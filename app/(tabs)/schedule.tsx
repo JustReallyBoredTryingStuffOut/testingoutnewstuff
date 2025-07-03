@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Alert } from "react-native";
-import { Calendar, Clock, Dumbbell, Plus, Copy, Save, ArrowLeft, ArrowRight, ChevronDown, Edit, Trash2, Repeat } from "lucide-react-native";
+import { Calendar, Clock, Dumbbell, Plus, Copy, Save, ArrowLeft, ArrowRight, ChevronDown, Edit, Edit3, Trash2, Repeat, Trophy, Target, Droplets, Footprints, CheckCircle, Camera } from "lucide-react-native";
 import { useRouter, Stack } from "expo-router";
 import { useWorkoutStore } from "@/store/workoutStore";
+import { useGamificationStore } from "@/store/gamificationStore";
+import { useHealthStore } from "@/store/healthStore";
+import { usePhotoStore } from "@/store/photoStore";
 import Button from "@/components/Button";
 import { useTheme } from "@/context/ThemeContext";
 
@@ -23,6 +26,22 @@ export default function ScheduleScreen() {
     getScheduledWorkoutsForDate,
     getRecurringWorkoutsForDay
   } = useWorkoutStore();
+  const { 
+    achievements,
+    challenges,
+    dailyQuests,
+    getAchievementsByCategory,
+    getActiveDailyQuests
+  } = useGamificationStore();
+  const { 
+    waterIntake,
+    stepLogs,
+    activityLogs,
+    healthGoals,
+    getWaterIntakeForDate,
+    getStepsForDate
+  } = useHealthStore();
+  const { progressPhotos } = usePhotoStore();
   
   const [viewMode, setViewMode] = useState<"week" | "month">("week");
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -32,6 +51,7 @@ export default function ScheduleScreen() {
   const [selectedScheduledWorkout, setSelectedScheduledWorkout] = useState<string | null>(null);
   const [showScheduledWorkouts, setShowScheduledWorkouts] = useState(true);
   const [showCompletedWorkouts, setShowCompletedWorkouts] = useState(true);
+  const [showProgressPhotos, setShowProgressPhotos] = useState(false);
   
   // Get dates for current view (week or month)
   const getDatesForView = () => {
@@ -98,13 +118,114 @@ export default function ScheduleScreen() {
         workout.exercises.forEach(exercise => {
           const ex = exercises.find(e => e.id === exercise.id);
           if (ex) {
-            ex.muscleGroups.forEach(group => muscleGroups.add(group));
+            ex.muscleGroups.forEach(group => muscleGroups.add(group.name));
           }
         });
       }
     });
     
     return Array.from(muscleGroups);
+  };
+  
+  // Get progress photos for a specific date
+  const getProgressPhotosForDate = (date: Date) => {
+    return progressPhotos.filter(photo => {
+      const photoDate = new Date(photo.date);
+      return photoDate.toDateString() === date.toDateString();
+    });
+  };
+  
+  // Get activities for a specific date
+  const getActivitiesForDate = (date: Date) => {
+    const dateString = date.toISOString().split('T')[0];
+    const activities = [];
+    
+    // Check water intake
+    const waterAmount = getWaterIntakeForDate(dateString);
+    if (waterAmount > 0) {
+      activities.push({
+        type: 'water',
+        icon: Droplets,
+        color: '#4A90E2',
+        label: `${waterAmount}ml`,
+        priority: 1
+      });
+    }
+    
+    // Check steps
+    const stepLog = getStepsForDate(dateString);
+    if (stepLog && stepLog.steps > 0) {
+      activities.push({
+        type: 'steps',
+        icon: Footprints,
+        color: '#50C878',
+        label: `${stepLog.steps.toLocaleString()}`,
+        priority: 2
+      });
+    }
+    
+    // Check completed achievements
+    const completedAchievements = achievements.filter(achievement => 
+      achievement.completed && achievement.dateCompleted && 
+      new Date(achievement.dateCompleted).toDateString() === date.toDateString()
+    );
+    
+    if (completedAchievements.length > 0) {
+      activities.push({
+        type: 'achievement',
+        icon: Trophy,
+        color: '#FFD700',
+        label: `${completedAchievements.length}`,
+        priority: 3
+      });
+    }
+    
+    // Check completed challenges
+    const completedChallenges = challenges.filter(challenge => 
+      challenge.completed && 
+      new Date(challenge.endDate).toDateString() === date.toDateString()
+    );
+    
+    if (completedChallenges.length > 0) {
+      activities.push({
+        type: 'challenge',
+        icon: Target,
+        color: '#FF6B6B',
+        label: `${completedChallenges.length}`,
+        priority: 4
+      });
+    }
+    
+    // Check completed daily quests
+    const completedQuests = dailyQuests.filter(quest => 
+      quest.completed && 
+      new Date(quest.date).toDateString() === date.toDateString()
+    );
+    
+    if (completedQuests.length > 0) {
+      activities.push({
+        type: 'quest',
+        icon: CheckCircle,
+        color: '#9B59B6',
+        label: `${completedQuests.length}`,
+        priority: 5
+      });
+    }
+    
+    // Check progress photos
+    const photosForDate = getProgressPhotosForDate(date);
+    if (photosForDate.length > 0) {
+      activities.push({
+        type: 'photo',
+        icon: Camera,
+        color: '#FF9500',
+        label: `${photosForDate.length}`,
+        priority: 6
+      });
+    }
+    
+    // Sort by priority (lower number = higher priority)
+    return activities.sort((a, b) => a.priority - b.priority);
   };
   
   // Navigate to previous week/month
@@ -450,6 +571,19 @@ export default function ScheduleScreen() {
               { color: showCompletedWorkouts ? colors.primary : colors.textSecondary }
             ]}>Completed</Text>
           </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[
+              styles.filterButton, 
+              showProgressPhotos && { borderColor: colors.primary }
+            ]}
+            onPress={() => setShowProgressPhotos(!showProgressPhotos)}
+          >
+            <Text style={[
+              styles.filterText, 
+              { color: showProgressPhotos ? colors.primary : colors.textSecondary }
+            ]}>Photos</Text>
+          </TouchableOpacity>
         </View>
       </View>
       
@@ -479,10 +613,14 @@ export default function ScheduleScreen() {
               const hasScheduledWorkout = scheduledWorkoutsForDate.length > 0;
               
               const muscleGroups = getMuscleGroupsForDate(date);
+              const activities = getActivitiesForDate(date);
+              const progressPhotosForDate = getProgressPhotosForDate(date);
+              const hasProgressPhotos = progressPhotosForDate.length > 0;
               
               // Determine if this cell has any content to show based on filters
               const hasContent = (hasCompletedWorkout && showCompletedWorkouts) || 
-                               (hasScheduledWorkout && showScheduledWorkouts);
+                               (hasScheduledWorkout && showScheduledWorkouts) ||
+                               (hasProgressPhotos && showProgressPhotos);
               
               return (
                 <TouchableOpacity
@@ -494,7 +632,13 @@ export default function ScheduleScreen() {
                     isSelected && [styles.selectedCell, { backgroundColor: colors.highlight }],
                     { borderColor: colors.border }
                   ]}
-                  onPress={() => handleDateSelect(date)}
+                  onPress={() => {
+                    handleDateSelect(date);
+                    // Navigate to activity detail if there are activities on this date
+                    if (hasContent || activities.length > 0) {
+                      router.push(`/activity/${date.toISOString()}`);
+                    }
+                  }}
                 >
                   <View style={styles.dateContainer}>
                     <Text style={[
@@ -507,13 +651,16 @@ export default function ScheduleScreen() {
                       {date.getDate()}
                     </Text>
                     
-                    {/* Indicators for scheduled and completed workouts */}
+                    {/* Indicators for scheduled and completed workouts and progress photos */}
                     <View style={styles.workoutIndicators}>
                       {hasScheduledWorkout && showScheduledWorkouts && (
                         <View style={[styles.indicatorDot, { backgroundColor: colors.secondary }]} />
                       )}
                       {hasCompletedWorkout && showCompletedWorkouts && (
                         <View style={[styles.indicatorDot, { backgroundColor: colors.primary }]} />
+                      )}
+                      {hasProgressPhotos && showProgressPhotos && (
+                        <View style={[styles.indicatorDot, { backgroundColor: '#FF9500' }]} />
                       )}
                     </View>
                   </View>
@@ -537,6 +684,15 @@ export default function ScheduleScreen() {
                           ellipsizeMode="tail"
                         >
                           {scheduledWorkoutsForDate.length} planned
+                        </Text>
+                      )}
+                      {showProgressPhotos && hasProgressPhotos && (
+                        <Text 
+                          style={[styles.workoutCount, { color: '#FF9500' }]} 
+                          numberOfLines={1} 
+                          ellipsizeMode="tail"
+                        >
+                          {progressPhotosForDate.length} photo{progressPhotosForDate.length > 1 ? 's' : ''}
                         </Text>
                       )}
                     </View>
@@ -565,11 +721,67 @@ export default function ScheduleScreen() {
                       )}
                     </View>
                   )}
+                  
+                  {/* Show activity indicators */}
+                  {activities.length > 0 && (
+                    <View style={styles.activityIndicators}>
+                      {activities.slice(0, 3).map((activity, idx) => {
+                        const IconComponent = activity.icon;
+                        return (
+                          <View key={idx} style={[styles.activityIndicator, { backgroundColor: activity.color }]}>
+                            <IconComponent size={8} color="#FFFFFF" />
+                          </View>
+                        );
+                      })}
+                      {activities.length > 3 && (
+                        <View style={[styles.activityIndicator, { backgroundColor: colors.textSecondary }]}>
+                          <Text style={styles.activityCountText}>+{activities.length - 3}</Text>
+                        </View>
+                      )}
+                    </View>
+                  )}
                 </TouchableOpacity>
               );
             })}
           </View>
         </View>
+        
+        {/* Activity Summary for Selected Date */}
+        {selectedDate && getActivitiesForDate(selectedDate).length > 0 && (
+          <View style={styles.activitySummaryContainer}>
+            <View style={[styles.activitySummary, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={[styles.activitySummaryTitle, { color: colors.text }]}>
+                Daily Activities - {formatDate(selectedDate)}
+              </Text>
+              
+              <View style={styles.activityList}>
+                {getActivitiesForDate(selectedDate).map((activity, index) => {
+                  const IconComponent = activity.icon;
+                  return (
+                    <View key={index} style={styles.activityItem}>
+                      <View style={[styles.activityIcon, { backgroundColor: activity.color }]}>
+                        <IconComponent size={16} color="#FFFFFF" />
+                      </View>
+                      <View style={styles.activityInfo}>
+                        <Text style={[styles.activityLabel, { color: colors.text }]}>
+                          {activity.type === 'water' && 'Water Intake'}
+                          {activity.type === 'steps' && 'Steps Walked'}
+                          {activity.type === 'achievement' && 'Achievements Unlocked'}
+                          {activity.type === 'challenge' && 'Challenges Completed'}
+                          {activity.type === 'quest' && 'Daily Quests Completed'}
+                          {activity.type === 'photo' && 'Progress Photos'}
+                        </Text>
+                        <Text style={[styles.activityValue, { color: colors.textSecondary }]}>
+                          {activity.label}
+                        </Text>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+          </View>
+        )}
         
         {/* Scheduled Workout Details */}
         {selectedScheduledWorkout && showScheduledWorkouts && (
@@ -722,7 +934,7 @@ export default function ScheduleScreen() {
                   {getSelectedWorkoutDetails()?.log.rating && (
                     <View style={styles.ratingContainer}>
                       <Text style={[styles.ratingText, { color: colors.text }]}>
-                        Rating: {getSelectedWorkoutDetails()?.log.rating.rating}/5
+                        Rating: {getSelectedWorkoutDetails()?.log.rating?.rating}/5
                       </Text>
                     </View>
                   )}
@@ -765,16 +977,12 @@ export default function ScheduleScreen() {
                 
                 <View style={styles.actionButtons}>
                   <TouchableOpacity 
-                    style={[styles.actionButton, { backgroundColor: colors.error }]}
-                    onPress={() => {
-                      if (getSelectedWorkoutDetails()?.log.id) {
-                        handleDeleteCompletedWorkout(getSelectedWorkoutDetails()?.log.id || "");
-                      }
-                    }}
+                    style={[styles.actionButton, { backgroundColor: colors.secondary }]}
+                    onPress={() => router.push(`/workout-log/${getSelectedWorkoutDetails()?.log.id}`)}
                   >
-                    <Trash2 size={16} color={colors.white} />
-                    <Text style={[styles.actionButtonText, { color: colors.white }]}>
-                      Delete Log
+                    <Edit3 size={16} color={colors.text} />
+                    <Text style={[styles.actionButtonText, { color: colors.text }]}>
+                      Edit Details
                     </Text>
                   </TouchableOpacity>
                   
@@ -795,6 +1003,20 @@ export default function ScheduleScreen() {
                     <Dumbbell size={16} color={colors.white} />
                     <Text style={[styles.actionButtonText, { color: colors.white }]}>
                       Start Workout
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={[styles.actionButton, { backgroundColor: colors.error }]}
+                    onPress={() => {
+                      if (getSelectedWorkoutDetails()?.log.id) {
+                        handleDeleteCompletedWorkout(getSelectedWorkoutDetails()?.log.id || "");
+                      }
+                    }}
+                  >
+                    <Trash2 size={16} color={colors.white} />
+                    <Text style={[styles.actionButtonText, { color: colors.white }]}>
+                      Delete Log
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -920,9 +1142,9 @@ const styles = StyleSheet.create({
   },
   calendarCell: {
     width: (screenWidth - 32) / 7,
-    height: 70,
+    height: 80,
     borderWidth: 0.5,
-    padding: 4,
+    padding: 2,
     justifyContent: "flex-start",
   },
   dateContainer: {
@@ -955,15 +1177,15 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   workoutCount: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: "500",
-    marginBottom: 2,
+    marginBottom: 1,
   },
   muscleGroupContainer: {
     marginTop: 2,
   },
   muscleGroupText: {
-    fontSize: 10,
+    fontSize: 8,
     fontWeight: "500",
   },
   workoutDetailsContainer: {
@@ -1134,5 +1356,59 @@ const styles = StyleSheet.create({
   },
   addButton: {
     width: "100%",
+  },
+  activityIndicators: {
+    flexDirection: "row",
+    gap: 4,
+  },
+  activityIndicator: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  activityCountText: {
+    fontSize: 10,
+    fontWeight: "500",
+  },
+  activitySummaryContainer: {
+    marginBottom: 16,
+  },
+  activitySummary: {
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+  },
+  activitySummaryTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 12,
+  },
+  activityList: {
+    marginBottom: 16,
+  },
+  activityItem: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  activityIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 8,
+  },
+  activityInfo: {
+    flex: 1,
+  },
+  activityLabel: {
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  activityValue: {
+    fontSize: 14,
+    fontWeight: "500",
   },
 });
