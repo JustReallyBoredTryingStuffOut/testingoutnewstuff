@@ -35,7 +35,8 @@ import {
   Lightbulb,
   Award,
   Trophy,
-  ArrowLeft
+  ArrowLeft,
+  BarChart3
 } from "lucide-react-native";
 import * as Speech from 'expo-speech';
 import { useTheme } from "@/context/ThemeContext";
@@ -57,6 +58,7 @@ import DailyQuests from "@/components/DailyQuests";
 import ChallengeCard from "@/components/ChallengeCard";
 import AchievementModal from "@/components/AchievementModal";
 import { APP_NAME } from "@/app/_layout";
+import MacroSummary from "@/components/MacroSummary";
 
 // Voice configuration for a more natural female voice
 const voiceConfig = {
@@ -413,7 +415,7 @@ export default function HomeScreen() {
         progress: 0,
         milestones: [],
         lastChecked: new Date().toISOString(),
-        targetValue,
+        targetValue: targetValue ?? undefined,
         timePeriod: timePeriod || (timeframe === 'weekly' ? 'weekly' : 'monthly'),
         reminderSchedule: category === 'water' ? 'hourly' : 'daily',
         currentValue: 0
@@ -607,14 +609,6 @@ export default function HomeScreen() {
         return `Ready for your ${APP_NAME} workout?`;
     }
   };
-  
-  // Check if user has a scheduled workout today
-  const hasWorkoutToday = scheduledWorkouts.some(workout => {
-    const workoutDate = new Date(workout.date);
-    const today = new Date();
-    return workoutDate.toDateString() === today.toDateString();
-  });
-
   // Navigate to daily quests screen
   const navigateToDailyQuests = () => {
     router.push("/daily-quests");
@@ -696,689 +690,709 @@ export default function HomeScreen() {
   };
   
   return (
-    <ScrollView 
-      style={[styles.container, { backgroundColor: colors.background }]} 
-      contentContainerStyle={styles.content}
-      scrollEventThrottle={16} // Prevent excessive scroll events
-    >
-      <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <View style={styles.greetingContainer}>
-            <Text style={[styles.greeting, { color: colors.text }]} numberOfLines={1} ellipsizeMode="tail">
-              {greeting}
-            </Text>
-            <Text style={[styles.subGreeting, { color: colors.textSecondary }]} numberOfLines={2} ellipsizeMode="tail">
-              {getMotivationMessage()}
-            </Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <ScrollView 
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={true}
+        bounces={true}
+        overScrollMode="always"
+      >
+        <View style={styles.header}>
+          <View style={styles.headerTop}>
+            <View style={styles.greetingContainer}>
+              <Text style={[styles.greeting, { color: colors.text }]} numberOfLines={1} ellipsizeMode="tail">
+                {greeting}
+              </Text>
+              <Text style={[styles.subGreeting, { color: colors.textSecondary }]} numberOfLines={2} ellipsizeMode="tail">
+                {getMotivationMessage()}
+              </Text>
+            </View>
+            
+            {userMood && new Date(userMood.date).toDateString() === new Date().toDateString() && (
+              <TouchableOpacity 
+                style={[styles.moodBadge, { backgroundColor: colors.card }]}
+                onPress={() => setShowMoodSelector(true)}
+              >
+                <Text style={styles.moodEmoji}>{userMood.emoji}</Text>
+              </TouchableOpacity>
+            )}
+            
+            <TouchableOpacity 
+              style={[styles.voiceButton, { backgroundColor: colors.card }]}
+              onPress={toggleVoice}
+            >
+              {voiceEnabled ? (
+                <Volume2 size={20} color={colors.primary} />
+              ) : (
+                <VolumeX size={20} color={colors.textSecondary} />
+              )}
+            </TouchableOpacity>
           </View>
           
-          {userMood && new Date(userMood.date).toDateString() === new Date().toDateString() && (
+          {!userMood || new Date(userMood.date).toDateString() !== new Date().toDateString() ? (
             <TouchableOpacity 
-              style={[styles.moodBadge, { backgroundColor: colors.card }]}
+              style={[styles.moodPrompt, { backgroundColor: colors.card }]}
               onPress={() => setShowMoodSelector(true)}
             >
-              <Text style={styles.moodEmoji}>{userMood.emoji}</Text>
+              <Text style={[styles.moodPromptText, { color: colors.text }]}>How are you feeling today?</Text>
+              <Text style={styles.moodPromptEmoji}>😊 😴 💪</Text>
             </TouchableOpacity>
-          )}
-          
-          <TouchableOpacity 
-            style={[styles.voiceButton, { backgroundColor: colors.card }]}
-            onPress={toggleVoice}
-          >
-            {voiceEnabled ? (
-              <Volume2 size={20} color={colors.primary} />
-            ) : (
-              <VolumeX size={20} color={colors.textSecondary} />
-            )}
-          </TouchableOpacity>
+          ) : null}
         </View>
         
-        {!userMood || new Date(userMood.date).toDateString() !== new Date().toDateString() ? (
+        {activeWorkout ? (
           <TouchableOpacity 
-            style={[styles.moodPrompt, { backgroundColor: colors.card }]}
-            onPress={() => setShowMoodSelector(true)}
+            style={[styles.activeWorkoutCard, { backgroundColor: colors.primary }]}
+            onPress={() => router.push("/active-workout")}
+            activeOpacity={0.7}
           >
-            <Text style={[styles.moodPromptText, { color: colors.text }]}>How are you feeling today?</Text>
-            <Text style={styles.moodPromptEmoji}>😊 😴 💪</Text>
-          </TouchableOpacity>
-        ) : null}
-      </View>
-      
-      {activeWorkout ? (
-        <TouchableOpacity 
-          style={[styles.activeWorkoutCard, { backgroundColor: colors.primary }]}
-          onPress={() => router.push("/active-workout")}
-          activeOpacity={0.7}
-        >
-          <View style={styles.activeWorkoutContent}>
-            <Text style={styles.activeWorkoutLabel}>WORKOUT IN PROGRESS</Text>
-            <Text style={styles.activeWorkoutTitle} numberOfLines={1} ellipsizeMode="tail">
-              {workouts.find(w => w.id === activeWorkout.workoutId)?.name || "Current Workout"}
-            </Text>
-            <View style={styles.activeWorkoutStats}>
-              <View style={styles.activeWorkoutStat}>
-                <Clock size={16} color="#FFFFFF" />
-                <Text style={styles.activeWorkoutStatText}>Continue</Text>
+            <View style={styles.activeWorkoutContent}>
+              <Text style={styles.activeWorkoutLabel}>WORKOUT IN PROGRESS</Text>
+              <Text style={styles.activeWorkoutTitle} numberOfLines={1} ellipsizeMode="tail">
+                {workouts.find(w => w.id === activeWorkout.workoutId)?.name || "Current Workout"}
+              </Text>
+              <View style={styles.activeWorkoutStats}>
+                <View style={styles.activeWorkoutStat}>
+                  <Clock size={16} color="#FFFFFF" />
+                  <Text style={styles.activeWorkoutStatText}>Continue</Text>
+                </View>
               </View>
             </View>
-          </View>
-          <View style={styles.activeWorkoutAction}>
-            <Play size={24} color="#FFFFFF" />
-          </View>
-        </TouchableOpacity>
-      ) : (
-        <MacroProgress current={todayMacros} goals={macroGoals} />
-      )}
-      
-      {/* Gamification Section - Only show if enabled */}
-      {gamificationEnabled && (
-        <View style={styles.gamificationContainer}>
-          <View style={styles.gamificationRow}>
-            <View style={styles.gamificationItem}>
-              <StreakTracker compact />
-            </View>
-            <View style={styles.gamificationItem}>
-              <LevelProgress compact />
-            </View>
-          </View>
-          
-          {activeQuests.length > 0 && (
-            <DailyQuests 
-              compact 
-              limit={2} 
-              onPress={navigateToDailyQuests}
-            />
-          )}
-          
-          {activeChallenge && (
-            <TouchableOpacity onPress={() => router.push("/challenges")}>
-              <ChallengeCard challenge={activeChallenge} compact />
-            </TouchableOpacity>
-          )}
-          
-          <TouchableOpacity 
-            style={[styles.achievementsButton, { backgroundColor: colors.card }]}
-            onPress={() => router.push("/achievements")}
-          >
-            <Trophy size={20} color={colors.primary} />
-            <Text style={[styles.achievementsButtonText, { color: colors.text }]}>
-              View All Achievements
-            </Text>
-            <View style={[styles.achievementsBadge, { backgroundColor: colors.primary }]}>
-              <Text style={styles.achievementsBadgeText}>New</Text>
+            <View style={styles.activeWorkoutAction}>
+              <Play size={24} color="#FFFFFF" />
             </View>
           </TouchableOpacity>
-        </View>
-      )}
-      
-      <View style={styles.quickAccessContainer}>
-        <StepCounter compact />
-        <WeightTracker 
-          compact 
-          onAddWeight={() => router.push("/weight-log")}
-        />
-      </View>
-      
-      {/* Mood-based Advice Banner */}
-      {moodBasedAdvice && (
-        <View style={[styles.moodAdviceBanner, { backgroundColor: colors.card }]}>
-          <View style={[styles.moodAdviceIcon, { backgroundColor: "rgba(74, 144, 226, 0.1)" }]}>
-            <Heart size={20} color={colors.primary} />
-          </View>
-          <Text style={[styles.moodAdviceText, { color: colors.text }]} numberOfLines={3} ellipsizeMode="tail">
-            {moodBasedAdvice}
-          </Text>
-        </View>
-      )}
-      
-      {/* Rest Day Activities (shown only when user selects rest preference) */}
-      {userMood?.preference === "rest" && (
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Rest Day Activities</Text>
-          </View>
-          
-          <View style={[styles.restDayCard, { backgroundColor: colors.card }]}>
-            <Text style={[styles.restDayTitle, { color: colors.text }]}>
-              Recovery is an essential part of fitness progress
-            </Text>
-            <Text style={[styles.restDaySubtitle, { color: colors.textSecondary }]}>
-              Here are some light activities you can do on your rest day:
-            </Text>
-            
-            <View style={styles.restActivitiesList}>
-              {restDayActivities.slice(0, 4).map((activity, index) => (
-                <View key={index} style={styles.restActivity}>
-                  <View style={[styles.restActivityBullet, { backgroundColor: "rgba(74, 144, 226, 0.1)" }]}>
-                    <Text style={[styles.restActivityBulletText, { color: colors.primary }]}>{index + 1}</Text>
-                  </View>
-                  <Text style={[styles.restActivityText, { color: colors.text }]} numberOfLines={2} ellipsizeMode="tail">
-                    {activity}
-                  </Text>
-                </View>
-              ))}
+        ) : (
+          <MacroSummary 
+            current={{
+              calories: todayMacros.calories || 0,
+              protein: todayMacros.protein || 0,
+              carbs: todayMacros.carbs || 0,
+              fat: todayMacros.fat || 0
+            }} 
+            goals={macroGoals} 
+          />
+        )}
+        
+        {/* Gamification Section - Only show if enabled */}
+        {gamificationEnabled && (
+          <View style={styles.gamificationContainer}>
+            <View style={styles.gamificationRow}>
+              <View style={styles.gamificationItem}>
+                <StreakTracker compact />
+              </View>
+              <View style={styles.gamificationItem}>
+                <LevelProgress compact />
+              </View>
             </View>
             
-            <TouchableOpacity 
-              style={styles.seeMoreButton}
-              onPress={() => setShowRestDayActivities(true)}
-            >
-              <Text style={[styles.seeMoreText, { color: colors.primary }]}>See More Activities</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
-      
-      {/* Workout Recommendations Section - Only show if not on rest day */}
-      {userMood?.preference !== "rest" && (
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Recommended For You</Text>
-            <View style={styles.recommendationToggle}>
-              <Text style={[styles.toggleLabel, { color: colors.textSecondary }]}>AI Recommendations</Text>
-              <Switch
-                value={workoutRecommendationsEnabled}
-                onValueChange={(value) => toggleWorkoutRecommendations(value)}
-                trackColor={{ false: colors.border, true: colors.primary }}
-                thumbColor="#FFFFFF"
+            {activeQuests.length > 0 && (
+              <DailyQuests 
+                compact 
+                limit={2} 
+                onPress={navigateToDailyQuests}
               />
-            </View>
-          </View>
-          
-          {workoutRecommendationsEnabled ? (
-            <>
-              {recommendedWorkouts.map((workout) => (
-                <WorkoutCard 
-                  key={workout.id} 
-                  workout={{...workout, isRecommended: true}}
-                  onPress={() => handleStartWorkout(workout.id)}
-                />
-              ))}
-              
-              {latestAnalysis && latestAnalysis.recommendations.exerciseRecommendations.length > 0 && (
-                <View style={[styles.analysisCard, { backgroundColor: colors.card }]}>
-                  <View style={styles.analysisHeader}>
-                    <Zap size={20} color={colors.primary} />
-                    <Text style={[styles.analysisTitle, { color: colors.text }]}>Workout Insight</Text>
-                  </View>
-                  <Text style={[styles.analysisTip, { color: colors.textSecondary }]} numberOfLines={3} ellipsizeMode="tail">
-                    {latestAnalysis.recommendations.exerciseRecommendations[0]}
-                  </Text>
-                  <TouchableOpacity 
-                    style={styles.analysisButton}
-                    onPress={() => setShowWorkoutAnalysis(true)}
-                  >
-                    <Text style={[styles.analysisButtonText, { color: colors.primary }]}>View Full Analysis</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </>
-          ) : (
+            )}
+            
+            {activeChallenge && (
+              <TouchableOpacity onPress={() => router.push("/challenges")}>
+                <ChallengeCard challenge={activeChallenge} compact />
+              </TouchableOpacity>
+            )}
+            
             <TouchableOpacity 
-              style={[styles.enableRecommendationsCard, { backgroundColor: colors.card }]}
-              onPress={() => toggleWorkoutRecommendations(true)}
+              style={[styles.achievementsButton, { backgroundColor: colors.card }]}
+              onPress={() => router.push("/achievements")}
             >
-              <Zap size={24} color={colors.primary} />
-              <Text style={[styles.enableRecommendationsText, { color: colors.textSecondary }]}>
-                Enable AI workout recommendations based on your fitness level, mood, and goals
+              <Trophy size={20} color={colors.primary} />
+              <Text style={[styles.achievementsButtonText, { color: colors.text }]}>
+                View All Achievements
               </Text>
+              <View style={[styles.achievementsBadge, { backgroundColor: colors.primary }]}>
+                <Text style={styles.achievementsBadgeText}>New</Text>
+              </View>
             </TouchableOpacity>
-          )}
-          
-          <Button
-            title="Browse All Workouts"
-            onPress={() => router.push("/workouts")}
-            variant="outline"
-            style={styles.browseButton}
-            icon={<Plus size={18} color={colors.primary} />}
+          </View>
+        )}
+        
+        <View style={styles.quickAccessContainer}>
+          <StepCounter compact />
+          <WeightTracker 
+            compact 
+            onAddWeight={() => router.push("/weight-log")}
           />
         </View>
-      )}
-      
-      {/* Daily Fitness Tip */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Daily Fitness Tip</Text>
-          <TouchableOpacity onPress={getNewTip}>
-            <RefreshCw size={18} color={colors.primary} />
-          </TouchableOpacity>
-        </View>
         
-        <View style={[styles.tipCard, { backgroundColor: colors.card }]}>
-          <View style={[styles.tipIconContainer, { backgroundColor: "rgba(74, 144, 226, 0.1)" }]}>
-            <Lightbulb size={24} color={colors.primary} />
+        {/* Mood-based Advice Banner */}
+        {moodBasedAdvice && (
+          <View style={[styles.moodAdviceBanner, { backgroundColor: colors.card }]}>
+            <View style={[styles.moodAdviceIcon, { backgroundColor: "rgba(74, 144, 226, 0.1)" }]}>
+              <Heart size={20} color={colors.primary} />
+            </View>
+            <Text style={[styles.moodAdviceText, { color: colors.text }]} numberOfLines={3} ellipsizeMode="tail">
+              {moodBasedAdvice}
+            </Text>
           </View>
-          <Text style={[styles.tipText, { color: colors.text }]} numberOfLines={4} ellipsizeMode="tail">
-            {dailyTip}
-          </Text>
-        </View>
-      </View>
-      
-      {/* Goals Section */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Your Goals</Text>
-          <TouchableOpacity onPress={() => router.push("/goals")}>
-            <Text style={[styles.seeAll, { color: colors.primary }]}>View All</Text>
-          </TouchableOpacity>
+        )}
+        
+        {/* Rest Day Activities (shown only when user selects rest preference) */}
+        {userMood?.preference === "rest" && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Rest Day Activities</Text>
+            </View>
+            
+            <View style={[styles.restDayCard, { backgroundColor: colors.card }]}>
+              <Text style={[styles.restDayTitle, { color: colors.text }]}>
+                Recovery is an essential part of fitness progress
+              </Text>
+              <Text style={[styles.restDaySubtitle, { color: colors.textSecondary }]}>
+                Here are some light activities you can do on your rest day:
+              </Text>
+              
+              <View style={styles.restActivitiesList}>
+                {restDayActivities.slice(0, 4).map((activity, index) => (
+                  <View key={index} style={styles.restActivity}>
+                    <View style={[styles.restActivityBullet, { backgroundColor: "rgba(74, 144, 226, 0.1)" }]}>
+                      <Text style={[styles.restActivityBulletText, { color: colors.primary }]}>{index + 1}</Text>
+                    </View>
+                    <Text style={[styles.restActivityText, { color: colors.text }]} numberOfLines={2} ellipsizeMode="tail">
+                      {activity}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+              
+              <TouchableOpacity 
+                style={styles.seeMoreButton}
+                onPress={() => setShowRestDayActivities(true)}
+              >
+                <Text style={[styles.seeMoreText, { color: colors.primary }]}>See More Activities</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+        
+        {/* Workout Recommendations Section - Only show if not on rest day */}
+        {userMood?.preference !== "rest" && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Recommended For You</Text>
+              <View style={styles.recommendationToggle}>
+                <Text style={[styles.toggleLabel, { color: colors.textSecondary }]}>AI Recommendations</Text>
+                <Switch
+                  value={workoutRecommendationsEnabled}
+                  onValueChange={(value) => toggleWorkoutRecommendations(value)}
+                  trackColor={{ false: colors.border, true: colors.primary }}
+                  thumbColor="#FFFFFF"
+                />
+              </View>
+            </View>
+            
+            {workoutRecommendationsEnabled ? (
+              <>
+                {recommendedWorkouts.map((workout) => (
+                  <WorkoutCard 
+                    key={workout.id} 
+                    workout={{...workout, isRecommended: true}}
+                    onPress={() => handleStartWorkout(workout.id)}
+                  />
+                ))}
+                
+                {latestAnalysis && latestAnalysis.recommendations.exerciseRecommendations.length > 0 && (
+                  <View style={[styles.analysisCard, { backgroundColor: colors.card }]}>
+                    <View style={styles.analysisHeader}>
+                      <Zap size={20} color={colors.primary} />
+                      <Text style={[styles.analysisTitle, { color: colors.text }]}>Workout Insight</Text>
+                    </View>
+                    <Text style={[styles.analysisTip, { color: colors.textSecondary }]} numberOfLines={3} ellipsizeMode="tail">
+                      {latestAnalysis.recommendations.exerciseRecommendations[0]}
+                    </Text>
+                    <TouchableOpacity 
+                      style={styles.analysisButton}
+                      onPress={() => setShowWorkoutAnalysis(true)}
+                    >
+                      <Text style={[styles.analysisButtonText, { color: colors.primary }]}>View Full Analysis</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </>
+            ) : (
+              <TouchableOpacity 
+                style={[styles.enableRecommendationsCard, { backgroundColor: colors.card }]}
+                onPress={() => toggleWorkoutRecommendations(true)}
+              >
+                <Zap size={24} color={colors.primary} />
+                <Text style={[styles.enableRecommendationsText, { color: colors.textSecondary }]}>
+                  Enable AI workout recommendations based on your fitness level, mood, and goals
+                </Text>
+              </TouchableOpacity>
+            )}
+            
+            <Button
+              title="Browse All Workouts"
+              onPress={() => router.push("/workouts")}
+              variant="outline"
+              style={styles.browseButton}
+              icon={<Plus size={18} color={colors.primary} />}
+            />
+          </View>
+        )}
+        
+        {/* Daily Fitness Tip */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Daily Fitness Tip</Text>
+            <TouchableOpacity onPress={getNewTip}>
+              <RefreshCw size={18} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
+          
+          <View style={[styles.tipCard, { backgroundColor: colors.card }]}>
+            <View style={[styles.tipIconContainer, { backgroundColor: "rgba(74, 144, 226, 0.1)" }]}>
+              <Lightbulb size={24} color={colors.primary} />
+            </View>
+            <Text style={[styles.tipText, { color: colors.text }]} numberOfLines={4} ellipsizeMode="tail">
+              {dailyTip}
+            </Text>
+          </View>
         </View>
         
-        {activeGoals.length > 0 ? (
-          activeGoals.map((goal) => (
-            <View key={goal.id} style={[styles.goalCard, { backgroundColor: colors.card }]}>
-              {editingGoalId === goal.id ? (
-                // Editing mode
-                <View style={styles.goalEditContainer}>
-                  <TextInput
-                    style={[styles.goalEditInput, { backgroundColor: colors.background, color: colors.text }]}
-                    value={editedGoalText}
-                    onChangeText={setEditedGoalText}
-                    multiline
-                    autoFocus
-                  />
-                  <View style={styles.goalEditActions}>
-                    <TouchableOpacity 
-                      style={[styles.goalEditCancel, { backgroundColor: "rgba(255, 59, 48, 0.1)" }]}
-                      onPress={handleCancelGoalEdit}
-                    >
-                      <X size={20} color={colors.error} />
-                    </TouchableOpacity>
-                    <TouchableOpacity 
-                      style={[styles.goalEditSave, { backgroundColor: "rgba(80, 200, 120, 0.1)" }]}
-                      onPress={handleSaveGoalEdit}
-                    >
-                      <Check size={20} color={colors.secondary} />
-                    </TouchableOpacity>
+        {/* Goals Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Your Goals</Text>
+            <TouchableOpacity onPress={() => router.push("/goals")}>
+              <Text style={[styles.seeAll, { color: colors.primary }]}>View All</Text>
+            </TouchableOpacity>
+          </View>
+          
+          {activeGoals.length > 0 ? (
+            activeGoals.map((goal) => (
+              <View key={goal.id} style={[styles.goalCard, { backgroundColor: colors.card }]}>
+                {editingGoalId === goal.id ? (
+                  // Editing mode
+                  <View style={styles.goalEditContainer}>
+                    <TextInput
+                      style={[styles.goalEditInput, { backgroundColor: colors.background, color: colors.text }]}
+                      value={editedGoalText}
+                      onChangeText={setEditedGoalText}
+                      multiline
+                      autoFocus
+                    />
+                    <View style={styles.goalEditActions}>
+                      <TouchableOpacity 
+                        style={[styles.goalEditCancel, { backgroundColor: "rgba(255, 59, 48, 0.1)" }]}
+                        onPress={handleCancelGoalEdit}
+                      >
+                        <X size={20} color={colors.error} />
+                      </TouchableOpacity>
+                      <TouchableOpacity 
+                        style={[styles.goalEditSave, { backgroundColor: "rgba(80, 200, 120, 0.1)" }]}
+                        onPress={handleSaveGoalEdit}
+                      >
+                        <Check size={20} color={colors.secondary} />
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                </View>
-              ) : (
-                // Display mode
-                <>
-                  <View style={[styles.goalIcon, { backgroundColor: "rgba(74, 144, 226, 0.1)" }]}>
-                    {goal.timeframe === "monthly" ? (
-                      <Calendar size={20} color={colors.primary} />
-                    ) : (
-                      <Target size={20} color={colors.primary} />
-                    )}
-                  </View>
-                  <View style={styles.goalContent}>
-                    <View style={styles.goalHeader}>
-                      <Text style={[styles.goalText, { color: colors.text }]} numberOfLines={2} ellipsizeMode="tail">
-                        {goal.text}
+                ) : (
+                  // Display mode
+                  <>
+                    <View style={[styles.goalIcon, { backgroundColor: "rgba(74, 144, 226, 0.1)" }]}>
+                      {goal.timeframe === "monthly" ? (
+                        <Calendar size={20} color={colors.primary} />
+                      ) : (
+                        <Target size={20} color={colors.primary} />
+                      )}
+                    </View>
+                    <View style={styles.goalContent}>
+                      <View style={styles.goalHeader}>
+                        <Text style={[styles.goalText, { color: colors.text }]} numberOfLines={2} ellipsizeMode="tail">
+                          {goal.text}
+                        </Text>
+                        {goal.timeframe && (
+                          <View style={[styles.goalTimeframeBadge, { backgroundColor: "rgba(74, 144, 226, 0.1)" }]}>
+                            <Text style={[styles.goalTimeframeText, { color: colors.primary }]}>
+                              {goal.timeframe === "weekly" ? "Weekly" : "Monthly"}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text style={[styles.goalDate, { color: colors.textSecondary }]}>
+                        Set on {new Date(goal.date).toLocaleDateString()}
                       </Text>
-                      {goal.timeframe && (
-                        <View style={[styles.goalTimeframeBadge, { backgroundColor: "rgba(74, 144, 226, 0.1)" }]}>
-                          <Text style={[styles.goalTimeframeText, { color: colors.primary }]}>
-                            {goal.timeframe === "weekly" ? "Weekly" : "Monthly"}
+                      
+                      {goal.targetDate && (
+                        <Text style={[styles.goalTargetDate, { color: colors.primary }]}>
+                          Target: {new Date(goal.targetDate).toLocaleDateString()}
+                        </Text>
+                      )}
+                      
+                      {/* Progress bar for goal */}
+                      {goal.progress !== undefined && goal.progress > 0 && (
+                        <View style={styles.goalProgressContainer}>
+                          <View 
+                            style={[
+                              styles.goalProgressBar, 
+                              { backgroundColor: colors.border }
+                            ]}
+                          >
+                            <View 
+                              style={[
+                                styles.goalProgressFill, 
+                                { 
+                                  backgroundColor: colors.primary,
+                                  width: `${goal.progress}%` 
+                                }
+                              ]} 
+                            />
+                          </View>
+                          <Text style={[styles.goalProgressText, { color: colors.textSecondary }]}>
+                            {goal.progress}% complete
                           </Text>
                         </View>
                       )}
                     </View>
-                    <Text style={[styles.goalDate, { color: colors.textSecondary }]}>
-                      Set on {new Date(goal.date).toLocaleDateString()}
+                    <TouchableOpacity 
+                      style={[styles.goalEditButton, { backgroundColor: "rgba(74, 144, 226, 0.1)" }]}
+                      onPress={() => handleEditGoal(goal)}
+                    >
+                      <Edit size={18} color={colors.primary} />
+                    </TouchableOpacity>
+                  </>
+                )}
+              </View>
+            ))
+          ) : (
+            <TouchableOpacity 
+              style={[styles.addGoalCard, { backgroundColor: colors.card }]}
+              onPress={() => setShowGoalPrompt(true)}
+            >
+              <Plus size={24} color={colors.primary} />
+              <Text style={[styles.addGoalText, { color: colors.primary }]}>Set a fitness goal</Text>
+            </TouchableOpacity>
+          )}
+          
+          <Button
+            title="View All Goals"
+            onPress={() => router.push("/goals")}
+            variant="outline"
+            style={styles.viewAllGoalsButton}
+          />
+        </View>
+        
+        {/* Quick Actions */}
+        <View style={styles.quickActionsContainer}>
+          <TouchableOpacity 
+            style={styles.quickAction}
+            onPress={() => router.push("/capture-food")}
+          >
+            <View style={[styles.quickActionIcon, { backgroundColor: "rgba(74, 144, 226, 0.1)" }]}>
+              <Camera size={24} color={colors.primary} />
+            </View>
+            <Text style={[styles.quickActionText, { color: colors.text }]}>Analyze Food</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.quickAction}
+            onPress={() => router.push("/progress-photos")}
+          >
+            <View style={[styles.quickActionIcon, { backgroundColor: "rgba(80, 200, 120, 0.1)" }]}>
+              <Camera size={24} color={colors.secondary} />
+            </View>
+            <Text style={[styles.quickActionText, { color: colors.text }]}>Progress Photo</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.quickAction}
+            onPress={() => router.push("/ai-chat")}
+          >
+            <View style={[styles.quickActionIcon, { backgroundColor: "rgba(255, 149, 0, 0.1)" }]}>
+              <MessageSquare size={24} color="#FF9500" />
+            </View>
+            <Text style={[styles.quickActionText, { color: colors.text }]}>Ask AI</Text>
+          </TouchableOpacity>
+        </View>
+        
+        {recentWorkouts.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent Workouts</Text>
+              <TouchableOpacity onPress={() => router.push("/history" as any)}>
+                <Text style={[styles.seeAll, { color: colors.primary }]}>History</Text>
+              </TouchableOpacity>
+            </View>
+            
+            {recentWorkouts.map((log) => {
+              const workout = workouts.find(w => w.id === log.workoutId);
+              if (!workout) return null;
+              
+              return (
+                <View key={log.id} style={[styles.recentWorkout, { backgroundColor: colors.card }]}>
+                  <View style={styles.recentWorkoutInfo}>
+                    <Text style={[styles.recentWorkoutName, { color: colors.text }]} numberOfLines={1} ellipsizeMode="tail">
+                      {workout.name}
                     </Text>
-                    
-                    {goal.targetDate && (
-                      <Text style={[styles.goalTargetDate, { color: colors.primary }]}>
-                        Target: {new Date(goal.targetDate).toLocaleDateString()}
+                    <Text style={[styles.recentWorkoutDate, { color: colors.textSecondary }]}>
+                      {new Date(log.date).toLocaleDateString()}
+                    </Text>
+                  </View>
+                  <View style={styles.recentWorkoutStats}>
+                    <View style={styles.recentWorkoutStat}>
+                      <Clock size={14} color={colors.textSecondary} />
+                      <Text style={[styles.recentWorkoutStatText, { color: colors.textSecondary }]}>{log.duration} min</Text>
+                    </View>
+                    <View style={styles.recentWorkoutStat}>
+                      <Calendar size={14} color={colors.textSecondary} />
+                      <Text style={[styles.recentWorkoutStatText, { color: colors.textSecondary }]}>
+                        {log.exercises.length} exercises
                       </Text>
-                    )}
+                    </View>
                     
-                    {/* Progress bar for goal */}
-                    {goal.progress !== undefined && goal.progress > 0 && (
-                      <View style={styles.goalProgressContainer}>
-                        <View 
-                          style={[
-                            styles.goalProgressBar, 
-                            { backgroundColor: colors.border }
-                          ]}
-                        >
-                          <View 
-                            style={[
-                              styles.goalProgressFill, 
-                              { 
-                                backgroundColor: colors.primary,
-                                width: `${goal.progress}%` 
-                              }
-                            ]} 
-                          />
-                        </View>
-                        <Text style={[styles.goalProgressText, { color: colors.textSecondary }]}>
-                          {goal.progress}% complete
+                    {log.rating && (
+                      <View style={styles.recentWorkoutStat}>
+                        <Text style={styles.ratingText}>
+                          {Array(log.rating.rating).fill('★').join('')}
+                          {Array(5 - log.rating.rating).fill('☆').join('')}
                         </Text>
                       </View>
                     )}
                   </View>
-                  <TouchableOpacity 
-                    style={[styles.goalEditButton, { backgroundColor: "rgba(74, 144, 226, 0.1)" }]}
-                    onPress={() => handleEditGoal(goal)}
-                  >
-                    <Edit size={18} color={colors.primary} />
-                  </TouchableOpacity>
-                </>
-              )}
-            </View>
-          ))
-        ) : (
-          <TouchableOpacity 
-            style={[styles.addGoalCard, { backgroundColor: colors.card }]}
-            onPress={() => setShowGoalPrompt(true)}
-          >
-            <Plus size={24} color={colors.primary} />
-            <Text style={[styles.addGoalText, { color: colors.primary }]}>Set a fitness goal</Text>
-          </TouchableOpacity>
-        )}
-        
-        <Button
-          title="View All Goals"
-          onPress={() => router.push("/goals")}
-          variant="outline"
-          style={styles.viewAllGoalsButton}
-        />
-      </View>
-      
-      {/* Quick Actions */}
-      <View style={styles.quickActionsContainer}>
-        <TouchableOpacity 
-          style={styles.quickAction}
-          onPress={() => router.push("/capture-food")}
-        >
-          <View style={[styles.quickActionIcon, { backgroundColor: "rgba(74, 144, 226, 0.1)" }]}>
-            <Camera size={24} color={colors.primary} />
-          </View>
-          <Text style={[styles.quickActionText, { color: colors.text }]}>Analyze Food</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.quickAction}
-          onPress={() => router.push("/progress-photos")}
-        >
-          <View style={[styles.quickActionIcon, { backgroundColor: "rgba(80, 200, 120, 0.1)" }]}>
-            <Camera size={24} color={colors.secondary} />
-          </View>
-          <Text style={[styles.quickActionText, { color: colors.text }]}>Progress Photo</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.quickAction}
-          onPress={() => router.push("/ai-chat")}
-        >
-          <View style={[styles.quickActionIcon, { backgroundColor: "rgba(255, 149, 0, 0.1)" }]}>
-            <MessageSquare size={24} color="#FF9500" />
-          </View>
-          <Text style={[styles.quickActionText, { color: colors.text }]}>Ask AI</Text>
-        </TouchableOpacity>
-      </View>
-      
-      {recentWorkouts.length > 0 && (
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent Workouts</Text>
-            <TouchableOpacity onPress={() => router.push("/history")}>
-              <Text style={[styles.seeAll, { color: colors.primary }]}>History</Text>
-            </TouchableOpacity>
-          </View>
-          
-          {recentWorkouts.map((log) => {
-            const workout = workouts.find(w => w.id === log.workoutId);
-            if (!workout) return null;
+                </View>
+              );
+            })}
             
-            return (
-              <View key={log.id} style={[styles.recentWorkout, { backgroundColor: colors.card }]}>
-                <View style={styles.recentWorkoutInfo}>
-                  <Text style={[styles.recentWorkoutName, { color: colors.text }]} numberOfLines={1} ellipsizeMode="tail">
-                    {workout.name}
-                  </Text>
-                  <Text style={[styles.recentWorkoutDate, { color: colors.textSecondary }]}>
-                    {new Date(log.date).toLocaleDateString()}
-                  </Text>
-                </View>
-                <View style={styles.recentWorkoutStats}>
-                  <View style={styles.recentWorkoutStat}>
-                    <Clock size={14} color={colors.textSecondary} />
-                    <Text style={[styles.recentWorkoutStatText, { color: colors.textSecondary }]}>{log.duration} min</Text>
-                  </View>
-                  <View style={styles.recentWorkoutStat}>
-                    <Calendar size={14} color={colors.textSecondary} />
-                    <Text style={[styles.recentWorkoutStatText, { color: colors.textSecondary }]}>
-                      {log.exercises.length} exercises
-                    </Text>
-                  </View>
-                  
-                  {log.rating && (
-                    <View style={styles.recentWorkoutStat}>
-                      <Text style={styles.ratingText}>
-                        {Array(log.rating.rating).fill('★').join('')}
-                        {Array(5 - log.rating.rating).fill('☆').join('')}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              </View>
-            );
-          })}
-          
-          {recentWorkouts.length >= 3 && (
-            <Button
-              title="Analyze My Workouts"
-              onPress={handleAnalyzeWorkouts}
-              variant="outline"
-              icon={<Zap size={18} color={colors.primary} />}
-              style={styles.analyzeButton}
-            />
-          )}
-        </View>
-      )}
-      
-      {/* Goal Setting Modal */}
-      <GoalPrompt
-        visible={showGoalPrompt}
-        prompt={getPromptForTimeframe(selectedTimeframe)}
-        onClose={() => {
-          setShowGoalPrompt(false);
-          // Update the last prompt date even if the user cancels
-          // to prevent showing the prompt again immediately
-          updateLastPromptDate(new Date().toISOString());
-        }}
-        onSubmit={handleSubmitGoal}
-        isLoading={isSettingGoal}
-        examples={GOAL_EXAMPLES}
-        timeframe={selectedTimeframe}
-        onTimeframeChange={setSelectedTimeframe}
-      />
-      
-      {/* Mood Selector Modal */}
-      <MoodSelector
-        visible={showMoodSelector}
-        onClose={() => setShowMoodSelector(false)}
-        onSelectMood={handleMoodSelected}
-      />
-      
-      {/* Workout Analysis Modal */}
-      <Modal
-        visible={showWorkoutAnalysis}
-        transparent
-        animationType="fade"
-        statusBarTranslucent
-      >
-        <Pressable 
-          style={styles.modalOverlay}
-          onPress={() => {
-            setShowWorkoutAnalysis(false);
-            Keyboard.dismiss();
-          }}
-        >
-          <Pressable 
-            style={[styles.analysisModal, { backgroundColor: colors.card }]} 
-            onPress={e => e.stopPropagation()}
-          >
-            <View style={styles.analysisModalHeader}>
-              <Text style={[styles.analysisModalTitle, { color: colors.text }]}>Workout Analysis</Text>
-              <TouchableOpacity 
-                onPress={() => setShowWorkoutAnalysis(false)}
-                style={[styles.closeButton, { backgroundColor: colors.background }]}
-              >
-                <X size={20} color={colors.text} />
-              </TouchableOpacity>
-            </View>
-            
-            {latestAnalysis ? (
-              <ScrollView style={styles.analysisModalContent}>
-                <View style={styles.analysisStats}>
-                  <View style={styles.analysisStat}>
-                    <Text style={[styles.analysisStatLabel, { color: colors.textSecondary }]}>AVG. DURATION</Text>
-                    <Text style={[styles.analysisStatValue, { color: colors.text }]}>
-                      {Math.floor(latestAnalysis.averageDuration)} min
-                    </Text>
-                  </View>
-                  
-                  <View style={styles.analysisStat}>
-                    <Text style={[styles.analysisStatLabel, { color: colors.textSecondary }]}>AVG. RATING</Text>
-                    <Text style={[styles.analysisStatValue, { color: colors.text }]}>
-                      {latestAnalysis.averageRating.toFixed(1)}/5
-                    </Text>
-                  </View>
-                </View>
-                
-                <View style={[styles.analysisSection, { borderBottomColor: colors.border }]}>
-                  <Text style={[styles.analysisSectionTitle, { color: colors.text }]}>Time Optimization</Text>
-                  {latestAnalysis.recommendations.timeOptimization.map((tip, index) => (
-                    <View key={`time-${index}`} style={styles.analysisTipItem}>
-                      <View style={[styles.analysisBullet, { backgroundColor: "rgba(74, 144, 226, 0.1)" }]}>
-                        <Text style={[styles.analysisBulletText, { color: colors.primary }]}>{index + 1}</Text>
-                      </View>
-                      <Text style={[styles.analysisTipText, { color: colors.text }]}>
-                        {tip}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-                
-                <View style={[styles.analysisSection, { borderBottomColor: colors.border }]}>
-                  <Text style={[styles.analysisSectionTitle, { color: colors.text }]}>Exercise Recommendations</Text>
-                  {latestAnalysis.recommendations.exerciseRecommendations.map((tip, index) => (
-                    <View key={`exercise-${index}`} style={styles.analysisTipItem}>
-                      <View style={[styles.analysisBullet, { backgroundColor: "rgba(74, 144, 226, 0.1)" }]}>
-                        <Text style={[styles.analysisBulletText, { color: colors.primary }]}>{index + 1}</Text>
-                      </View>
-                      <Text style={[styles.analysisTipText, { color: colors.text }]}>
-                        {tip}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-                
-                <View style={styles.analysisSection}>
-                  <Text style={[styles.analysisSectionTitle, { color: colors.text }]}>General Tips</Text>
-                  {latestAnalysis.recommendations.generalTips.map((tip, index) => (
-                    <View key={`general-${index}`} style={styles.analysisTipItem}>
-                      <View style={[styles.analysisBullet, { backgroundColor: "rgba(74, 144, 226, 0.1)" }]}>
-                        <Text style={[styles.analysisBulletText, { color: colors.primary }]}>{index + 1}</Text>
-                      </View>
-                      <Text style={[styles.analysisTipText, { color: colors.text }]}>
-                        {tip}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              </ScrollView>
-            ) : (
-              <View style={styles.noAnalysisContainer}>
-                <Text style={[styles.noAnalysisText, { color: colors.textSecondary }]}>
-                  Not enough workout data to generate an analysis. Complete more workouts to see insights.
-                </Text>
+            {recentWorkouts.length >= 3 && (
+              <View style={styles.analysisButtons}>
+                <Button
+                  title="Analyze My Workouts"
+                  onPress={handleAnalyzeWorkouts}
+                  variant="outline"
+                  icon={<Zap size={18} color={colors.primary} />}
+                  style={styles.analyzeButton}
+                />
+                <Button
+                  title="View Analytics"
+                  onPress={() => router.push('/workout-analytics')}
+                  variant="outline"
+                  icon={<BarChart3 size={18} color={colors.secondary} />}
+                  style={styles.analyticsButton}
+                />
               </View>
             )}
-            
-            <Button
-              title="Close"
-              onPress={() => setShowWorkoutAnalysis(false)}
-              style={styles.closeAnalysisButton}
-            />
-          </Pressable>
-        </Pressable>
-      </Modal>
-      
-      {/* Rest Day Activities Modal */}
-      <Modal
-        visible={showRestDayActivities}
-        transparent
-        animationType="fade"
-        statusBarTranslucent
-      >
-        <Pressable 
-          style={styles.modalOverlay}
-          onPress={() => {
-            setShowRestDayActivities(false);
-            Keyboard.dismiss();
+          </View>
+        )}
+        
+        {/* Goal Setting Modal */}
+        <GoalPrompt
+          visible={showGoalPrompt}
+          prompt={getPromptForTimeframe(selectedTimeframe)}
+          onClose={() => {
+            setShowGoalPrompt(false);
+            // Update the last prompt date even if the user cancels
+            // to prevent showing the prompt again immediately
+            updateLastPromptDate(new Date().toISOString());
           }}
+          onSubmit={handleSubmitGoal}
+          isLoading={isSettingGoal}
+          examples={GOAL_EXAMPLES}
+          timeframe={selectedTimeframe}
+          onTimeframeChange={setSelectedTimeframe}
+        />
+        
+        {/* Mood Selector Modal */}
+        <MoodSelector
+          visible={showMoodSelector}
+          onClose={() => setShowMoodSelector(false)}
+          onSelectMood={handleMoodSelected}
+        />
+        
+        {/* Workout Analysis Modal */}
+        <Modal
+          visible={showWorkoutAnalysis}
+          transparent
+          animationType="fade"
+          statusBarTranslucent
         >
           <Pressable 
-            style={[styles.restDayModal, { backgroundColor: colors.card }]} 
-            onPress={e => e.stopPropagation()}
+            style={styles.modalOverlay}
+            onPress={() => {
+              setShowWorkoutAnalysis(false);
+              Keyboard.dismiss();
+            }}
           >
-            <View style={styles.restDayModalHeader}>
-              <Text style={[styles.restDayModalTitle, { color: colors.text }]}>Rest Day Activities</Text>
-              <TouchableOpacity 
-                onPress={() => setShowRestDayActivities(false)}
-                style={[styles.closeButton, { backgroundColor: colors.background }]}
-              >
-                <X size={20} color={colors.text} />
-              </TouchableOpacity>
-            </View>
-            
-            <ScrollView style={styles.restDayModalContent}>
-              <Text style={[styles.restDayModalSubtitle, { color: colors.textSecondary }]}>
-                Rest days are essential for muscle recovery and preventing burnout. 
-                Here are some light activities you can do to stay active while giving your body time to recover:
-              </Text>
+            <Pressable 
+              style={[styles.analysisModal, { backgroundColor: colors.card }]} 
+              onPress={e => e.stopPropagation()}
+            >
+              <View style={styles.analysisModalHeader}>
+                <Text style={[styles.analysisModalTitle, { color: colors.text }]}>Workout Analysis</Text>
+                <TouchableOpacity 
+                  onPress={() => setShowWorkoutAnalysis(false)}
+                  style={[styles.closeButton, { backgroundColor: colors.background }]}
+                >
+                  <X size={20} color={colors.text} />
+                </TouchableOpacity>
+              </View>
               
-              {restDayActivities.map((activity, index) => (
-                <View key={index} style={styles.restDayActivityItem}>
-                  <View style={[styles.restDayActivityBullet, { backgroundColor: "rgba(74, 144, 226, 0.1)" }]}>
-                    <Text style={[styles.restDayActivityBulletText, { color: colors.primary }]}>{index + 1}</Text>
+              {latestAnalysis ? (
+                <ScrollView style={styles.analysisModalContent}>
+                  <View style={styles.analysisStats}>
+                    <View style={styles.analysisStat}>
+                      <Text style={[styles.analysisStatLabel, { color: colors.textSecondary }]}>AVG. DURATION</Text>
+                      <Text style={[styles.analysisStatValue, { color: colors.text }]}>
+                        {Math.floor(latestAnalysis.averageDuration)} min
+                      </Text>
+                    </View>
+                    
+                    <View style={styles.analysisStat}>
+                      <Text style={[styles.analysisStatLabel, { color: colors.textSecondary }]}>AVG. RATING</Text>
+                      <Text style={[styles.analysisStatValue, { color: colors.text }]}>
+                        {latestAnalysis.averageRating.toFixed(1)}/5
+                      </Text>
+                    </View>
                   </View>
-                  <Text style={[styles.restDayActivityText, { color: colors.text }]}>
-                    {activity}
+                  
+                  <View style={[styles.analysisSection, { borderBottomColor: colors.border }]}>
+                    <Text style={[styles.analysisSectionTitle, { color: colors.text }]}>Time Optimization</Text>
+                    {latestAnalysis.recommendations.timeOptimization.map((tip, index) => (
+                      <View key={`time-${index}`} style={styles.analysisTipItem}>
+                        <View style={[styles.analysisBullet, { backgroundColor: "rgba(74, 144, 226, 0.1)" }]}>
+                          <Text style={[styles.analysisBulletText, { color: colors.primary }]}>{index + 1}</Text>
+                        </View>
+                        <Text style={[styles.analysisTipText, { color: colors.text }]}>
+                          {tip}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                  
+                  <View style={[styles.analysisSection, { borderBottomColor: colors.border }]}>
+                    <Text style={[styles.analysisSectionTitle, { color: colors.text }]}>Exercise Recommendations</Text>
+                    {latestAnalysis.recommendations.exerciseRecommendations.map((tip, index) => (
+                      <View key={`exercise-${index}`} style={styles.analysisTipItem}>
+                        <View style={[styles.analysisBullet, { backgroundColor: "rgba(74, 144, 226, 0.1)" }]}>
+                          <Text style={[styles.analysisBulletText, { color: colors.primary }]}>{index + 1}</Text>
+                        </View>
+                        <Text style={[styles.analysisTipText, { color: colors.text }]}>
+                          {tip}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                  
+                  <View style={styles.analysisSection}>
+                    <Text style={[styles.analysisSectionTitle, { color: colors.text }]}>General Tips</Text>
+                    {latestAnalysis.recommendations.generalTips.map((tip, index) => (
+                      <View key={`general-${index}`} style={styles.analysisTipItem}>
+                        <View style={[styles.analysisBullet, { backgroundColor: "rgba(74, 144, 226, 0.1)" }]}>
+                          <Text style={[styles.analysisBulletText, { color: colors.primary }]}>{index + 1}</Text>
+                        </View>
+                        <Text style={[styles.analysisTipText, { color: colors.text }]}>
+                          {tip}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                </ScrollView>
+              ) : (
+                <View style={styles.noAnalysisContainer}>
+                  <Text style={[styles.noAnalysisText, { color: colors.textSecondary }]}>
+                    Not enough workout data to generate an analysis. Complete more workouts to see insights.
                   </Text>
                 </View>
-              ))}
+              )}
               
-              <View style={[styles.restDayTips, { backgroundColor: colors.background }]}>
-                <Text style={[styles.restDayTipsTitle, { color: colors.text }]}>Rest Day Tips:</Text>
-                <View style={styles.restDayTipItem}>
-                  <Text style={[styles.restDayTipText, { color: colors.text }]}>• Focus on hydration and nutrition</Text>
-                </View>
-                <View style={styles.restDayTipItem}>
-                  <Text style={[styles.restDayTipText, { color: colors.text }]}>• Get 7-9 hours of quality sleep</Text>
-                </View>
-                <View style={styles.restDayTipItem}>
-                  <Text style={[styles.restDayTipText, { color: colors.text }]}>• Use foam rollers or massage tools for recovery</Text>
-                </View>
-                <View style={styles.restDayTipItem}>
-                  <Text style={[styles.restDayTipText, { color: colors.text }]}>• Practice mindfulness or meditation</Text>
-                </View>
-              </View>
-            </ScrollView>
-            
-            <Button
-              title="Close"
-              onPress={() => setShowRestDayActivities(false)}
-              style={styles.closeRestDayButton}
-            />
+              <Button
+                title="Close"
+                onPress={() => setShowWorkoutAnalysis(false)}
+                style={styles.closeAnalysisButton}
+              />
+            </Pressable>
           </Pressable>
-        </Pressable>
-      </Modal>
-      
-      {/* Achievement Celebration Modal - Only show if gamification is enabled */}
-      {gamificationEnabled && celebrationAchievement && (
-        <AchievementModal
-          achievement={celebrationAchievement}
-          visible={showCelebration}
-          onClose={clearCelebration}
-        />
-      )}
-    </ScrollView>
+        </Modal>
+        
+        {/* Rest Day Activities Modal */}
+        <Modal
+          visible={showRestDayActivities}
+          transparent
+          animationType="fade"
+          statusBarTranslucent
+        >
+          <Pressable 
+            style={styles.modalOverlay}
+            onPress={() => {
+              setShowRestDayActivities(false);
+              Keyboard.dismiss();
+            }}
+          >
+            <Pressable 
+              style={[styles.restDayModal, { backgroundColor: colors.card }]} 
+              onPress={e => e.stopPropagation()}
+            >
+              <View style={styles.restDayModalHeader}>
+                <Text style={[styles.restDayModalTitle, { color: colors.text }]}>Rest Day Activities</Text>
+                <TouchableOpacity 
+                  onPress={() => setShowRestDayActivities(false)}
+                  style={[styles.closeButton, { backgroundColor: colors.background }]}
+                >
+                  <X size={20} color={colors.text} />
+                </TouchableOpacity>
+              </View>
+              
+              <ScrollView style={styles.restDayModalContent}>
+                <Text style={[styles.restDayModalSubtitle, { color: colors.textSecondary }]}>
+                  Rest days are essential for muscle recovery and preventing burnout. 
+                  Here are some light activities you can do to stay active while giving your body time to recover:
+                </Text>
+                
+                {restDayActivities.map((activity, index) => (
+                  <View key={index} style={styles.restDayActivityItem}>
+                    <View style={[styles.restDayActivityBullet, { backgroundColor: "rgba(74, 144, 226, 0.1)" }]}>
+                      <Text style={[styles.restDayActivityBulletText, { color: colors.primary }]}>{index + 1}</Text>
+                    </View>
+                    <Text style={[styles.restDayActivityText, { color: colors.text }]}>
+                      {activity}
+                    </Text>
+                  </View>
+                ))}
+                
+                <View style={[styles.restDayTips, { backgroundColor: colors.background }]}>
+                  <Text style={[styles.restDayTipsTitle, { color: colors.text }]}>Rest Day Tips:</Text>
+                  <View style={styles.restDayTipItem}>
+                    <Text style={[styles.restDayTipText, { color: colors.text }]}>• Focus on hydration and nutrition</Text>
+                  </View>
+                  <View style={styles.restDayTipItem}>
+                    <Text style={[styles.restDayTipText, { color: colors.text }]}>• Get 7-9 hours of quality sleep</Text>
+                  </View>
+                  <View style={styles.restDayTipItem}>
+                    <Text style={[styles.restDayTipText, { color: colors.text }]}>• Use foam rollers or massage tools for recovery</Text>
+                  </View>
+                  <View style={styles.restDayTipItem}>
+                    <Text style={[styles.restDayTipText, { color: colors.text }]}>• Practice mindfulness or meditation</Text>
+                  </View>
+                </View>
+              </ScrollView>
+              
+              <Button
+                title="Close"
+                onPress={() => setShowRestDayActivities(false)}
+                style={styles.closeRestDayButton}
+              />
+            </Pressable>
+          </Pressable>
+        </Modal>
+        
+        {/* Achievement Celebration Modal - Only show if gamification is enabled */}
+        {gamificationEnabled && celebrationAchievement && (
+          <AchievementModal
+            achievement={celebrationAchievement}
+            visible={showCelebration}
+            onClose={clearCelebration}
+          />
+        )}
+      </ScrollView>
+    </View>
   );
 }
 
@@ -2114,5 +2128,13 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  analysisButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+  },
+  analyticsButton: {
+    marginLeft: 8,
   },
 });
