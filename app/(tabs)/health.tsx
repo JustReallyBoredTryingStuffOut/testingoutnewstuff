@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform } from "react-native";
-import { useRouter } from "expo-router";
+import { useNavigation } from "@react-navigation/native";
 import { 
   Activity, 
   TrendingUp, 
@@ -15,7 +15,9 @@ import {
   RefreshCw,
   Zap,
   Bluetooth,
-  AlertTriangle
+  AlertTriangle,
+  Target,
+  BarChart3
 } from "lucide-react-native";
 import { useHealthStore } from "@/store/healthStore";
 import { useWorkoutStore } from "@/store/workoutStore";
@@ -23,8 +25,10 @@ import { usePhotoStore } from "@/store/photoStore";
 import { useTheme } from "@/context/ThemeContext";
 import StepCounter from "@/components/StepCounter";
 import WeightTracker from "@/components/WeightTracker";
+import WaterTracker from "@/components/WaterTracker";
 import ActivityMap from "@/components/ActivityMap";
 import Button from "@/components/Button";
+import HealthKitService from '../../src/services/HealthKitService';
 
 // Import CoreBluetooth with correct path
 import CoreBluetooth from "@/src/NativeModules/CoreBluetooth";
@@ -32,7 +36,7 @@ import CoreBluetooth from "@/src/NativeModules/CoreBluetooth";
 import HealthKit from "@/src/NativeModules/HealthKit";
 
 export default function HealthScreen() {
-  const router = useRouter();
+  const navigation = useNavigation();
   const { 
     workoutLogs 
   } = useWorkoutStore();
@@ -76,7 +80,7 @@ export default function HealthScreen() {
       // Set up Bluetooth state change listener
       const stateListener = CoreBluetooth.addListener(
         'bluetoothStateChanged',
-        (event) => {
+        (event: any) => {
           setBluetoothState(event.state);
         }
       );
@@ -148,7 +152,7 @@ export default function HealthScreen() {
         "You don't have any connected devices or Apple Health access. Would you like to connect a device or enable Apple Health?",
         [
           { text: "Cancel", style: "cancel" },
-          { text: "Connect Device", onPress: () => router.push("/health-devices") },
+          { text: "Connect Device", onPress: () => navigation.navigate("health-devices") },
           { 
             text: "Enable Apple Health", 
             onPress: async () => {
@@ -219,14 +223,14 @@ export default function HealthScreen() {
         }
         
         // Get workout data
-        const workoutsResult = await HealthKit.getWorkouts(
+        const workouts = await HealthKit.getWorkouts(
           sevenDaysAgo.toISOString(),
           new Date().toISOString()
         );
         
-        if (workoutsResult.success) {
+        if (workouts && workouts.length > 0) {
           // Log success
-          console.log(`Synced ${workoutsResult.workouts.length} workouts from Apple Health`);
+          console.log(`Synced ${workouts.length} workouts from Apple Health`);
         }
       }
       
@@ -253,8 +257,59 @@ export default function HealthScreen() {
     }
   };
   
+  // DEBUG: Manual HealthKit Authorization Test
+  const testHealthKitAuth = async () => {
+    try {
+      Alert.alert('DEBUG', 'Testing HealthKit authorization...');
+      
+      const HealthKit = require('@/src/NativeModules/HealthKit');
+      
+      // Check availability
+      const isAvailable = await HealthKit.isHealthDataAvailable();
+      Alert.alert('DEBUG', `HealthKit available: ${isAvailable}`);
+      
+      if (!isAvailable) {
+        Alert.alert('ERROR', 'HealthKit not available on this device');
+        return;
+      }
+      
+      // Request authorization
+      Alert.alert('DEBUG', 'Requesting authorization - watch for system popup!');
+      const authResult = await HealthKit.requestAuthorization([
+        'steps', 
+        'distance', 
+        'calories',
+        'activity'
+      ]);
+      
+      Alert.alert('RESULT', `Success: ${authResult.authorized}\n\nIf true, check Settings → Privacy & Security → Health → Data Access & Devices for FitJourneyTracker`);
+      
+    } catch (error: any) {
+      Alert.alert('ERROR', `Failed: ${error.message}`);
+    }
+  };
+
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.content}>
+      {/* DEBUG BUTTONS - TEMPORARY */}
+      <TouchableOpacity 
+        style={{ backgroundColor: '#FF6B6B', padding: 12, margin: 16, borderRadius: 8 }}
+        onPress={testHealthKitAuth}
+      >
+        <Text style={{ color: 'white', textAlign: 'center', fontWeight: 'bold' }}>
+          🧪 TEST HEALTHKIT AUTH
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity 
+        style={{ backgroundColor: '#4ECDC4', padding: 12, margin: 16, borderRadius: 8 }}
+        onPress={() => router.push("/health-test" as any)}
+      >
+        <Text style={{ color: 'white', textAlign: 'center', fontWeight: 'bold' }}>
+          🔬 DIRECT HEALTHKIT TEST
+        </Text>
+      </TouchableOpacity>
+
       <View style={styles.header}>
         <Text style={[styles.title, { color: colors.text }]}>Health Tracking</Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Monitor your fitness progress</Text>
@@ -317,7 +372,7 @@ export default function HealthScreen() {
       )}
       
       {/* Bluetooth Status Banner (iOS only) */}
-      {Platform.OS === 'ios' && bluetoothState !== "poweredOn" && (
+      {Platform.OS === 'ios' && bluetoothState !== "poweredOn" && bluetoothState !== "PoweredOn" && (
         <View style={[
           styles.bluetoothStatusBanner, 
           { backgroundColor: "rgba(255, 59, 48, 0.1)" }
@@ -344,7 +399,7 @@ export default function HealthScreen() {
         </View>
       )}
       
-      {Platform.OS === 'ios' && bluetoothState === "poweredOn" && permissionStatus !== "granted" && (
+      {Platform.OS === 'ios' && (bluetoothState === "poweredOn" || bluetoothState === "PoweredOn") && permissionStatus !== "granted" && (
         <View style={[
           styles.bluetoothStatusBanner, 
           { backgroundColor: "rgba(255, 59, 48, 0.1)" }
@@ -428,6 +483,8 @@ export default function HealthScreen() {
       <WeightTracker 
         onAddWeight={() => router.push("/weight-log")}
       />
+      
+      <WaterTracker />
       
       {isTrackingLocation && (
         <View style={styles.section}>
@@ -637,13 +694,31 @@ export default function HealthScreen() {
           onPress={() => router.push("/health-goals")}
         >
           <View style={styles.toolInfo}>
-            <View style={[styles.toolIcon, { backgroundColor: "rgba(255, 59, 48, 0.1)" }]}>
-              <Award size={24} color={colors.error} />
+            <View style={[styles.toolIcon, { backgroundColor: "rgba(255, 149, 0, 0.1)" }]}>
+              <Target size={24} color="#FF9500" />
             </View>
             <View>
               <Text style={[styles.toolTitle, { color: colors.text }]}>Health Goals</Text>
               <Text style={[styles.toolDescription, { color: colors.textSecondary }]}>
-                Set and track your fitness and health goals
+                Set and track your health objectives
+              </Text>
+            </View>
+          </View>
+          <ChevronRight size={20} color={colors.textLight} />
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[styles.toolCard, { backgroundColor: colors.card }]}
+          onPress={() => router.push("/workout-analytics")}
+        >
+          <View style={styles.toolInfo}>
+            <View style={[styles.toolIcon, { backgroundColor: "rgba(74, 144, 226, 0.1)" }]}>
+              <BarChart3 size={24} color={colors.primary} />
+            </View>
+            <View>
+              <Text style={[styles.toolTitle, { color: colors.text }]}>Workout Analytics</Text>
+              <Text style={[styles.toolDescription, { color: colors.textSecondary }]}>
+                View detailed charts and progress graphs
               </Text>
             </View>
           </View>
