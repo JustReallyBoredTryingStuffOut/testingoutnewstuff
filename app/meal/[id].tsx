@@ -1,241 +1,325 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from "react-native";
-import { useLocalSearchParams, useRouter, Stack } from "expo-router";
-import { Clock, Dumbbell, Award, Zap, Calendar, BarChart, ArrowLeft } from "lucide-react-native";
-import { useWorkoutStore } from "@/store/workoutStore";
-import { useAiStore } from "@/store/aiStore";
-import { useTheme } from "@/context/ThemeContext";
-import ExerciseCard from "@/components/ExerciseCard";
+import React from "react";
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  TouchableOpacity, 
+  Image,
+  TouchableWithoutFeedback,
+  Modal,
+  Pressable,
+  Alert
+} from "react-native";
+import { Stack, useRouter, useLocalSearchParams } from "expo-router";
+import { 
+  ArrowLeft, 
+  Clock, 
+  UtensilsCrossed, 
+  Share2, 
+  Check, 
+  Bookmark,
+  X
+} from "lucide-react-native";
+import { colors } from "@/constants/colors";
+import { mealRecommendations } from "@/mocks/meals";
+import { useMacroStore } from "@/store/macroStore";
 import Button from "@/components/Button";
+import { useState } from "react";
 
-export default function WorkoutDetailScreen() {
-  const { id } = useLocalSearchParams();
+export default function MealDetailScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
-  const { 
-    workouts, 
-    exercises,
-    startWorkout, 
-    workoutLogs,
-    getAverageWorkoutDuration,
-    getRecommendedWorkouts
-  } = useWorkoutStore();
-  const { analyzeWorkoutDurations } = useAiStore();
+  const { id } = useLocalSearchParams();
+  const { addMacroLog } = useMacroStore();
+  const [showShareModal, setShowShareModal] = useState(false);
   
-  const [showStats, setShowStats] = useState(false);
+  const meal = mealRecommendations.find(meal => meal.id === id);
   
-  const workout = workouts.find(w => w.id === id);
-  
-  if (!workout) {
+  if (!meal) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Text style={[styles.errorText, { color: colors.error }]}>Workout not found</Text>
-        <Button 
-          title="Back to Workouts" 
-          onPress={() => router.navigate("/(tabs)/workouts")}
-          style={{ marginTop: 16 }}
+      <View style={styles.container}>
+        <Stack.Screen 
+          options={{
+            title: "Meal Details",
+            headerLeft: () => (
+              <TouchableOpacity 
+                onPress={() => router.back()} 
+                style={styles.backButton}
+                accessibilityLabel="Go back"
+                accessibilityHint="Returns to the previous screen"
+              >
+                <ArrowLeft size={24} color={colors.text} />
+              </TouchableOpacity>
+            ),
+          }}
         />
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Meal not found</Text>
+          <TouchableOpacity 
+            style={styles.backToMealsButton}
+            onPress={() => router.push("/meal-recommendations")}
+          >
+            <Text style={styles.backToMealsText}>Back to Recommendations</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
   
-  // Get workout stats
-  const completedLogs = workoutLogs.filter(
-    log => log.workoutId === workout.id && log.completed
-  );
-  
-  const averageDuration = getAverageWorkoutDuration(workout.id);
-  const lastCompletedDate = completedLogs.length > 0 
-    ? new Date(completedLogs[completedLogs.length - 1].date).toLocaleDateString()
-    : "Never";
-  
-  const totalCompletions = completedLogs.length;
-  
-  // Check if this workout is recommended
-  const recommendedWorkouts = getRecommendedWorkouts();
-  const isRecommended = recommendedWorkouts.some(w => w.id === workout.id);
-  
-  const handleStartWorkout = () => {
-    startWorkout(workout.id);
-    router.push("/active-workout");
-  };
-  
-  const handleScheduleWorkout = () => {
-    // Pass the workout ID to the scheduling screen
-    router.push({
-      pathname: "/add-workout-schedule",
-      params: { workoutId: workout.id }
-    });
-  };
-  
-  const handleAnalyzeWorkouts = () => {
-    // Analyze workout logs for this specific workout
-    const relevantLogs = workoutLogs.filter(log => log.workoutId === workout.id);
-    
-    if (relevantLogs.length < 2) {
-      Alert.alert(
-        "Not Enough Data",
-        "Complete this workout at least twice to see analysis and recommendations."
-      );
-      return;
-    }
-    
-    analyzeWorkoutDurations(relevantLogs);
-    router.push("/goals"); // Navigate to goals page where analysis can be viewed
-  };
-
   const handleGoBack = () => {
-    router.navigate("/(tabs)/workouts");
+    router.back();
+  };
+  
+  const handleShare = () => {
+    // Open share modal
+    setShowShareModal(true);
+  };
+  
+  const handleLogMeal = () => {
+    // Add meal to macro logs
+    addMacroLog({
+      id: Date.now().toString(),
+      date: new Date().toISOString(),
+      calories: meal.calories,
+      protein: meal.protein,
+      carbs: meal.carbs,
+      fat: meal.fat,
+      notes: `Logged from recommendations: ${meal.name}`,
+    });
+    
+    // Show success message
+    Alert.alert(
+      "Success",
+      "Meal logged successfully",
+      [
+        {
+          text: "OK",
+          onPress: () => router.push("/(tabs)/nutrition")
+        }
+      ]
+    );
   };
   
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={styles.container}>
       <Stack.Screen 
         options={{
-          title: workout.name,
-          headerBackTitle: "Workouts",
+          title: "Meal Details",
           headerLeft: () => (
             <TouchableOpacity 
               onPress={handleGoBack} 
               style={styles.backButton}
-              accessibilityLabel="Go back to workouts"
-              accessibilityHint="Returns to the workouts list"
+              accessibilityLabel="Go back"
+              accessibilityHint="Returns to the previous screen"
             >
               <ArrowLeft size={24} color={colors.text} />
+            </TouchableOpacity>
+          ),
+          headerRight: () => (
+            <TouchableOpacity 
+              onPress={handleShare} 
+              style={styles.shareButton}
+              accessibilityLabel="Share meal"
+              accessibilityHint="Opens sharing options for this meal"
+            >
+              <Share2 size={24} color={colors.text} />
             </TouchableOpacity>
           ),
         }}
       />
       
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.header}>
-          {isRecommended && (
-            <View style={[styles.recommendedBanner, { backgroundColor: colors.primary }]}>
-              <Zap size={16} color="#FFFFFF" />
-              <Text style={styles.recommendedText}>Recommended for you</Text>
-            </View>
-          )}
+      <ScrollView style={styles.content}>
+        <Image 
+          source={{ uri: meal.imageUrl }} 
+          style={styles.mealImage} 
+          resizeMode="cover"
+        />
+        
+        <View style={styles.mealHeader}>
+          <Text style={styles.mealName}>{meal.name}</Text>
           
-          <Text style={[styles.title, { color: colors.text }]}>{workout.name}</Text>
-          
-          <View style={styles.stats}>
-            <View style={styles.stat}>
+          <View style={styles.mealMeta}>
+            <View style={styles.metaItem}>
               <Clock size={16} color={colors.textSecondary} />
-              <Text style={[styles.statText, { color: colors.textSecondary }]}>{workout.duration || 0} min</Text>
+              <Text style={styles.metaText}>
+                {meal.prepTime + meal.cookTime} min
+              </Text>
             </View>
             
-            <View style={styles.stat}>
-              <Dumbbell size={16} color={colors.textSecondary} />
-              <Text style={[styles.statText, { color: colors.textSecondary }]}>{workout.exercises?.length || 0} exercises</Text>
-            </View>
-            
-            <View style={styles.stat}>
-              <Award size={16} color={colors.textSecondary} />
-              <Text style={[styles.statText, { color: colors.textSecondary }]}>{workout.difficulty || 'Unknown'}</Text>
-            </View>
+            {meal.dietaryRestrictions.length > 0 && (
+              <View style={styles.dietaryTags}>
+                {meal.dietaryRestrictions.map((restriction: string) => (
+                  <View key={restriction} style={styles.dietaryTag}>
+                    <Text style={styles.dietaryTagText}>
+                      {restriction}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        </View>
+        
+        <View style={styles.macrosCard}>
+          <View style={styles.macroItem}>
+            <Text style={styles.macroValue}>{meal.calories}</Text>
+            <Text style={styles.macroLabel}>Calories</Text>
           </View>
           
-          <Text style={[styles.description, { color: colors.textSecondary }]}>{workout.description}</Text>
+          <View style={styles.macroItem}>
+            <Text style={styles.macroValue}>{meal.protein}g</Text>
+            <Text style={styles.macroLabel}>Protein</Text>
+          </View>
           
-          {totalCompletions > 0 && (
-            <TouchableOpacity 
-              style={[styles.statsCard, { backgroundColor: colors.card }]}
-              onPress={() => setShowStats(!showStats)}
-            >
-              <View style={styles.statsHeader}>
-                <View style={styles.statsHeaderLeft}>
-                  <BarChart size={16} color={colors.primary} />
-                  <Text style={[styles.statsTitle, { color: colors.text }]}>Your Stats</Text>
-                </View>
-                <Text style={[styles.statsToggle, { color: colors.primary }]}>
-                  {showStats ? "Hide" : "Show"}
-                </Text>
-              </View>
-              
-              {showStats && (
-                <View style={styles.statsContent}>
-                  <View style={[styles.statRow, { borderBottomColor: colors.border }]}>
-                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Average Duration</Text>
-                    <Text style={[styles.statValue, { color: colors.text }]}>{averageDuration} min</Text>
-                  </View>
-                  
-                  <View style={[styles.statRow, { borderBottomColor: colors.border }]}>
-                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Completed</Text>
-                    <Text style={[styles.statValue, { color: colors.text }]}>{totalCompletions} times</Text>
-                  </View>
-                  
-                  <View style={[styles.statRow, { borderBottomColor: colors.border }]}>
-                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Last Completed</Text>
-                    <Text style={[styles.statValue, { color: colors.text }]}>{lastCompletedDate}</Text>
-                  </View>
-                  
-                  {totalCompletions >= 2 && (
-                    <TouchableOpacity 
-                      style={styles.analyzeButton}
-                      onPress={handleAnalyzeWorkouts}
-                    >
-                      <Text style={[styles.analyzeButtonText, { color: colors.primary }]}>
-                        Analyze My Performance
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              )}
-            </TouchableOpacity>
-          )}
+          <View style={styles.macroItem}>
+            <Text style={styles.macroValue}>{meal.carbs}g</Text>
+            <Text style={styles.macroLabel}>Carbs</Text>
+          </View>
+          
+          <View style={styles.macroItem}>
+            <Text style={styles.macroValue}>{meal.fat}g</Text>
+            <Text style={styles.macroLabel}>Fat</Text>
+          </View>
         </View>
         
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Exercises</Text>
-          
-          {workout.exercises && workout.exercises.length > 0 ? (
-            workout.exercises
-              .filter(exerciseItem => exerciseItem && exerciseItem.id) // Filter out null/undefined exercises
-              .map((exerciseItem, index) => {
-              const exercise = exercises.find(e => e.id === exerciseItem.id);
-              if (!exercise) return null;
-              
-              return (
-                <View key={exercise.id} style={styles.exerciseContainer}>
-                  <View style={[styles.exerciseNumber, { backgroundColor: colors.primary }]}>
-                    <Text style={styles.exerciseNumberText}>{index + 1}</Text>
-                  </View>
-                  <ExerciseCard exercise={exercise} />
+          <Text style={styles.sectionTitle}>Ingredients</Text>
+          <View style={styles.ingredientsCard}>
+            {meal.ingredients.map((ingredient: string, index: number) => (
+              <View key={index} style={styles.ingredientItem}>
+                <View style={styles.bulletPoint} />
+                <Text style={styles.ingredientText}>{ingredient}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+        
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Instructions</Text>
+          <View style={styles.instructionsCard}>
+            {meal.instructions.map((instruction: string, index: number) => (
+              <View key={index} style={styles.instructionItem}>
+                <View style={styles.instructionNumber}>
+                  <Text style={styles.instructionNumberText}>{index + 1}</Text>
                 </View>
-              );
-            })
-          ) : (
-            <Text style={[styles.noExercisesText, { color: colors.textSecondary }]}>
-              No exercises found for this workout.
-            </Text>
-          )}
+                <Text style={styles.instructionText}>{instruction}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+        
+        <View style={styles.actionsContainer}>
+          <Button
+            title="Log This Meal"
+            onPress={handleLogMeal}
+            icon={<Check size={18} color="#FFFFFF" />}
+            style={styles.logButton}
+          />
+          
+          <Button
+            title="Save Recipe"
+            onPress={() => {
+              Alert.alert("Recipe Saved", "This recipe has been saved to your favorites");
+            }}
+            icon={<Bookmark size={18} color={colors.primary} />}
+            variant="outline"
+            style={styles.saveButton}
+          />
         </View>
       </ScrollView>
-      
-      <View style={[styles.footer, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
-        <Button
-          title="Start Workout"
-          onPress={handleStartWorkout}
-          size="large"
-          style={styles.startButton}
-        />
-        <Button
-          title="Add to Schedule"
-          onPress={handleScheduleWorkout}
-          variant="outline"
-          style={styles.scheduleButton}
-        />
-        <TouchableOpacity 
-          style={styles.backToWorkoutsButton}
-          onPress={handleGoBack}
-          accessibilityLabel="Back to workouts"
-          accessibilityHint="Returns to the workouts list"
-        >
-          <Text style={[styles.backToWorkoutsText, { color: colors.textSecondary }]}>
-            Back to Workouts
-          </Text>
-        </TouchableOpacity>
-      </View>
+
+      {/* Share Modal */}
+      <Modal
+        visible={showShareModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowShareModal(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setShowShareModal(false)}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.modalContent}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Share Recipe</Text>
+                  <TouchableOpacity 
+                    onPress={() => setShowShareModal(false)}
+                    style={styles.modalCloseButton}
+                  >
+                    <X size={20} color={colors.text} />
+                  </TouchableOpacity>
+                </View>
+                
+                <Text style={styles.modalText}>
+                  Share this {meal.name} recipe with friends and family
+                </Text>
+                
+                <View style={styles.shareOptions}>
+                  <TouchableOpacity 
+                    style={styles.shareOption}
+                    onPress={() => {
+                      setShowShareModal(false);
+                      Alert.alert("Shared", "Recipe shared via WhatsApp");
+                    }}
+                  >
+                    <View style={[styles.shareIconContainer, { backgroundColor: "#25D366" }]}>
+                      <Text style={styles.shareIconText}>W</Text>
+                    </View>
+                    <Text style={styles.shareOptionText}>WhatsApp</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={styles.shareOption}
+                    onPress={() => {
+                      setShowShareModal(false);
+                      Alert.alert("Shared", "Recipe shared via Facebook");
+                    }}
+                  >
+                    <View style={[styles.shareIconContainer, { backgroundColor: "#3b5998" }]}>
+                      <Text style={styles.shareIconText}>f</Text>
+                    </View>
+                    <Text style={styles.shareOptionText}>Facebook</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={styles.shareOption}
+                    onPress={() => {
+                      setShowShareModal(false);
+                      Alert.alert("Shared", "Recipe shared via Twitter");
+                    }}
+                  >
+                    <View style={[styles.shareIconContainer, { backgroundColor: "#1DA1F2" }]}>
+                      <Text style={styles.shareIconText}>X</Text>
+                    </View>
+                    <Text style={styles.shareOptionText}>Twitter</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={styles.shareOption}
+                    onPress={() => {
+                      setShowShareModal(false);
+                      Alert.alert("Shared", "Recipe shared via Telegram");
+                    }}
+                  >
+                    <View style={[styles.shareIconContainer, { backgroundColor: "#0088cc" }]}>
+                      <Text style={styles.shareIconText}>T</Text>
+                    </View>
+                    <Text style={styles.shareOptionText}>Telegram</Text>
+                  </TouchableOpacity>
+                </View>
+                
+                <Button
+                  title="Copy Link"
+                  onPress={() => {
+                    setShowShareModal(false);
+                    Alert.alert("Link Copied", "Recipe link copied to clipboard");
+                  }}
+                  style={styles.copyLinkButton}
+                />
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </View>
   );
 }
@@ -243,159 +327,258 @@ export default function WorkoutDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  content: {
-    padding: 16,
-    paddingBottom: 100, // Increased to accommodate the back button
-  },
-  header: {
-    marginBottom: 24,
-  },
-  recommendedBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    alignSelf: "flex-start",
-    marginBottom: 12,
-  },
-  recommendedText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#FFFFFF",
-    marginLeft: 6,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "700",
-    marginBottom: 12,
-  },
-  stats: {
-    flexDirection: "row",
-    marginBottom: 16,
-  },
-  stat: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginRight: 16,
-  },
-  statText: {
-    fontSize: 14,
-    marginLeft: 4,
-  },
-  description: {
-    fontSize: 16,
-    lineHeight: 22,
-  },
-  statsCard: {
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 16,
-  },
-  statsHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  statsHeaderLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  statsTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginLeft: 8,
-  },
-  statsToggle: {
-    fontSize: 14,
-  },
-  statsContent: {
-    marginTop: 16,
-  },
-  statRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-  },
-  statLabel: {
-    fontSize: 14,
-  },
-  statValue: {
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  analyzeButton: {
-    marginTop: 16,
-    alignItems: "center",
-  },
-  analyzeButtonText: {
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    marginBottom: 12,
-  },
-  exerciseContainer: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: 12,
-  },
-  exerciseNumber: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-    marginTop: 16,
-  },
-  exerciseNumberText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
-  footer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    borderTopWidth: 1,
-    padding: 16,
-  },
-  startButton: {
-    width: "100%",
-    marginBottom: 8,
-  },
-  scheduleButton: {
-    width: "100%",
-    marginBottom: 8,
-  },
-  backToWorkoutsButton: {
-    alignItems: "center",
-    paddingVertical: 8,
-  },
-  backToWorkoutsText: {
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  errorText: {
-    fontSize: 16,
-    textAlign: "center",
-    marginTop: 24,
+    backgroundColor: colors.background,
   },
   backButton: {
     padding: 8,
   },
-  noExercisesText: {
+  shareButton: {
+    padding: 8,
+  },
+  content: {
+    flex: 1,
+  },
+  mealImage: {
+    width: "100%",
+    height: 250,
+  },
+  mealHeader: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  mealName: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: colors.text,
+    marginBottom: 8,
+  },
+  mealMeta: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+  },
+  metaItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 16,
+    marginBottom: 8,
+  },
+  metaText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginLeft: 4,
+  },
+  dietaryTags: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+  },
+  dietaryTag: {
+    backgroundColor: "rgba(74, 144, 226, 0.1)",
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginRight: 4,
+    marginBottom: 4,
+  },
+  dietaryTagText: {
+    fontSize: 12,
+    color: colors.primary,
+  },
+  macrosCard: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    backgroundColor: colors.card,
+    padding: 16,
+    margin: 16,
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  macroItem: {
+    alignItems: "center",
+  },
+  macroValue: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: colors.text,
+    marginBottom: 4,
+  },
+  macroLabel: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  section: {
+    padding: 16,
+    paddingTop: 0,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: colors.text,
+    marginBottom: 12,
+  },
+  ingredientsCard: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  ingredientItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  bulletPoint: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.primary,
+    marginRight: 12,
+  },
+  ingredientText: {
     fontSize: 16,
-    textAlign: "center",
-    marginTop: 24,
+    color: colors.text,
+    flex: 1,
+  },
+  instructionsCard: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  instructionItem: {
+    flexDirection: "row",
+    marginBottom: 16,
+  },
+  instructionNumber: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colors.primary,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  instructionNumberText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+  instructionText: {
+    fontSize: 16,
+    color: colors.text,
+    flex: 1,
+    lineHeight: 24,
+  },
+  actionsContainer: {
+    padding: 16,
+    flexDirection: "row",
+    marginBottom: 24,
+  },
+  logButton: {
+    flex: 1,
+    marginRight: 8,
+  },
+  saveButton: {
+    flex: 1,
+    marginLeft: 8,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+  errorText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: colors.text,
+    marginBottom: 16,
+  },
+  backToMealsButton: {
+    backgroundColor: colors.primary,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  backToMealsText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 20,
+    width: "85%",
+    maxWidth: 400,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: colors.text,
+  },
+  modalCloseButton: {
+    padding: 4,
+  },
+  modalText: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    marginBottom: 20,
+  },
+  shareOptions: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    marginBottom: 20,
+  },
+  shareOption: {
+    width: "48%",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  shareIconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  shareIconText: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+  },
+  shareOptionText: {
+    fontSize: 14,
+    color: colors.text,
+  },
+  copyLinkButton: {
+    width: "100%",
   },
 });

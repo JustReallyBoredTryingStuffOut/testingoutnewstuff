@@ -51,7 +51,7 @@ export default function DraggableExerciseCard({
   onMarkCompleted,
   onStartRest,
   totalExercises,
-  children,
+  children
 }: DraggableExerciseCardProps) {
   const { colors } = useTheme();
   const [isDragging, setIsDragging] = useState(false);
@@ -101,11 +101,11 @@ export default function DraggableExerciseCard({
     PanResponder.create({
       onStartShouldSetPanResponder: (_, gestureState) => {
         // Only respond to vertical movements that are significant
-        return Math.abs(gestureState.dy) > 10;
+        return Math.abs(gestureState.dy) > 5;
       },
       onMoveShouldSetPanResponder: (_, gestureState) => {
         // Only respond to vertical movements that are significant
-        return Math.abs(gestureState.dy) > 10 && Math.abs(gestureState.dx) < Math.abs(gestureState.dy);
+        return Math.abs(gestureState.dy) > 5 && Math.abs(gestureState.dx) < Math.abs(gestureState.dy);
       },
       onPanResponderGrant: (_, gestureState) => {
         // Store the initial touch position
@@ -140,25 +140,29 @@ export default function DraggableExerciseCard({
           { useNativeDriver: false }
         )(_, gestureState);
         
-        // Calculate potential drop index based on movement
-        const movementY = gestureState.dy;
-        const cardsMoved = Math.round(movementY / CARD_HEIGHT);
-        const potentialDropIndex = Math.max(0, Math.min(totalExercises - 1, index + cardsMoved));
+        // Calculate potential drop index
+        const potentialDropIndex = getDropIndex(gestureState.moveY);
         
         // Only update and provide feedback if the drop zone has changed
-        if (potentialDropIndex !== lastReportedDropZone.current && potentialDropIndex !== index) {
+        if (potentialDropIndex !== lastReportedDropZone.current) {
           setDropZoneIndex(potentialDropIndex);
           lastReportedDropZone.current = potentialDropIndex;
+          
+          // Provide light haptic feedback when crossing threshold to a new position
+          // But limit the frequency of vibrations to prevent excessive feedback
+          const now = Date.now();
+          if (potentialDropIndex !== null && Platform.OS !== 'web' && now - lastVibrationTime.current > VIBRATION_COOLDOWN) {
+            Vibration.vibrate(20);
+            lastVibrationTime.current = now;
+          }
         }
       },
       onPanResponderRelease: (_, gestureState) => {
         // Reset the pan offset
         pan.flattenOffset();
         
-        // Calculate the final drop index based on movement
-        const movementY = gestureState.dy;
-        const cardsMoved = Math.round(movementY / CARD_HEIGHT);
-        const finalDropIndex = Math.max(0, Math.min(totalExercises - 1, index + cardsMoved));
+        // Calculate the final drop index
+        const finalDropIndex = getDropIndex(gestureState.moveY);
         
         // Reset the position with animation
         Animated.spring(pan, {
@@ -169,9 +173,18 @@ export default function DraggableExerciseCard({
           setIsDragging(false);
           setDropZoneIndex(null);
           
-          // Only call onDragEnd if we have a valid drop index and it's different from current
-          if (finalDropIndex !== index && finalDropIndex >= 0 && finalDropIndex < totalExercises) {
+          // Only call onDragEnd if we have a valid drop index
+          if (finalDropIndex !== null && finalDropIndex !== index) {
             onDragEnd(finalDropIndex);
+            
+            // Provide haptic feedback when drop completes
+            if (Platform.OS !== 'web') {
+              const now = Date.now();
+              if (now - lastVibrationTime.current > VIBRATION_COOLDOWN) {
+                Vibration.vibrate(100);
+                lastVibrationTime.current = now;
+              }
+            }
           }
         });
       }
@@ -256,7 +269,7 @@ export default function DraggableExerciseCard({
               isCompleted && styles.completedText
             ]}
           >
-            {exerciseLog.sets.length} sets • {Array.isArray(exercise.muscleGroups) ? exercise.muscleGroups.join(', ') : exercise.muscleGroups}
+            {exerciseLog.sets.length} sets • {exercise.muscleGroups.join(', ')}
           </Text>
         </View>
         
@@ -538,10 +551,10 @@ export default function DraggableExerciseCard({
                         Muscle Groups
                       </Text>
                       <View style={styles.aboutDetailTags}>
-                        {(Array.isArray(exercise.muscleGroups) ? exercise.muscleGroups : [exercise.muscleGroups]).map((group, idx) => (
+                        {exercise.muscleGroups.map((group, idx) => (
                           <View key={idx} style={[styles.aboutDetailTag, { backgroundColor: "rgba(52, 152, 219, 0.1)" }]}>
                             <Text style={[styles.aboutDetailTagText, { color: "#3498db" }]}>
-                              {typeof group === 'string' ? group : group.name || group}
+                              {group}
                             </Text>
                           </View>
                         ))}
@@ -553,10 +566,10 @@ export default function DraggableExerciseCard({
                         Equipment
                       </Text>
                       <View style={styles.aboutDetailTags}>
-                        {(Array.isArray(exercise.equipment) ? exercise.equipment : [exercise.equipment]).map((item, idx) => (
+                        {exercise.equipment.map((item, idx) => (
                           <View key={idx} style={[styles.aboutDetailTag, { backgroundColor: "rgba(0, 0, 0, 0.05)" }]}>
                             <Text style={[styles.aboutDetailTagText, { color: colors.textSecondary }]}>
-                              {typeof item === 'string' ? item : item.name || item}
+                              {item}
                             </Text>
                           </View>
                         ))}
