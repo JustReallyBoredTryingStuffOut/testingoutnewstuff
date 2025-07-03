@@ -51,7 +51,7 @@ export default function DraggableExerciseCard({
   onMarkCompleted,
   onStartRest,
   totalExercises,
-  children
+  children,
 }: DraggableExerciseCardProps) {
   const { colors } = useTheme();
   const [isDragging, setIsDragging] = useState(false);
