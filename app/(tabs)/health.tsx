@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { router } from "expo-router";
+import { router } from "expo-router";
 import { 
   Activity, 
   TrendingUp, 
@@ -28,7 +30,7 @@ import WeightTracker from "@/components/WeightTracker";
 import WaterTracker from "@/components/WaterTracker";
 import ActivityMap from "@/components/ActivityMap";
 import Button from "@/components/Button";
-import HealthKitService from '../../src/services/HealthKitService';
+
 
 // Import CoreBluetooth with correct path
 import CoreBluetooth from "@/src/NativeModules/CoreBluetooth";
@@ -481,7 +483,7 @@ export default function HealthScreen() {
       <StepCounter />
       
       <WeightTracker 
-        onAddWeight={() => router.push("/weight-log")}
+        onAddWeight={() => router.push("/weight-log" as any)}
       />
       
       <WaterTracker />
@@ -490,7 +492,7 @@ export default function HealthScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Activity Map</Text>
-            <TouchableOpacity onPress={() => router.push("/activity-map")}>
+            <TouchableOpacity onPress={() => router.push("/activity-map" as any)}>
               <Text style={[styles.seeAll, { color: colors.primary }]}>Full Map</Text>
             </TouchableOpacity>
           </View>
@@ -499,7 +501,7 @@ export default function HealthScreen() {
           
           <TouchableOpacity 
             style={[styles.activityButton, { backgroundColor: colors.primary }]}
-            onPress={() => router.push("/activity-log")}
+            onPress={() => router.push("/activity-log" as any)}
           >
             <MapPin size={18} color="#FFFFFF" />
             <Text style={styles.activityButtonText}>Log Activity</Text>
@@ -536,7 +538,7 @@ export default function HealthScreen() {
       {!hasConnectedDevices && !(Platform.OS === 'ios' && healthKitAuthorized) && (
         <TouchableOpacity 
           style={[styles.connectDeviceCard, { backgroundColor: colors.card }]}
-          onPress={() => router.push("/health-devices")}
+          onPress={() => router.push("/health-devices" as any)}
         >
           <View style={styles.connectDeviceContent}>
             <View style={[styles.connectDeviceIcon, { backgroundColor: "rgba(74, 144, 226, 0.1)" }]}>
@@ -559,7 +561,7 @@ export default function HealthScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent Activities</Text>
-            <TouchableOpacity onPress={() => router.push("/activity-history")}>
+            <TouchableOpacity onPress={() => router.push("/activity-history" as any)}>
               <Text style={[styles.seeAll, { color: colors.primary }]}>See All</Text>
             </TouchableOpacity>
           </View>
@@ -568,7 +570,7 @@ export default function HealthScreen() {
             <TouchableOpacity 
               key={activity.id}
               style={[styles.activityCard, { backgroundColor: colors.card }]}
-              onPress={() => router.push(`/activity/${activity.id}`)}
+              onPress={() => router.push(`/activity/${activity.id}` as any)}
             >
               <View style={styles.activityInfo}>
                 <View style={[styles.activityIcon, { backgroundColor: "rgba(74, 144, 226, 0.1)" }]}>
@@ -616,7 +618,7 @@ export default function HealthScreen() {
           
           <TouchableOpacity 
             style={[styles.addActivityButton, { backgroundColor: colors.highlight }]}
-            onPress={() => router.push("/activity-log")}
+            onPress={() => router.push("/activity-log" as any)}
           >
             <Text style={[styles.addActivityText, { color: colors.primary }]}>Log New Activity</Text>
           </TouchableOpacity>
@@ -628,7 +630,7 @@ export default function HealthScreen() {
         
         <TouchableOpacity 
           style={[styles.toolCard, { backgroundColor: colors.card }]}
-          onPress={() => router.push("/progress-photos")}
+          onPress={() => router.push("/progress-photos" as any)}
         >
           <View style={styles.toolInfo}>
             <View style={[styles.toolIcon, { backgroundColor: "rgba(74, 144, 226, 0.1)" }]}>
@@ -649,7 +651,7 @@ export default function HealthScreen() {
         
         <TouchableOpacity 
           style={[styles.toolCard, { backgroundColor: colors.card }]}
-          onPress={() => router.push("/health-devices")}
+          onPress={() => router.push("/health-devices" as any)}
         >
           <View style={styles.toolInfo}>
             <View style={[styles.toolIcon, { backgroundColor: "rgba(80, 200, 120, 0.1)" }]}>
@@ -670,7 +672,7 @@ export default function HealthScreen() {
         
         <TouchableOpacity 
           style={[styles.toolCard, { backgroundColor: colors.card }]}
-          onPress={() => router.push("/weight-log")}
+          onPress={() => router.push("/weight-log" as any)}
         >
           <View style={styles.toolInfo}>
             <View style={[styles.toolIcon, { backgroundColor: "rgba(255, 149, 0, 0.1)" }]}>
@@ -691,7 +693,7 @@ export default function HealthScreen() {
         
         <TouchableOpacity 
           style={[styles.toolCard, { backgroundColor: colors.card }]}
-          onPress={() => router.push("/health-goals")}
+          onPress={() => router.push("/health-goals" as any)}
         >
           <View style={styles.toolInfo}>
             <View style={[styles.toolIcon, { backgroundColor: "rgba(255, 149, 0, 0.1)" }]}>
@@ -709,7 +711,7 @@ export default function HealthScreen() {
         
         <TouchableOpacity 
           style={[styles.toolCard, { backgroundColor: colors.card }]}
-          onPress={() => router.push("/workout-analytics")}
+          onPress={() => router.push("/workout-analytics" as any)}
         >
           <View style={styles.toolInfo}>
             <View style={[styles.toolIcon, { backgroundColor: "rgba(74, 144, 226, 0.1)" }]}>
@@ -732,7 +734,7 @@ export default function HealthScreen() {
         <View style={styles.cardioButtonsContainer}>
           <TouchableOpacity 
             style={[styles.cardioButton, { backgroundColor: colors.card }]}
-            onPress={() => router.push("/log-cardio")}
+            onPress={() => router.push("/log-cardio" as any)}
           >
             <View style={[styles.cardioButtonIcon, { backgroundColor: "rgba(74, 144, 226, 0.1)" }]}>
               <Footprints size={24} color={colors.primary} />
@@ -742,7 +744,7 @@ export default function HealthScreen() {
           
           <TouchableOpacity 
             style={[styles.cardioButton, { backgroundColor: colors.card }]}
-            onPress={() => router.push("/activity-log")}
+            onPress={() => router.push("/activity-log" as any)}
           >
             <View style={[styles.cardioButtonIcon, { backgroundColor: "rgba(80, 200, 120, 0.1)" }]}>
               <Activity size={24} color={colors.secondary} />
