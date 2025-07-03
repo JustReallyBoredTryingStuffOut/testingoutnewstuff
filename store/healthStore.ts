@@ -4,6 +4,14 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { WeightLog, StepLog, HealthGoals, HealthDevice, ActivityLog, WaterIntake, DeviceSync, DeviceData } from "@/types";
 import { Platform } from "react-native";
 
+export interface HealthData {
+  date: string;
+  steps: number;
+  caloriesBurned: number;
+  distance: number;
+  activeMinutes: number;
+}
+
 interface HealthState {
   weightLogs: WeightLog[];
   stepLogs: StepLog[];
@@ -16,6 +24,7 @@ interface HealthState {
   stepCount: number;
   deviceSyncHistory: DeviceSync[];
   lastDeviceSync: string | null;
+  healthData: HealthData[];
   
   // Actions
   addWeightLog: (log: WeightLog) => void;
@@ -92,6 +101,10 @@ interface HealthState {
   getConnectedDeviceByType: (type: string) => HealthDevice | undefined;
   getDevicesByType: (type: string) => HealthDevice[];
   importDataFromDevice: (deviceId: string, dataType: string, startDate: string, endDate: string) => Promise<boolean>;
+  
+  // Health data actions
+  addHealthData: (data: HealthData) => void;
+  clearHealthData: () => void;
 }
 
 const defaultHealthGoals: HealthGoals = {
@@ -115,6 +128,7 @@ export const useHealthStore = create<HealthState>()(
       stepCount: 0, // Initialize with 0
       deviceSyncHistory: [], // Track device sync history
       lastDeviceSync: null, // Last device sync timestamp
+      healthData: [],
       
       addWeightLog: (log) => set((state) => ({
         weightLogs: [...state.weightLogs, log]
@@ -685,7 +699,11 @@ export const useHealthStore = create<HealthState>()(
           console.error("Error importing data from device:", error);
           return false;
         }
-      }
+      },
+      
+      // Health data actions
+      addHealthData: (data) => set((state) => ({ healthData: [...state.healthData, data] })),
+      clearHealthData: () => set({ healthData: [] }),
     }),
     {
       name: "health-storage",

@@ -147,13 +147,6 @@ const identifyMacroPatterns = (averageMacros: { calories: number, protein: numbe
     patterns.push("Your fat intake is higher than typical recommendations. Focus on sources of healthy unsaturated fats.");
   }
   
-  // Check calorie balance
-  if (averageMacros.calories < goals.calories * 0.8) {
-    patterns.push("Your average calorie intake is significantly below your goal. This may impact energy levels and recovery if sustained.");
-  } else if (averageMacros.calories > goals.calories * 1.2) {
-    patterns.push("Your average calorie intake is significantly above your goal. If weight management is a concern, consider adjusting portion sizes.");
-  }
-  
   return patterns;
 };
 
@@ -761,8 +754,6 @@ const styles = StyleSheet.create({
     padding: 2,
   },
   macroCard: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     backgroundColor: colors.card,
     borderRadius: 12,
     padding: 16,
@@ -773,8 +764,6 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   macroItem: {
-    width: '50%',
-    paddingHorizontal: 8,
     marginBottom: 16,
   },
   macroLabel: {
@@ -805,18 +794,19 @@ const styles = StyleSheet.create({
   foodItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
   foodName: {
-    fontSize: 16,
+    fontSize: 14,
     color: colors.text,
+    fontWeight: '500',
   },
   foodCount: {
     fontSize: 14,
-    color: colors.primary,
-    fontWeight: '500',
+    color: colors.textSecondary,
   },
   mealCard: {
     backgroundColor: colors.card,
@@ -836,15 +826,15 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   mealName: {
-    flex: 1,
-    fontSize: 16,
+    fontSize: 14,
     color: colors.text,
-    marginLeft: 12,
+    fontWeight: '500',
+    marginLeft: 8,
+    flex: 1,
   },
   mealCount: {
     fontSize: 14,
-    color: colors.primary,
-    fontWeight: '500',
+    color: colors.textSecondary,
   },
   patternsCard: {
     backgroundColor: colors.card,

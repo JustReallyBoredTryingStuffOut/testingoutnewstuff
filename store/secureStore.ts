@@ -356,3 +356,15 @@ export const useSecureStore = create<SecureStoreState>()(
     }
   )
 );
+
+export const saveToSecureStore = async (key: string, value: string) => {
+  await SecureStore.setItemAsync(key, value);
+};
+
+export const getFromSecureStore = async (key: string) => {
+  return await SecureStore.getItemAsync(key);
+};
+
+export const deleteFromSecureStore = async (key: string) => {
+  await SecureStore.deleteItemAsync(key);
+};

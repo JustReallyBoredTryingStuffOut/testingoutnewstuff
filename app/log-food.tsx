@@ -459,92 +459,90 @@ export default function LogFoodScreen() {
           </View>
         </View>
         
-        <View style={styles.macroContainer}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Protein (g)</Text>
-            <View style={styles.numberInput}>
-              <TouchableOpacity 
-                style={[styles.button, !areManualInputsEnabled && styles.buttonDisabled]}
-                onPress={() => adjustValue(setProtein, protein, -1)}
-                disabled={!areManualInputsEnabled}
-              >
-                <Minus size={20} color={!areManualInputsEnabled ? colors.textLight : colors.text} />
-              </TouchableOpacity>
-              
-              <TextInput
-                style={[styles.input, !areManualInputsEnabled && styles.inputDisabled]}
-                value={protein}
-                onChangeText={setProtein}
-                keyboardType="numeric"
-                editable={areManualInputsEnabled}
-              />
-              
-              <TouchableOpacity 
-                style={[styles.button, !areManualInputsEnabled && styles.buttonDisabled]}
-                onPress={() => adjustValue(setProtein, protein, 1)}
-                disabled={!areManualInputsEnabled}
-              >
-                <Plus size={20} color={!areManualInputsEnabled ? colors.textLight : colors.text} />
-              </TouchableOpacity>
-            </View>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Protein (g)</Text>
+          <View style={styles.numberInput}>
+            <TouchableOpacity 
+              style={[styles.button, !areManualInputsEnabled && styles.buttonDisabled]}
+              onPress={() => adjustValue(setProtein, protein, -1)}
+              disabled={!areManualInputsEnabled}
+            >
+              <Minus size={20} color={!areManualInputsEnabled ? colors.textLight : colors.text} />
+            </TouchableOpacity>
+            
+            <TextInput
+              style={[styles.input, !areManualInputsEnabled && styles.inputDisabled]}
+              value={protein}
+              onChangeText={setProtein}
+              keyboardType="numeric"
+              editable={areManualInputsEnabled}
+            />
+            
+            <TouchableOpacity 
+              style={[styles.button, !areManualInputsEnabled && styles.buttonDisabled]}
+              onPress={() => adjustValue(setProtein, protein, 1)}
+              disabled={!areManualInputsEnabled}
+            >
+              <Plus size={20} color={!areManualInputsEnabled ? colors.textLight : colors.text} />
+            </TouchableOpacity>
           </View>
-          
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Carbs (g)</Text>
-            <View style={styles.numberInput}>
-              <TouchableOpacity 
-                style={[styles.button, !areManualInputsEnabled && styles.buttonDisabled]}
-                onPress={() => adjustValue(setCarbs, carbs, -1)}
-                disabled={!areManualInputsEnabled}
-              >
-                <Minus size={20} color={!areManualInputsEnabled ? colors.textLight : colors.text} />
-              </TouchableOpacity>
-              
-              <TextInput
-                style={[styles.input, !areManualInputsEnabled && styles.inputDisabled]}
-                value={carbs}
-                onChangeText={setCarbs}
-                keyboardType="numeric"
-                editable={areManualInputsEnabled}
-              />
-              
-              <TouchableOpacity 
-                style={[styles.button, !areManualInputsEnabled && styles.buttonDisabled]}
-                onPress={() => adjustValue(setCarbs, carbs, 1)}
-                disabled={!areManualInputsEnabled}
-              >
-                <Plus size={20} color={!areManualInputsEnabled ? colors.textLight : colors.text} />
-              </TouchableOpacity>
-            </View>
+        </View>
+        
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Carbs (g)</Text>
+          <View style={styles.numberInput}>
+            <TouchableOpacity 
+              style={[styles.button, !areManualInputsEnabled && styles.buttonDisabled]}
+              onPress={() => adjustValue(setCarbs, carbs, -1)}
+              disabled={!areManualInputsEnabled}
+            >
+              <Minus size={20} color={!areManualInputsEnabled ? colors.textLight : colors.text} />
+            </TouchableOpacity>
+            
+            <TextInput
+              style={[styles.input, !areManualInputsEnabled && styles.inputDisabled]}
+              value={carbs}
+              onChangeText={setCarbs}
+              keyboardType="numeric"
+              editable={areManualInputsEnabled}
+            />
+            
+            <TouchableOpacity 
+              style={[styles.button, !areManualInputsEnabled && styles.buttonDisabled]}
+              onPress={() => adjustValue(setCarbs, carbs, 1)}
+              disabled={!areManualInputsEnabled}
+            >
+              <Plus size={20} color={!areManualInputsEnabled ? colors.textLight : colors.text} />
+            </TouchableOpacity>
           </View>
-          
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Fat (g)</Text>
-            <View style={styles.numberInput}>
-              <TouchableOpacity 
-                style={[styles.button, !areManualInputsEnabled && styles.buttonDisabled]}
-                onPress={() => adjustValue(setFat, fat, -1)}
-                disabled={!areManualInputsEnabled}
-              >
-                <Minus size={20} color={!areManualInputsEnabled ? colors.textLight : colors.text} />
-              </TouchableOpacity>
-              
-              <TextInput
-                style={[styles.input, !areManualInputsEnabled && styles.inputDisabled]}
-                value={fat}
-                onChangeText={setFat}
-                keyboardType="numeric"
-                editable={areManualInputsEnabled}
-              />
-              
-              <TouchableOpacity 
-                style={[styles.button, !areManualInputsEnabled && styles.buttonDisabled]}
-                onPress={() => adjustValue(setFat, fat, 1)}
-                disabled={!areManualInputsEnabled}
-              >
-                <Plus size={20} color={!areManualInputsEnabled ? colors.textLight : colors.text} />
-              </TouchableOpacity>
-            </View>
+        </View>
+        
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Fat (g)</Text>
+          <View style={styles.numberInput}>
+            <TouchableOpacity 
+              style={[styles.button, !areManualInputsEnabled && styles.buttonDisabled]}
+              onPress={() => adjustValue(setFat, fat, -1)}
+              disabled={!areManualInputsEnabled}
+            >
+              <Minus size={20} color={!areManualInputsEnabled ? colors.textLight : colors.text} />
+            </TouchableOpacity>
+            
+            <TextInput
+              style={[styles.input, !areManualInputsEnabled && styles.inputDisabled]}
+              value={fat}
+              onChangeText={setFat}
+              keyboardType="numeric"
+              editable={areManualInputsEnabled}
+            />
+            
+            <TouchableOpacity 
+              style={[styles.button, !areManualInputsEnabled && styles.buttonDisabled]}
+              onPress={() => adjustValue(setFat, fat, 1)}
+              disabled={!areManualInputsEnabled}
+            >
+              <Plus size={20} color={!areManualInputsEnabled ? colors.textLight : colors.text} />
+            </TouchableOpacity>
           </View>
         </View>
         

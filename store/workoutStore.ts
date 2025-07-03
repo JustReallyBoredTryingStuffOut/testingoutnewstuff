@@ -7,6 +7,15 @@ import { workouts } from "@/mocks/workouts";
 import { useMacroStore } from "./macroStore";
 import { useGamificationStore } from "./gamificationStore";
 
+export interface Workout {
+  id: string;
+  name: string;
+  date: string;
+  duration: number;
+  caloriesBurned: number;
+  notes?: string;
+}
+
 interface WorkoutState {
   exercises: Exercise[];
   workouts: Workout[];
@@ -1566,20 +1575,10 @@ export const useWorkoutStore = create<WorkoutState>()(
         const newWorkout: Workout = {
           id: newWorkoutId,
           name: `${originalWorkout.name} (Custom)`,
-          description: `Custom workout based on ${originalWorkout.name} completed on ${new Date(log.date).toLocaleDateString()}`,
-          category: originalWorkout.category,
-          difficulty: originalWorkout.difficulty,
-          intensity: originalWorkout.intensity,
-          estimatedDuration: log.duration || originalWorkout.estimatedDuration,
-          exercises: originalWorkout.exercises.map(ex => ({
-            id: ex.id,
-            sets: ex.sets,
-            reps: ex.reps,
-            restTime: ex.restTime,
-          })),
-          imageUrl: originalWorkout.imageUrl,
-          isCustom: true,
-          createdAt: new Date().toISOString(),
+          date: log.date,
+          duration: log.duration,
+          caloriesBurned: log.duration * 100, // Assuming 100 calories per minute
+          notes: `Custom workout based on ${originalWorkout.name} completed on ${new Date(log.date).toLocaleDateString()}`,
         };
         
         // Add the new workout to the store

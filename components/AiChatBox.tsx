@@ -1,112 +1,76 @@
-import React, { useState, useRef, useEffect } from "react";
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TextInput, 
-  TouchableOpacity, 
-  FlatList, 
-  KeyboardAvoidingView, 
-  Platform,
-  ActivityIndicator
-} from "react-native";
-import { Send } from "lucide-react-native";
-import { colors } from "@/constants/colors";
-import { ChatMessage } from "@/store/aiStore";
+import React, { useRef, useState } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { colors } from '../constants/colors';
+import { fonts } from '../constants/fonts';
 
-interface AiChatBoxProps {
-  messages: ChatMessage[];
-  onSendMessage: (message: string) => void;
-  isLoading: boolean;
+interface Message {
+  id: string;
+  text: string;
+  sender: 'user' | 'ai';
 }
 
-export default function AiChatBox({ messages, onSendMessage, isLoading }: AiChatBoxProps) {
-  const [inputText, setInputText] = useState("");
-  const flatListRef = useRef<FlatList>(null);
-  
-  // Scroll to bottom when messages change
-  useEffect(() => {
-    if (messages.length > 0 && flatListRef.current) {
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
-    }
-  }, [messages]);
-  
-  const handleSend = () => {
-    if (inputText.trim() === "" || isLoading) return;
-    
-    onSendMessage(inputText.trim());
-    setInputText("");
+export default function AiChatBox() {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const scrollViewRef = useRef<ScrollView>(null);
+
+  const sendMessage = () => {
+    if (!input.trim()) return;
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      text: input,
+      sender: 'user',
+    };
+    setMessages((prev) => [...prev, userMessage]);
+    setInput('');
+    setTimeout(() => {
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: 'This is a sample AI response.',
+        sender: 'ai',
+      };
+      setMessages((prev) => [...prev, aiMessage]);
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 1000);
   };
-  
-  const renderMessage = ({ item }: { item: ChatMessage }) => {
-    const isUser = item.role === "user";
-    
-    return (
-      <View style={[
-        styles.messageContainer,
-        isUser ? styles.userMessageContainer : styles.assistantMessageContainer
-      ]}>
-        <View style={[
-          styles.messageBubble,
-          isUser ? styles.userMessageBubble : styles.assistantMessageBubble
-        ]}>
-          <Text style={[
-            styles.messageText,
-            isUser ? styles.userMessageText : styles.assistantMessageText
-          ]}>
-            {item.content}
-          </Text>
-        </View>
-      </View>
-    );
-  };
-  
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={80}
     >
-      <FlatList
-        ref={flatListRef}
-        data={messages}
-        renderItem={renderMessage}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.messagesContainer}
-        showsVerticalScrollIndicator={true}
-      />
-      
-      <View style={styles.inputContainer}>
-        <View style={styles.inputWrapper}>
-          <TextInput
-            style={styles.input}
-            value={inputText}
-            onChangeText={setInputText}
-            placeholder="Ask about fitness, nutrition, or workouts..."
-            placeholderTextColor={colors.textSecondary}
-            multiline
-            maxLength={500}
-            onSubmitEditing={handleSend}
-            editable={!isLoading}
-          />
-          
-          <TouchableOpacity
+      <ScrollView
+        style={styles.messagesContainer}
+        ref={scrollViewRef}
+        onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+      >
+        {messages.map((msg) => (
+          <View
+            key={msg.id}
             style={[
-              styles.sendButton,
-              (inputText.trim() === "" || isLoading) && styles.disabledSendButton
+              styles.message,
+              msg.sender === 'user' ? styles.userMessage : styles.aiMessage,
             ]}
-            onPress={handleSend}
-            disabled={inputText.trim() === "" || isLoading}
           >
-            {isLoading ? (
-              <ActivityIndicator size="small" color={colors.white} />
-            ) : (
-              <Send size={20} color={colors.white} />
-            )}
-          </TouchableOpacity>
-        </View>
+            <Text style={styles.messageText}>{msg.text}</Text>
+          </View>
+        ))}
+      </ScrollView>
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          value={input}
+          onChangeText={setInput}
+          placeholder="Type your message..."
+          placeholderTextColor={colors.textSecondary}
+          onSubmitEditing={sendMessage}
+          returnKeyType="send"
+        />
+        <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
+          <Ionicons name="send" size={24} color={colors.primary} />
+        </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
   );
@@ -118,73 +82,48 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   messagesContainer: {
+    flex: 1,
     padding: 16,
-    paddingBottom: 24,
   },
-  messageContainer: {
-    marginBottom: 16,
-    flexDirection: "row",
+  message: {
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 8,
+    maxWidth: '80%',
   },
-  userMessageContainer: {
-    justifyContent: "flex-end",
-  },
-  assistantMessageContainer: {
-    justifyContent: "flex-start",
-  },
-  messageBubble: {
-    borderRadius: 18,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    maxWidth: "80%",
-  },
-  userMessageBubble: {
+  userMessage: {
     backgroundColor: colors.primary,
+    alignSelf: 'flex-end',
   },
-  assistantMessageBubble: {
+  aiMessage: {
     backgroundColor: colors.card,
+    alignSelf: 'flex-start',
   },
   messageText: {
-    fontSize: 16,
-    lineHeight: 22,
-  },
-  userMessageText: {
-    color: colors.white,
-  },
-  assistantMessageText: {
     color: colors.text,
+    fontSize: 16,
+    fontFamily: fonts.regular,
   },
   inputContainer: {
-    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
     borderTopWidth: 1,
     borderTopColor: colors.border,
-    backgroundColor: colors.card,
-  },
-  inputWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
+    backgroundColor: colors.background,
   },
   input: {
     flex: 1,
-    backgroundColor: colors.background,
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
     fontSize: 16,
+    fontFamily: fonts.regular,
     color: colors.text,
-    maxHeight: 120,
-    minHeight: 40,
+    backgroundColor: colors.card,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginRight: 8,
   },
   sendButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.primary,
-    justifyContent: "center",
-    alignItems: "center",
-    marginLeft: 8,
-  },
-  disabledSendButton: {
-    backgroundColor: colors.primaryLight,
-    opacity: 0.7,
+    padding: 8,
   },
 });

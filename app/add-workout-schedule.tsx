@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, Pressable, Keyboard, Platform, Switch } from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, Pressable, Keyboard, Platform, Switch, Animated } from "react-native";
 import { Stack, useRouter, useLocalSearchParams } from "expo-router";
 import { Calendar, Clock, ChevronDown, Check, ArrowLeft, X, Repeat, CalendarDays } from "lucide-react-native";
 import { useWorkoutStore } from "@/store/workoutStore";
@@ -10,6 +10,78 @@ import { Picker } from "@react-native-picker/picker";
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { useTheme } from "@/context/ThemeContext";
 
+// Success Toast Component
+const SuccessToast = ({ 
+  visible, 
+  message, 
+  onHide 
+}: { 
+  visible: boolean; 
+  message: string; 
+  onHide: () => void; 
+}) => {
+  const { colors } = useTheme();
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(-100)).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateY, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+
+      // Auto hide after 3 seconds
+      const timer = setTimeout(() => {
+        Animated.parallel([
+          Animated.timing(fadeAnim, {
+            toValue: 0,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+          Animated.timing(translateY, {
+            toValue: -100,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+        ]).start(() => {
+          onHide();
+        });
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [visible]);
+
+  if (!visible) return null;
+
+  return (
+    <Animated.View
+      style={[
+        styles.successToast,
+        {
+          backgroundColor: colors.primary,
+          opacity: fadeAnim,
+          transform: [{ translateY }],
+        },
+      ]}
+    >
+      <Check size={20} color={colors.white} />
+      <Text style={[styles.successToastText, { color: colors.white }]}>
+        {message}
+      </Text>
+    </Animated.View>
+  );
+};
+
 export default function AddWorkoutScheduleScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
@@ -18,22 +90,25 @@ export default function AddWorkoutScheduleScreen() {
   const { scheduleWorkoutNotification } = useNotificationStore();
   
   const [selectedWorkoutId, setSelectedWorkoutId] = useState("");
+  const [workoutType, setWorkoutType] = useState<'specific' | 'flexible'>('specific');
   const [selectedDay, setSelectedDay] = useState(new Date().getDay());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedTime, setSelectedTime] = useState(new Date());
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
+  const [scheduleType, setScheduleType] = useState<'one-time' | 'recurring'>('one-time');
   const [reminder, setReminder] = useState(true);
-  const [reminderTime, setReminderTime] = useState(15); // 15 minutes before
+  const [reminderTime, setReminderTime] = useState(15);
+  const [recurrenceFrequency, setRecurrenceFrequency] = useState<'weekly' | 'biweekly' | 'monthly'>('weekly');
+  const [hasEndDate, setHasEndDate] = useState(false);
+  const [recurrenceEndDate, setRecurrenceEndDate] = useState<Date | null>(null);
   const [showWorkoutSelector, setShowWorkoutSelector] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Schedule type state
-  const [scheduleType, setScheduleType] = useState<'recurring' | 'one-time'>('one-time');
-  const [recurrenceFrequency, setRecurrenceFrequency] = useState<'weekly' | 'biweekly' | 'monthly'>('weekly');
-  const [recurrenceEndDate, setRecurrenceEndDate] = useState<Date | null>(null);
-  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
-  const [hasEndDate, setHasEndDate] = useState(false);
+  // Success toast state
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
   
   // Set the workout ID from params if available
   useEffect(() => {
@@ -117,7 +192,8 @@ export default function AddWorkoutScheduleScreen() {
   const handleSave = async () => {
     if (isSubmitting) return; // Prevent multiple submissions
     
-    if (!selectedWorkoutId) {
+    // Validation: Only require workout selection for specific workouts
+    if (workoutType === 'specific' && !selectedWorkoutId) {
       Alert.alert("Error", "Please select a workout");
       return;
     }
@@ -125,78 +201,40 @@ export default function AddWorkoutScheduleScreen() {
     setIsSubmitting(true);
     
     try {
-      // Find the selected workout to include its name in the scheduled workout
       const selectedWorkout = workouts.find(w => w.id === selectedWorkoutId);
-      if (!selectedWorkout) {
-        Alert.alert("Error", "Selected workout not found");
-        setIsSubmitting(false);
-        return;
-      }
+      const workoutName = workoutType === 'specific' 
+        ? selectedWorkout?.name || 'Unknown Workout'
+        : 'Flexible Session';
       
-      const newScheduledWorkout = {
-        id: Date.now().toString(),
-        workoutId: selectedWorkoutId,
-        workoutName: selectedWorkout.name, // Add workout name for easier display
+      const newScheduledWorkout = await scheduleWorkout({
+        workoutId: workoutType === 'specific' ? selectedWorkoutId : null,
+        workoutName,
+        workoutType,
+        day: selectedDay,
+        date: selectedDate,
+        time: selectedTime,
         scheduleType,
-        time: formatTime(selectedTime),
-        notes: "",
+        recurrenceFrequency,
+        recurrenceEndDate: hasEndDate ? recurrenceEndDate : null,
         reminder,
         reminderTime,
-        createdAt: new Date().toISOString(), // Add creation timestamp
-      };
+      });
       
-      // Add schedule-type specific fields
-      if (scheduleType === 'recurring') {
-        Object.assign(newScheduledWorkout, {
-          dayOfWeek: selectedDay,
-          recurrenceFrequency,
-          ...(hasEndDate && recurrenceEndDate ? { recurrenceEndDate: recurrenceEndDate.toISOString() } : {})
-        });
-      } else {
-        // One-time workout
-        Object.assign(newScheduledWorkout, {
-          scheduledDate: selectedDate.toISOString()
-        });
-      }
-      
-      // Schedule the workout
-      scheduleWorkout(newScheduledWorkout);
-      
-      // Schedule notification if reminders are enabled
-      if (reminder && Platform.OS !== "web") {
+      // Schedule notification if reminder is enabled
+      if (reminder && newScheduledWorkout) {
         try {
-          let notificationDate;
+          const notificationDate = new Date(selectedDate);
+          notificationDate.setHours(selectedTime.getHours());
+          notificationDate.setMinutes(selectedTime.getMinutes());
+          notificationDate.setSeconds(0);
+          notificationDate.setMilliseconds(0);
           
-          if (scheduleType === 'one-time') {
-            // For one-time workouts, use the exact date
-            notificationDate = new Date(selectedDate);
-            notificationDate.setHours(selectedTime.getHours());
-            notificationDate.setMinutes(selectedTime.getMinutes());
-            notificationDate.setSeconds(0);
-            notificationDate.setMilliseconds(0);
-          } else {
-            // For recurring workouts, calculate the next occurrence
-            const today = new Date();
-            const todayDay = today.getDay();
-            const daysUntilNext = (selectedDay - todayDay + 7) % 7;
-            
-            notificationDate = new Date(today);
-            notificationDate.setDate(today.getDate() + daysUntilNext);
-            notificationDate.setHours(selectedTime.getHours());
-            notificationDate.setMinutes(selectedTime.getMinutes());
-            notificationDate.setSeconds(0);
-            notificationDate.setMilliseconds(0);
-            
-            // If today is the selected day and the time has passed, move to next week
-            if (daysUntilNext === 0 && notificationDate < today) {
-              notificationDate.setDate(notificationDate.getDate() + 7);
-            }
-          }
+          // Subtract reminder time
+          notificationDate.setMinutes(notificationDate.getMinutes() - reminderTime);
           
-          // Schedule the notification
           await scheduleWorkoutNotification(
             newScheduledWorkout.id,
-            selectedWorkout.name,
+            newScheduledWorkout.workoutName,
             notificationDate
           );
         } catch (notificationError) {
@@ -208,27 +246,25 @@ export default function AddWorkoutScheduleScreen() {
       // Show success message and navigate back
       setIsSubmitting(false);
       
-      let successMessage = "";
-      if (scheduleType === 'one-time') {
-        successMessage = `Workout "${selectedWorkout.name}" scheduled for ${formatDate(selectedDate)} at ${formatTime(selectedTime)}`;
+      let toastMessage = "";
+      if (workoutType === 'flexible') {
+        toastMessage = scheduleType === 'one-time' 
+          ? "Flexible workout session added to schedule"
+          : "Flexible workout sessions added to schedule";
       } else {
-        successMessage = `Workout "${selectedWorkout.name}" scheduled for ${days[selectedDay].name} at ${formatTime(selectedTime)}`;
-        if (recurrenceFrequency !== 'weekly') {
-          successMessage += ` (${recurrenceFrequency})`;
-        }
-        if (hasEndDate && recurrenceEndDate) {
-          successMessage += ` until ${formatDate(recurrenceEndDate)}`;
-        }
+        toastMessage = scheduleType === 'one-time' 
+          ? "Workout added to schedule"
+          : "Workouts added to schedule";
       }
       
-      Alert.alert(
-        "Success", 
-        successMessage, 
-        [{ 
-          text: "OK", 
-          onPress: () => router.back()
-        }]
-      );
+      setSuccessMessage(toastMessage);
+      setShowSuccessToast(true);
+      
+      // Navigate back after showing the toast
+      setTimeout(() => {
+        router.back();
+      }, 1000);
+      
     } catch (error) {
       console.error("Error scheduling workout:", error);
       Alert.alert(
@@ -265,30 +301,95 @@ export default function AddWorkoutScheduleScreen() {
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Add a workout to your schedule</Text>
         </View>
         
+        {/* Workout Type Selection */}
         <View style={[styles.section, { backgroundColor: colors.card, shadowColor: "#000" }]}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Select Workout</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Workout Type</Text>
+          <Text style={[styles.helperText, { color: colors.textSecondary }]}>
+            Choose between a specific workout or a flexible session where you'll decide what to do when you arrive at the gym.
+          </Text>
           
-          <View style={styles.workoutSelector}>
-            {selectedWorkout ? (
-              <View style={styles.selectedWorkoutContainer}>
-                <WorkoutCard workout={selectedWorkout} />
-                <TouchableOpacity 
-                  style={styles.changeButton}
-                  onPress={() => setShowWorkoutSelector(true)}
-                >
-                  <Text style={[styles.changeButtonText, { color: colors.primary }]}>Change Workout</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <TouchableOpacity 
-                style={[styles.selectWorkoutButton, { backgroundColor: colors.background, borderColor: colors.border }]}
-                onPress={() => setShowWorkoutSelector(true)}
+          <View style={styles.workoutTypeContainer}>
+            <TouchableOpacity
+              style={[
+                styles.workoutTypeButton,
+                { backgroundColor: colors.background },
+                workoutType === 'specific' && [styles.selectedWorkoutType, { backgroundColor: colors.primary }]
+              ]}
+              onPress={() => setWorkoutType('specific')}
+            >
+              <Text
+                style={[
+                  styles.workoutTypeText,
+                  { color: workoutType === 'specific' ? colors.white : colors.text }
+                ]}
               >
-                <Text style={[styles.selectWorkoutText, { color: colors.textSecondary }]}>Tap to select a workout</Text>
-              </TouchableOpacity>
-            )}
+                Specific Workout
+              </Text>
+              <Text
+                style={[
+                  styles.workoutTypeSubtext,
+                  { color: workoutType === 'specific' ? colors.white + '80' : colors.textSecondary }
+                ]}
+              >
+                Choose a predefined workout
+              </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[
+                styles.workoutTypeButton,
+                { backgroundColor: colors.background },
+                workoutType === 'flexible' && [styles.selectedWorkoutType, { backgroundColor: colors.primary }]
+              ]}
+              onPress={() => setWorkoutType('flexible')}
+            >
+              <Text
+                style={[
+                  styles.workoutTypeText,
+                  { color: workoutType === 'flexible' ? colors.white : colors.text }
+                ]}
+              >
+                Flexible Session
+              </Text>
+              <Text
+                style={[
+                  styles.workoutTypeSubtext,
+                  { color: workoutType === 'flexible' ? colors.white + '80' : colors.textSecondary }
+                ]}
+              >
+                Decide when you arrive
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
+        
+        {/* Workout Selection - Only show for specific workouts */}
+        {workoutType === 'specific' && (
+          <View style={[styles.section, { backgroundColor: colors.card, shadowColor: "#000" }]}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Select Workout</Text>
+            
+            <View style={styles.workoutSelector}>
+              {selectedWorkout ? (
+                <View style={styles.selectedWorkoutContainer}>
+                  <WorkoutCard workout={selectedWorkout} />
+                  <TouchableOpacity 
+                    style={styles.changeButton}
+                    onPress={() => setShowWorkoutSelector(true)}
+                  >
+                    <Text style={[styles.changeButtonText, { color: colors.primary }]}>Change Workout</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <TouchableOpacity 
+                  style={[styles.selectWorkoutButton, { backgroundColor: colors.background, borderColor: colors.border }]}
+                  onPress={() => setShowWorkoutSelector(true)}
+                >
+                  <Text style={[styles.selectWorkoutText, { color: colors.textSecondary }]}>Tap to select a workout</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        )}
         
         {/* Schedule Type Selection */}
         <View style={[styles.section, { backgroundColor: colors.card, shadowColor: "#000" }]}>
@@ -634,7 +735,7 @@ export default function AddWorkoutScheduleScreen() {
           title={isSubmitting ? "Adding to Schedule..." : "Add to Schedule"}
           onPress={handleSave}
           style={styles.saveButton}
-          disabled={isSubmitting || !selectedWorkoutId}
+          disabled={isSubmitting || (workoutType === 'specific' && !selectedWorkoutId)}
         />
         
         {/* Added back button at the bottom */}
@@ -714,6 +815,13 @@ export default function AddWorkoutScheduleScreen() {
           </Pressable>
         </Pressable>
       </Modal>
+      
+      {/* Success Toast */}
+      <SuccessToast
+        visible={showSuccessToast}
+        message={successMessage}
+        onHide={() => setShowSuccessToast(false)}
+      />
     </View>
   );
 }
@@ -1053,5 +1161,53 @@ const styles = StyleSheet.create({
   },
   createWorkoutButton: {
     width: "100%",
+  },
+  // Workout Type Styles
+  workoutTypeContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  workoutTypeButton: {
+    flex: 1,
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  selectedWorkoutType: {
+  },
+  workoutTypeText: {
+    fontSize: 16,
+    fontWeight: "600",
+    textAlign: "center",
+    marginBottom: 4,
+  },
+  workoutTypeSubtext: {
+    fontSize: 12,
+    textAlign: "center",
+    lineHeight: 16,
+  },
+  helperText: {
+    fontSize: 14,
+    marginBottom: 16,
+  },
+  successToast: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 16,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  successToastText: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginLeft: 8,
   },
 });

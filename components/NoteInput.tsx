@@ -1,72 +1,33 @@
-import React, { useState } from "react";
-import { 
-  View, 
-  TextInput, 
-  StyleSheet, 
-  TouchableOpacity,
-  Text,
-  Keyboard,
-} from "react-native";
-import { Edit3, Check } from "lucide-react-native";
-import { colors } from "@/constants/colors";
+import React, { useState } from 'react';
+import { View, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { colors } from '../constants/colors';
+import { fonts } from '../constants/fonts';
 
-type NoteInputProps = {
-  initialValue: string;
-  onSave: (note: string) => void;
+interface NoteInputProps {
+  value: string;
+  onChange: (text: string) => void;
+  onSave: () => void;
   placeholder?: string;
-  multiline?: boolean;
-};
+}
 
-export default function NoteInput({ 
-  initialValue, 
-  onSave, 
-  placeholder = "Add a note...",
-  multiline = false,
-}: NoteInputProps) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [note, setNote] = useState(initialValue);
-  
-  const handleSave = () => {
-    onSave(note);
-    setIsEditing(false);
-    Keyboard.dismiss();
-  };
-  
-  if (!isEditing) {
-    return (
-      <TouchableOpacity 
-        style={styles.container} 
-        onPress={() => setIsEditing(true)}
-        activeOpacity={0.7}
-      >
-        {note ? (
-          <Text style={styles.noteText} numberOfLines={multiline ? 3 : 1}>
-            {note}
-          </Text>
-        ) : (
-          <Text style={styles.placeholder}>{placeholder}</Text>
-        )}
-        <Edit3 size={16} color={colors.textLight} />
-      </TouchableOpacity>
-    );
-  }
-  
+export default function NoteInput({ value, onChange, onSave, placeholder }: NoteInputProps) {
+  const [focused, setFocused] = useState(false);
+
   return (
-    <View style={styles.editContainer}>
+    <View style={[styles.container, focused && styles.focusedContainer]}>
       <TextInput
-        style={[styles.input, multiline && styles.multilineInput]}
-        value={note}
-        onChangeText={setNote}
-        placeholder={placeholder}
-        placeholderTextColor={colors.textLight}
-        autoFocus
-        multiline={multiline}
+        style={styles.input}
+        value={value}
+        onChangeText={onChange}
+        placeholder={placeholder || 'Add a note...'}
+        placeholderTextColor={colors.textSecondary}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        multiline
       />
-      <TouchableOpacity 
-        style={styles.saveButton} 
-        onPress={handleSave}
-      >
-        <Check size={20} color="#FFFFFF" />
+      <TouchableOpacity onPress={onSave} style={styles.saveButton}>
+        <Ionicons name="checkmark" size={24} color={colors.primary} />
       </TouchableOpacity>
     </View>
   );
@@ -74,53 +35,32 @@ export default function NoteInput({
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    borderRadius: 12,
     padding: 12,
-    backgroundColor: colors.background,
-    borderRadius: 8,
+    marginBottom: 12,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  focusedContainer: {
+    borderColor: colors.primary,
     borderWidth: 1,
-    borderColor: colors.border,
-  },
-  noteText: {
-    flex: 1,
-    fontSize: 14,
-    color: colors.text,
-    marginRight: 8,
-  },
-  placeholder: {
-    flex: 1,
-    fontSize: 14,
-    color: colors.textLight,
-    marginRight: 8,
-  },
-  editContainer: {
-    flexDirection: "row",
-    alignItems: "center",
   },
   input: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 16,
+    fontFamily: fonts.regular,
     color: colors.text,
-    padding: 12,
-    backgroundColor: colors.background,
-    borderTopLeftRadius: 8,
-    borderBottomLeftRadius: 8,
-    borderWidth: 1,
-    borderRightWidth: 0,
-    borderColor: colors.primary,
-  },
-  multilineInput: {
-    minHeight: 80,
-    textAlignVertical: "top",
+    backgroundColor: 'transparent',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   saveButton: {
-    backgroundColor: colors.primary,
-    padding: 12,
-    borderTopRightRadius: 8,
-    borderBottomRightRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
+    padding: 8,
   },
 });

@@ -44,35 +44,36 @@
  * - Version tracking allows for future encryption upgrades
  */
 
-export const encryptionInfo = {
-  algorithm: 'AES-GCM',
-  keyLength: 256, // bits
-  keyDerivation: 'PBKDF2',
-  iterations: 100000,
-  saltLength: 16, // bytes
-  ivLength: 12, // bytes
-  tagLength: 128, // bits
-  version: 2, // Current encryption version
-  
-  // For documentation purposes only
-  getDescription: () => `
-    This app uses AES-GCM 256-bit encryption with PBKDF2 key derivation
-    to protect your sensitive data. All encryption is performed locally
-    on your device, and encryption keys are never transmitted over the network.
-    
-    For photos and media, both the content and metadata are encrypted
-    separately to ensure maximum privacy. When you delete data, it is
-    securely overwritten before being removed from your device.
-  `,
-  
-  // For GDPR compliance documentation
-  getGdprInfo: () => `
-    Data Protection Information:
-    
-    1. All sensitive data is encrypted using AES-GCM 256-bit encryption
-    2. Encryption keys are stored securely on your device
-    3. When you delete data, it is securely overwritten before deletion
-    4. You can export or delete all your data at any time
-    5. No personal data is transmitted without your explicit consent
-  `
+export interface EncryptionInfo {
+  version: string;
+  algorithm: string;
+  keyDerivation: string;
+  salt: string;
+  iv: string;
+  tagLength: number;
+}
+
+export const ENCRYPTION_VERSION = '1.0';
+export const ALGORITHM = 'AES-GCM';
+export const KEY_DERIVATION = 'PBKDF2';
+export const TAG_LENGTH = 128;
+
+export const createEncryptionInfo = (): EncryptionInfo => ({
+  version: ENCRYPTION_VERSION,
+  algorithm: ALGORITHM,
+  keyDerivation: KEY_DERIVATION,
+  salt: '',
+  iv: '',
+  tagLength: TAG_LENGTH
+});
+
+export const validateEncryptionInfo = (info: EncryptionInfo): boolean => {
+  return (
+    info.version === ENCRYPTION_VERSION &&
+    info.algorithm === ALGORITHM &&
+    info.keyDerivation === KEY_DERIVATION &&
+    info.tagLength === TAG_LENGTH &&
+    info.salt.length > 0 &&
+    info.iv.length > 0
+  );
 };

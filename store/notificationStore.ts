@@ -72,6 +72,21 @@ interface NotificationState {
   showLongWorkoutNotification: (workoutName: string, durationMinutes: number) => Promise<string | null>;
 }
 
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  date: string;
+  read: boolean;
+}
+
+interface NotificationStoreState {
+  notifications: Notification[];
+  addNotification: (notification: Notification) => void;
+  markAsRead: (id: string) => void;
+  clearNotifications: () => void;
+}
+
 const defaultSettings: NotificationSettings = {
   enabled: false,
   workoutReminders: true,
@@ -195,7 +210,14 @@ const getReminderMessages = (category: string, goalText: string): string[] => {
   }
 };
 
-export const useNotificationStore = create<NotificationState>()(
+export const useNotificationStore = create<NotificationStoreState>((set) => ({
+  notifications: [],
+  addNotification: (notification) => set((state) => ({ notifications: [...state.notifications, notification] })),
+  markAsRead: (id) => set((state) => ({ notifications: state.notifications.map((n) => n.id === id ? { ...n, read: true } : n) })),
+  clearNotifications: () => set({ notifications: [] }),
+}));
+
+export const useNotificationStoreState = create<NotificationState>()(
   persist(
     (set, get) => ({
       settings: defaultSettings,

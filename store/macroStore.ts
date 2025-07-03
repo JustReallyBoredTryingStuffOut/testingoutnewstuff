@@ -4,6 +4,16 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { MacroGoals, MacroLog, UserProfile, FoodCategory } from "@/types";
 import { foodCategories, getFoodCategoriesByMealType } from "@/mocks/foodCategories";
 
+export interface MacroLog {
+  id: string;
+  date: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  notes?: string;
+}
+
 interface MacroState {
   macroLogs: MacroLog[];
   macroGoals: MacroGoals;

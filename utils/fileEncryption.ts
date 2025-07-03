@@ -480,3 +480,64 @@ export const reEncryptFile = async (uri: string): Promise<string | null> => {
     return null;
   }
 };
+
+export const encryptFile = async (
+  sourceUri: string, 
+  destinationUri: string, 
+  key: string
+): Promise<boolean> => {
+  try {
+    // Read the file
+    const fileContent = await FileSystem.readAsStringAsync(sourceUri, {
+      encoding: FileSystem.EncodingType.Base64
+    });
+
+    // Encrypt the content
+    const encryptedContent = await encryptData(fileContent, key);
+
+    // Write the encrypted content
+    await FileSystem.writeAsStringAsync(destinationUri, encryptedContent);
+
+    return true;
+  } catch (error) {
+    console.error('Error encrypting file:', error);
+    return false;
+  }
+};
+
+export const decryptFile = async (
+  sourceUri: string, 
+  destinationUri: string, 
+  key: string
+): Promise<boolean> => {
+  try {
+    // Read the encrypted file
+    const encryptedContent = await FileSystem.readAsStringAsync(sourceUri);
+
+    // Decrypt the content
+    const decryptedContent = await decryptData(encryptedContent, key);
+
+    // Write the decrypted content
+    await FileSystem.writeAsStringAsync(destinationUri, decryptedContent, {
+      encoding: FileSystem.EncodingType.Base64
+    });
+
+    return true;
+  } catch (error) {
+    console.error('Error decrypting file:', error);
+    return false;
+  }
+};
+
+export const isFileEncrypted = async (fileUri: string): Promise<boolean> => {
+  try {
+    const content = await FileSystem.readAsStringAsync(fileUri, {
+      length: 100 // Only read first 100 characters
+    });
+    
+    // Check if the content looks like encrypted data (hex string)
+    return /^[0-9a-f]+$/i.test(content);
+  } catch (error) {
+    return false;
+  }
+};

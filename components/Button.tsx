@@ -1,136 +1,65 @@
-import React from "react";
-import { 
-  TouchableOpacity, 
-  Text, 
-  StyleSheet, 
-  ActivityIndicator,
-  ViewStyle,
-  TextStyle,
-} from "react-native";
-import { colors } from "@/constants/colors";
+import React from 'react';
+import { TouchableOpacity, Text, StyleSheet, View, ActivityIndicator } from 'react-native';
+import { colors } from '../constants/colors';
+import { fonts } from '../constants/fonts';
 
-type ButtonProps = {
+interface ButtonProps {
   title: string;
   onPress: () => void;
-  variant?: "primary" | "secondary" | "outline" | "danger";
-  size?: "small" | "medium" | "large";
+  icon?: React.ReactNode;
+  style?: any;
+  textStyle?: any;
   disabled?: boolean;
   loading?: boolean;
-  style?: ViewStyle;
-  textStyle?: TextStyle;
-  icon?: React.ReactNode;
-};
+  variant?: 'primary' | 'outline' | 'ghost';
+}
 
 export default function Button({
   title,
   onPress,
-  variant = "primary",
-  size = "medium",
-  disabled = false,
-  loading = false,
+  icon,
   style,
   textStyle,
-  icon,
+  disabled = false,
+  loading = false,
+  variant = 'primary',
 }: ButtonProps) {
   const getButtonStyle = () => {
-    let buttonStyle: ViewStyle = { ...styles.button };
-    
-    // Variant styles
     switch (variant) {
-      case "primary":
-        buttonStyle = { ...buttonStyle, ...styles.primaryButton };
-        break;
-      case "secondary":
-        buttonStyle = { ...buttonStyle, ...styles.secondaryButton };
-        break;
-      case "outline":
-        buttonStyle = { ...buttonStyle, ...styles.outlineButton };
-        break;
-      case "danger":
-        buttonStyle = { ...buttonStyle, ...styles.dangerButton };
-        break;
+      case 'outline':
+        return [styles.button, styles.outline, style];
+      case 'ghost':
+        return [styles.button, styles.ghost, style];
+      default:
+        return [styles.button, style];
     }
-    
-    // Size styles
-    switch (size) {
-      case "small":
-        buttonStyle = { ...buttonStyle, ...styles.smallButton };
-        break;
-      case "medium":
-        buttonStyle = { ...buttonStyle, ...styles.mediumButton };
-        break;
-      case "large":
-        buttonStyle = { ...buttonStyle, ...styles.largeButton };
-        break;
-    }
-    
-    // Disabled style
-    if (disabled) {
-      buttonStyle = { ...buttonStyle, ...styles.disabledButton };
-    }
-    
-    return buttonStyle;
   };
-  
+
   const getTextStyle = () => {
-    let textStyleObj: TextStyle = { ...styles.buttonText };
-    
-    // Variant text styles
     switch (variant) {
-      case "primary":
-        textStyleObj = { ...textStyleObj, ...styles.primaryText };
-        break;
-      case "secondary":
-        textStyleObj = { ...textStyleObj, ...styles.secondaryText };
-        break;
-      case "outline":
-        textStyleObj = { ...textStyleObj, ...styles.outlineText };
-        break;
-      case "danger":
-        textStyleObj = { ...textStyleObj, ...styles.dangerText };
-        break;
+      case 'outline':
+        return [styles.text, styles.outlineText, textStyle];
+      case 'ghost':
+        return [styles.text, styles.ghostText, textStyle];
+      default:
+        return [styles.text, textStyle];
     }
-    
-    // Size text styles
-    switch (size) {
-      case "small":
-        textStyleObj = { ...textStyleObj, ...styles.smallText };
-        break;
-      case "medium":
-        textStyleObj = { ...textStyleObj, ...styles.mediumText };
-        break;
-      case "large":
-        textStyleObj = { ...textStyleObj, ...styles.largeText };
-        break;
-    }
-    
-    // Disabled text style
-    if (disabled) {
-      textStyleObj = { ...textStyleObj, ...styles.disabledText };
-    }
-    
-    return textStyleObj;
   };
-  
+
   return (
     <TouchableOpacity
-      style={[getButtonStyle(), style]}
+      style={getButtonStyle()}
       onPress={onPress}
       disabled={disabled || loading}
-      activeOpacity={0.7}
+      activeOpacity={0.8}
     >
       {loading ? (
-        <ActivityIndicator 
-          color={variant === "outline" ? colors.primary : "#FFFFFF"} 
-          size="small" 
-        />
+        <ActivityIndicator color={colors.background} />
       ) : (
-        <>
-          {icon && icon}
-          <Text style={[getTextStyle(), icon && styles.textWithIcon, textStyle]}>
-            {title}
-          </Text>
-        </>
+        <View style={styles.content}>
+          {icon && <View style={styles.icon}>{icon}</View>}
+          <Text style={getTextStyle()}>{title}</Text>
+        </View>
       )}
     </TouchableOpacity>
   );
@@ -138,69 +67,48 @@ export default function Button({
 
 const styles = StyleSheet.create({
   button: {
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    flexDirection: "row",
-  },
-  primaryButton: {
     backgroundColor: colors.primary,
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginVertical: 4,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  secondaryButton: {
-    backgroundColor: colors.secondary,
-  },
-  outlineButton: {
-    backgroundColor: "transparent",
-    borderWidth: 1,
+  outline: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
     borderColor: colors.primary,
   },
-  dangerButton: {
-    backgroundColor: colors.error,
+  ghost: {
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    elevation: 0,
+    shadowOpacity: 0,
   },
-  smallButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-  },
-  mediumButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-  },
-  largeButton: {
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-  },
-  disabledButton: {
-    backgroundColor: colors.inactive,
-    borderColor: colors.inactive,
-  },
-  buttonText: {
-    fontWeight: "600",
-  },
-  primaryText: {
-    color: "#FFFFFF",
-  },
-  secondaryText: {
-    color: "#FFFFFF",
+  text: {
+    color: colors.background,
+    fontSize: 16,
+    fontFamily: fonts.weight.semibold,
   },
   outlineText: {
     color: colors.primary,
   },
-  dangerText: {
-    color: "#FFFFFF",
+  ghostText: {
+    color: colors.primary,
   },
-  smallText: {
-    fontSize: 14,
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  mediumText: {
-    fontSize: 16,
-  },
-  largeText: {
-    fontSize: 18,
-  },
-  disabledText: {
-    color: "#FFFFFF",
-  },
-  textWithIcon: {
-    marginLeft: 8,
+  icon: {
+    marginRight: 8,
   },
 });

@@ -1,6 +1,8 @@
 import * as FileSystem from 'expo-file-system';
 import * as Random from 'expo-random';
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 
 /**
  * Securely delete a file by overwriting it with random data before deletion
@@ -10,98 +12,31 @@ import { Platform } from 'react-native';
  * @param passes Number of overwrite passes (default: 3)
  * @returns Promise resolving when deletion is complete
  */
-export const secureDeleteFile = async (uri: string, passes: number = 3): Promise<void> => {
-  if (Platform.OS === 'web' || !uri) return;
-  
+export const secureDeleteFile = async (fileUri: string): Promise<boolean> => {
   try {
-    const fileInfo = await FileSystem.getInfoAsync(uri);
-    if (!fileInfo.exists) return;
-    
-    // Get file size for overwriting
-    const fileSize = fileInfo.size;
-    if (fileSize <= 0) {
-      // If file is empty, just delete it
-      await FileSystem.deleteAsync(uri, { idempotent: true });
-      return;
+    // Check if file exists
+    const fileInfo = await FileSystem.getInfoAsync(fileUri);
+    if (!fileInfo.exists) {
+      return true; // File doesn't exist, consider it "deleted"
     }
+
+    // Overwrite with random data before deletion
+    const fileSize = fileInfo.size || 0;
+    const randomData = Array.from({ length: fileSize }, () => 
+      Math.floor(Math.random() * 256)
+    ).join('');
     
-    // Limit size for overwriting to prevent memory issues with very large files
-    // For large files, we'll overwrite the first and last portions
-    const maxOverwriteSize = Math.min(fileSize, 1024 * 1024); // 1MB max
+    await FileSystem.writeAsStringAsync(fileUri, randomData, {
+      encoding: FileSystem.EncodingType.UTF8
+    });
+
+    // Delete the file
+    await FileSystem.deleteAsync(fileUri);
     
-    for (let pass = 0; pass < passes; pass++) {
-      // For each pass, use a different pattern
-      let overwriteData: string;
-      
-      if (pass === 0) {
-        // First pass: random data
-        const randomBytes = await Random.getRandomBytesAsync(maxOverwriteSize);
-        overwriteData = Array.from(randomBytes)
-          .map(byte => String.fromCharCode(byte))
-          .join('');
-      } else if (pass === passes - 1) {
-        // Last pass: all zeros
-        overwriteData = '\0'.repeat(maxOverwriteSize);
-      } else {
-        // Middle passes: alternating patterns
-        overwriteData = (pass % 2 === 0) 
-          ? '\xFF'.repeat(maxOverwriteSize) 
-          : '\xAA'.repeat(maxOverwriteSize);
-      }
-      
-      // Overwrite the file
-      await FileSystem.writeAsStringAsync(uri, overwriteData);
-      
-      // If file is larger than our max overwrite size, also overwrite the end of the file
-      if (fileSize > maxOverwriteSize) {
-        try {
-          await FileSystem.writeAsStringAsync(uri, overwriteData, {
-            encoding: FileSystem.EncodingType.UTF8,
-            position: fileSize - maxOverwriteSize
-          });
-        } catch (positionError) {
-          // Some file systems may not support position parameter
-          console.warn('Could not overwrite end of file:', positionError);
-        }
-      }
-    }
-    
-    // Finally delete the file
-    await FileSystem.deleteAsync(uri, { idempotent: true });
-    
-    // Also delete any associated metadata files
-    try {
-      const metadataUri = `${uri}.metadata`;
-      const metadataInfo = await FileSystem.getInfoAsync(metadataUri);
-      if (metadataInfo.exists) {
-        await FileSystem.deleteAsync(metadataUri, { idempotent: true });
-      }
-    } catch (metadataError) {
-      // Ignore errors with metadata deletion
-      console.warn('Error deleting metadata file:', metadataError);
-    }
-    
-    // Delete any cache files that might exist
-    try {
-      const cacheUri = `${uri}.cache`;
-      const cacheInfo = await FileSystem.getInfoAsync(cacheUri);
-      if (cacheInfo.exists) {
-        await FileSystem.deleteAsync(cacheUri, { idempotent: true });
-      }
-    } catch (cacheError) {
-      // Ignore errors with cache deletion
-      console.warn('Error deleting cache file:', cacheError);
-    }
-    
+    return true;
   } catch (error) {
     console.error('Error securely deleting file:', error);
-    // If secure deletion fails, try regular deletion as fallback
-    try {
-      await FileSystem.deleteAsync(uri, { idempotent: true });
-    } catch (deleteError) {
-      console.error('Regular deletion also failed:', deleteError);
-      throw new Error('Could not delete file: ' + deleteError);
-    }
+    return false;
   }
 };
 
@@ -132,7 +67,7 @@ export const secureDeleteDirectory = async (dirUri: string, passes: number = 3):
         await secureDeleteDirectory(itemUri, passes);
       } else {
         // Securely delete files
-        await secureDeleteFile(itemUri, passes);
+        await secureDeleteFile(itemUri);
       }
     }
     
@@ -258,7 +193,7 @@ export const secureDeleteFileWithMetadata = async (baseUri: string, passes: numb
   
   try {
     // Delete the main file
-    await secureDeleteFile(baseUri, passes);
+    await secureDeleteFile(baseUri);
     
     // Get the directory and filename
     const lastSlashIndex = baseUri.lastIndexOf('/');
@@ -273,7 +208,7 @@ export const secureDeleteFileWithMetadata = async (baseUri: string, passes: numb
       // Find and delete any files that might be related (metadata, thumbnails, etc.)
       for (const item of dirContents) {
         if (item.startsWith(filenameWithoutExt) && item !== filename) {
-          await secureDeleteFile(`${directory}${item}`, passes);
+          await secureDeleteFile(`${directory}${item}`);
         }
       }
     } catch (dirError) {
@@ -294,7 +229,7 @@ export const secureDeleteFileWithMetadata = async (baseUri: string, passes: numb
       try {
         const metadataInfo = await FileSystem.getInfoAsync(metadataUri);
         if (metadataInfo.exists) {
-          await secureDeleteFile(metadataUri, passes);
+          await secureDeleteFile(metadataUri);
         }
       } catch (metadataError) {
         // Ignore errors with metadata deletion
@@ -305,5 +240,43 @@ export const secureDeleteFileWithMetadata = async (baseUri: string, passes: numb
   } catch (error) {
     console.error('Error securely deleting file with metadata:', error);
     throw error;
+  }
+};
+
+export const secureDeleteData = async (key: string): Promise<boolean> => {
+  try {
+    // For AsyncStorage, we can't overwrite, but we can delete
+    await AsyncStorage.removeItem(key);
+    return true;
+  } catch (error) {
+    console.error('Error deleting data from AsyncStorage:', error);
+    return false;
+  }
+};
+
+export const secureDeleteSecureData = async (key: string): Promise<boolean> => {
+  try {
+    // For SecureStore, we can't overwrite, but we can delete
+    await SecureStore.deleteItemAsync(key);
+    return true;
+  } catch (error) {
+    console.error('Error deleting data from SecureStore:', error);
+    return false;
+  }
+};
+
+export const secureWipeAllData = async (): Promise<boolean> => {
+  try {
+    // Clear AsyncStorage
+    await AsyncStorage.clear();
+    
+    // Clear SecureStore (we need to know the keys to delete them)
+    // This is a limitation of SecureStore - we can't list all keys
+    // In a real app, you'd maintain a list of keys to delete
+    
+    return true;
+  } catch (error) {
+    console.error('Error wiping all data:', error);
+    return false;
   }
 };

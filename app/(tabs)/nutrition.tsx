@@ -197,7 +197,7 @@ export default function NutritionScreen() {
               <View style={styles.analysisTextContainer}>
                 <Text style={[styles.analysisTitle, { color: colors.text }]}>Analyze Food with Camera</Text>
                 <Text style={[styles.analysisDescription, { color: colors.textSecondary }]}>
-                  Take a photo of your meal to get nutritional information
+                  Take a photo of your meal or scan nutrition labels
                 </Text>
               </View>
             </View>

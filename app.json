@@ -17,13 +17,6 @@
       "supportsTablet": true,
       "bundleIdentifier": "app.rork.fitjourney-tracker"
     },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "package": "app.rork.fitjourney-tracker"
-    },
     "web": {
       "favicon": "./assets/images/favicon.png"
     },
@@ -33,7 +26,9 @@
         {
           "origin": "https://rork.com/"
         }
-      ]
+      ],
+      "expo-font",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

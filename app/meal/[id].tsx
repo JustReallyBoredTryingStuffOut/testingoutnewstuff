@@ -1,325 +1,219 @@
-import React from "react";
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
-  Image,
-  TouchableWithoutFeedback,
-  Modal,
-  Pressable,
-  Alert
-} from "react-native";
-import { Stack, useRouter, useLocalSearchParams } from "expo-router";
-import { 
-  ArrowLeft, 
-  Clock, 
-  UtensilsCrossed, 
-  Share2, 
-  Check, 
-  Bookmark,
-  X
-} from "lucide-react-native";
-import { colors } from "@/constants/colors";
-import { mealRecommendations } from "@/mocks/meals";
-import { useMacroStore } from "@/store/macroStore";
-import Button from "@/components/Button";
-import { useState } from "react";
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Image } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { useMealStore } from '../../store/mealStore';
+import { useFoodStore } from '../../store/foodStore';
+import { useNutritionStore } from '../../store/nutritionStore';
+import { useUserStore } from '../../store/userStore';
+import { Meal, FoodItem } from '../../types/meal';
+import { formatDate } from '../../utils/dateUtils';
+import { calculateNutrition } from '../../utils/nutritionUtils';
+import { colors } from '../../constants/colors';
+import { fonts } from '../../constants/fonts';
 
 export default function MealDetailScreen() {
-  const router = useRouter();
   const { id } = useLocalSearchParams();
-  const { addMacroLog } = useMacroStore();
-  const [showShareModal, setShowShareModal] = useState(false);
+  const router = useRouter();
+  const [meal, setMeal] = useState<Meal | null>(null);
+  const [loading, setLoading] = useState(true);
   
-  const meal = mealRecommendations.find(meal => meal.id === id);
-  
-  if (!meal) {
-    return (
-      <View style={styles.container}>
-        <Stack.Screen 
-          options={{
-            title: "Meal Details",
-            headerLeft: () => (
-              <TouchableOpacity 
-                onPress={() => router.back()} 
-                style={styles.backButton}
-                accessibilityLabel="Go back"
-                accessibilityHint="Returns to the previous screen"
-              >
-                <ArrowLeft size={24} color={colors.text} />
-              </TouchableOpacity>
-            ),
-          }}
-        />
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Meal not found</Text>
-          <TouchableOpacity 
-            style={styles.backToMealsButton}
-            onPress={() => router.push("/meal-recommendations")}
-          >
-            <Text style={styles.backToMealsText}>Back to Recommendations</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
-  
-  const handleGoBack = () => {
-    router.back();
-  };
-  
-  const handleShare = () => {
-    // Open share modal
-    setShowShareModal(true);
-  };
-  
-  const handleLogMeal = () => {
-    // Add meal to macro logs
-    addMacroLog({
-      id: Date.now().toString(),
-      date: new Date().toISOString(),
-      calories: meal.calories,
-      protein: meal.protein,
-      carbs: meal.carbs,
-      fat: meal.fat,
-      notes: `Logged from recommendations: ${meal.name}`,
-    });
-    
-    // Show success message
+  const { getMealById, deleteMeal } = useMealStore();
+  const { deleteFoodItem } = useFoodStore();
+  const { updateNutrition } = useNutritionStore();
+  const { user } = useUserStore();
+
+  useEffect(() => {
+    if (id) {
+      const foundMeal = getMealById(id as string);
+      setMeal(foundMeal);
+      setLoading(false);
+    }
+  }, [id, getMealById]);
+
+  const handleDeleteMeal = () => {
     Alert.alert(
-      "Success",
-      "Meal logged successfully",
+      'Delete Meal',
+      'Are you sure you want to delete this meal? This action cannot be undone.',
       [
+        { text: 'Cancel', style: 'cancel' },
         {
-          text: "OK",
-          onPress: () => router.push("/(tabs)/nutrition")
-        }
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            if (meal) {
+              // Delete all food items in the meal
+              meal.foodItems.forEach(foodItem => {
+                deleteFoodItem(foodItem.id);
+              });
+              
+              // Delete the meal
+              deleteMeal(meal.id);
+              
+              // Update nutrition totals
+              if (user) {
+                const updatedNutrition = calculateNutrition(user.id);
+                updateNutrition(updatedNutrition);
+              }
+              
+              router.back();
+            }
+          },
+        },
       ]
     );
   };
-  
+
+  const handleDeleteFoodItem = (foodItem: FoodItem) => {
+    Alert.alert(
+      'Remove Food Item',
+      `Are you sure you want to remove ${foodItem.name} from this meal?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => {
+            if (meal) {
+              // Remove food item from meal
+              const updatedFoodItems = meal.foodItems.filter(item => item.id !== foodItem.id);
+              const updatedMeal = { ...meal, foodItems: updatedFoodItems };
+              
+              // Update meal in store
+              useMealStore.getState().updateMeal(updatedMeal);
+              
+              // Delete the food item
+              deleteFoodItem(foodItem.id);
+              
+              // Update nutrition totals
+              if (user) {
+                const updatedNutrition = calculateNutrition(user.id);
+                updateNutrition(updatedNutrition);
+              }
+              
+              setMeal(updatedMeal);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const getTotalNutrition = () => {
+    if (!meal) return { calories: 0, protein: 0, carbs: 0, fat: 0 };
+    
+    return meal.foodItems.reduce((totals, item) => ({
+      calories: totals.calories + (item.nutrition.calories || 0),
+      protein: totals.protein + (item.nutrition.protein || 0),
+      carbs: totals.carbs + (item.nutrition.carbs || 0),
+      fat: totals.fat + (item.nutrition.fat || 0),
+    }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.loadingText}>Loading meal details...</Text>
+      </View>
+    );
+  }
+
+  if (!meal) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>Meal not found</Text>
+      </View>
+    );
+  }
+
+  const totalNutrition = getTotalNutrition();
+
   return (
     <View style={styles.container}>
-      <Stack.Screen 
-        options={{
-          title: "Meal Details",
-          headerLeft: () => (
-            <TouchableOpacity 
-              onPress={handleGoBack} 
-              style={styles.backButton}
-              accessibilityLabel="Go back"
-              accessibilityHint="Returns to the previous screen"
-            >
-              <ArrowLeft size={24} color={colors.text} />
-            </TouchableOpacity>
-          ),
-          headerRight: () => (
-            <TouchableOpacity 
-              onPress={handleShare} 
-              style={styles.shareButton}
-              accessibilityLabel="Share meal"
-              accessibilityHint="Opens sharing options for this meal"
-            >
-              <Share2 size={24} color={colors.text} />
-            </TouchableOpacity>
-          ),
-        }}
-      />
-      
-      <ScrollView style={styles.content}>
-        <Image 
-          source={{ uri: meal.imageUrl }} 
-          style={styles.mealImage} 
-          resizeMode="cover"
-        />
-        
-        <View style={styles.mealHeader}>
-          <Text style={styles.mealName}>{meal.name}</Text>
-          
-          <View style={styles.mealMeta}>
-            <View style={styles.metaItem}>
-              <Clock size={16} color={colors.textSecondary} />
-              <Text style={styles.metaText}>
-                {meal.prepTime + meal.cookTime} min
-              </Text>
-            </View>
-            
-            {meal.dietaryRestrictions.length > 0 && (
-              <View style={styles.dietaryTags}>
-                {meal.dietaryRestrictions.map((restriction: string) => (
-                  <View key={restriction} style={styles.dietaryTag}>
-                    <Text style={styles.dietaryTagText}>
-                      {restriction}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            )}
-          </View>
-        </View>
-        
-        <View style={styles.macrosCard}>
-          <View style={styles.macroItem}>
-            <Text style={styles.macroValue}>{meal.calories}</Text>
-            <Text style={styles.macroLabel}>Calories</Text>
-          </View>
-          
-          <View style={styles.macroItem}>
-            <Text style={styles.macroValue}>{meal.protein}g</Text>
-            <Text style={styles.macroLabel}>Protein</Text>
-          </View>
-          
-          <View style={styles.macroItem}>
-            <Text style={styles.macroValue}>{meal.carbs}g</Text>
-            <Text style={styles.macroLabel}>Carbs</Text>
-          </View>
-          
-          <View style={styles.macroItem}>
-            <Text style={styles.macroValue}>{meal.fat}g</Text>
-            <Text style={styles.macroLabel}>Fat</Text>
-          </View>
-        </View>
-        
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Ingredients</Text>
-          <View style={styles.ingredientsCard}>
-            {meal.ingredients.map((ingredient: string, index: number) => (
-              <View key={index} style={styles.ingredientItem}>
-                <View style={styles.bulletPoint} />
-                <Text style={styles.ingredientText}>{ingredient}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-        
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Instructions</Text>
-          <View style={styles.instructionsCard}>
-            {meal.instructions.map((instruction: string, index: number) => (
-              <View key={index} style={styles.instructionItem}>
-                <View style={styles.instructionNumber}>
-                  <Text style={styles.instructionNumberText}>{index + 1}</Text>
-                </View>
-                <Text style={styles.instructionText}>{instruction}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-        
-        <View style={styles.actionsContainer}>
-          <Button
-            title="Log This Meal"
-            onPress={handleLogMeal}
-            icon={<Check size={18} color="#FFFFFF" />}
-            style={styles.logButton}
-          />
-          
-          <Button
-            title="Save Recipe"
-            onPress={() => {
-              Alert.alert("Recipe Saved", "This recipe has been saved to your favorites");
-            }}
-            icon={<Bookmark size={18} color={colors.primary} />}
-            variant="outline"
-            style={styles.saveButton}
-          />
-        </View>
-      </ScrollView>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
+        </TouchableOpacity>
+        <Text style={styles.title}>{meal.name}</Text>
+        <TouchableOpacity onPress={handleDeleteMeal} style={styles.deleteButton}>
+          <Ionicons name="trash-outline" size={24} color={colors.error} />
+        </TouchableOpacity>
+      </View>
 
-      {/* Share Modal */}
-      <Modal
-        visible={showShareModal}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowShareModal(false)}
-      >
-        <TouchableWithoutFeedback onPress={() => setShowShareModal(false)}>
-          <View style={styles.modalOverlay}>
-            <TouchableWithoutFeedback>
-              <View style={styles.modalContent}>
-                <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>Share Recipe</Text>
-                  <TouchableOpacity 
-                    onPress={() => setShowShareModal(false)}
-                    style={styles.modalCloseButton}
-                  >
-                    <X size={20} color={colors.text} />
-                  </TouchableOpacity>
-                </View>
-                
-                <Text style={styles.modalText}>
-                  Share this {meal.name} recipe with friends and family
-                </Text>
-                
-                <View style={styles.shareOptions}>
-                  <TouchableOpacity 
-                    style={styles.shareOption}
-                    onPress={() => {
-                      setShowShareModal(false);
-                      Alert.alert("Shared", "Recipe shared via WhatsApp");
-                    }}
-                  >
-                    <View style={[styles.shareIconContainer, { backgroundColor: "#25D366" }]}>
-                      <Text style={styles.shareIconText}>W</Text>
-                    </View>
-                    <Text style={styles.shareOptionText}>WhatsApp</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={styles.shareOption}
-                    onPress={() => {
-                      setShowShareModal(false);
-                      Alert.alert("Shared", "Recipe shared via Facebook");
-                    }}
-                  >
-                    <View style={[styles.shareIconContainer, { backgroundColor: "#3b5998" }]}>
-                      <Text style={styles.shareIconText}>f</Text>
-                    </View>
-                    <Text style={styles.shareOptionText}>Facebook</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={styles.shareOption}
-                    onPress={() => {
-                      setShowShareModal(false);
-                      Alert.alert("Shared", "Recipe shared via Twitter");
-                    }}
-                  >
-                    <View style={[styles.shareIconContainer, { backgroundColor: "#1DA1F2" }]}>
-                      <Text style={styles.shareIconText}>X</Text>
-                    </View>
-                    <Text style={styles.shareOptionText}>Twitter</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={styles.shareOption}
-                    onPress={() => {
-                      setShowShareModal(false);
-                      Alert.alert("Shared", "Recipe shared via Telegram");
-                    }}
-                  >
-                    <View style={[styles.shareIconContainer, { backgroundColor: "#0088cc" }]}>
-                      <Text style={styles.shareIconText}>T</Text>
-                    </View>
-                    <Text style={styles.shareOptionText}>Telegram</Text>
-                  </TouchableOpacity>
-                </View>
-                
-                <Button
-                  title="Copy Link"
-                  onPress={() => {
-                    setShowShareModal(false);
-                    Alert.alert("Link Copied", "Recipe link copied to clipboard");
-                  }}
-                  style={styles.copyLinkButton}
-                />
-              </View>
-            </TouchableWithoutFeedback>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.mealInfo}>
+          <Text style={styles.dateText}>{formatDate(meal.date)}</Text>
+          <Text style={styles.mealTypeText}>{meal.mealType}</Text>
+        </View>
+
+        <View style={styles.nutritionCard}>
+          <Text style={styles.nutritionTitle}>Total Nutrition</Text>
+          <View style={styles.nutritionGrid}>
+            <View style={styles.nutritionItem}>
+              <Text style={styles.nutritionValue}>{Math.round(totalNutrition.calories)}</Text>
+              <Text style={styles.nutritionLabel}>Calories</Text>
+            </View>
+            <View style={styles.nutritionItem}>
+              <Text style={styles.nutritionValue}>{Math.round(totalNutrition.protein)}g</Text>
+              <Text style={styles.nutritionLabel}>Protein</Text>
+            </View>
+            <View style={styles.nutritionItem}>
+              <Text style={styles.nutritionValue}>{Math.round(totalNutrition.carbs)}g</Text>
+              <Text style={styles.nutritionLabel}>Carbs</Text>
+            </View>
+            <View style={styles.nutritionItem}>
+              <Text style={styles.nutritionValue}>{Math.round(totalNutrition.fat)}g</Text>
+              <Text style={styles.nutritionLabel}>Fat</Text>
+            </View>
           </View>
-        </TouchableWithoutFeedback>
-      </Modal>
+        </View>
+
+        <View style={styles.foodItemsSection}>
+          <Text style={styles.sectionTitle}>Food Items ({meal.foodItems.length})</Text>
+          {meal.foodItems.map((foodItem) => (
+            <View key={foodItem.id} style={styles.foodItemCard}>
+              <View style={styles.foodItemHeader}>
+                <View style={styles.foodItemInfo}>
+                  <Text style={styles.foodItemName}>{foodItem.name}</Text>
+                  <Text style={styles.foodItemServing}>
+                    {foodItem.servingSize} {foodItem.servingUnit}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => handleDeleteFoodItem(foodItem)}
+                  style={styles.removeButton}
+                >
+                  <Ionicons name="close-circle" size={24} color={colors.error} />
+                </TouchableOpacity>
+              </View>
+              
+              <View style={styles.foodItemNutrition}>
+                <Text style={styles.foodItemCalories}>
+                  {Math.round(foodItem.nutrition.calories || 0)} calories
+                </Text>
+                <View style={styles.foodItemMacros}>
+                  <Text style={styles.macroText}>
+                    P: {Math.round(foodItem.nutrition.protein || 0)}g
+                  </Text>
+                  <Text style={styles.macroText}>
+                    C: {Math.round(foodItem.nutrition.carbs || 0)}g
+                  </Text>
+                  <Text style={styles.macroText}>
+                    F: {Math.round(foodItem.nutrition.fat || 0)}g
+                  </Text>
+                </View>
+              </View>
+            </View>
+          ))}
+        </View>
+
+        {meal.notes && (
+          <View style={styles.notesSection}>
+            <Text style={styles.sectionTitle}>Notes</Text>
+            <Text style={styles.notesText}>{meal.notes}</Text>
+          </View>
+        )}
+      </ScrollView>
     </View>
   );
 }
@@ -329,256 +223,168 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingBottom: 20,
+    backgroundColor: colors.background,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
   backButton: {
     padding: 8,
   },
-  shareButton: {
+  title: {
+    fontSize: 20,
+    fontFamily: fonts.weight.semibold,
+    color: colors.text,
+    flex: 1,
+    textAlign: 'center',
+  },
+  deleteButton: {
     padding: 8,
   },
   content: {
     flex: 1,
+    paddingHorizontal: 20,
   },
-  mealImage: {
-    width: "100%",
-    height: 250,
+  mealInfo: {
+    marginTop: 20,
+    marginBottom: 20,
   },
-  mealHeader: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  mealName: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: colors.text,
-    marginBottom: 8,
-  },
-  mealMeta: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    alignItems: "center",
-  },
-  metaItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginRight: 16,
-    marginBottom: 8,
-  },
-  metaText: {
-    fontSize: 14,
+  dateText: {
+    fontSize: 16,
+    fontFamily: fonts.medium,
     color: colors.textSecondary,
-    marginLeft: 4,
-  },
-  dietaryTags: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-  },
-  dietaryTag: {
-    backgroundColor: "rgba(74, 144, 226, 0.1)",
-    borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    marginRight: 4,
     marginBottom: 4,
   },
-  dietaryTagText: {
-    fontSize: 12,
-    color: colors.primary,
-  },
-  macrosCard: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    backgroundColor: colors.card,
-    padding: 16,
-    margin: 16,
-    borderRadius: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  macroItem: {
-    alignItems: "center",
-  },
-  macroValue: {
+  mealTypeText: {
     fontSize: 18,
-    fontWeight: "700",
+    fontFamily: fonts.weight.semibold,
     color: colors.text,
-    marginBottom: 4,
   },
-  macroLabel: {
-    fontSize: 14,
-    color: colors.textSecondary,
-  },
-  section: {
-    padding: 16,
-    paddingTop: 0,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: colors.text,
-    marginBottom: 12,
-  },
-  ingredientsCard: {
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  ingredientItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  bulletPoint: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.primary,
-    marginRight: 12,
-  },
-  ingredientText: {
-    fontSize: 16,
-    color: colors.text,
-    flex: 1,
-  },
-  instructionsCard: {
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  instructionItem: {
-    flexDirection: "row",
-    marginBottom: 16,
-  },
-  instructionNumber: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: colors.primary,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-  },
-  instructionNumberText: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#FFFFFF",
-  },
-  instructionText: {
-    fontSize: 16,
-    color: colors.text,
-    flex: 1,
-    lineHeight: 24,
-  },
-  actionsContainer: {
-    padding: 16,
-    flexDirection: "row",
-    marginBottom: 24,
-  },
-  logButton: {
-    flex: 1,
-    marginRight: 8,
-  },
-  saveButton: {
-    flex: 1,
-    marginLeft: 8,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 24,
-  },
-  errorText: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: colors.text,
-    marginBottom: 16,
-  },
-  backToMealsButton: {
-    backgroundColor: colors.primary,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-  },
-  backToMealsText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "500",
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContent: {
+  nutritionCard: {
     backgroundColor: colors.card,
     borderRadius: 16,
     padding: 20,
-    width: "85%",
-    maxWidth: 400,
+    marginBottom: 24,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+  nutritionTitle: {
+    fontSize: 18,
+    fontFamily: fonts.weight.semibold,
+    color: colors.text,
     marginBottom: 16,
   },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: colors.text,
+  nutritionGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
-  modalCloseButton: {
+  nutritionItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  nutritionValue: {
+    fontSize: 20,
+    fontFamily: fonts.bold,
+    color: colors.primary,
+    marginBottom: 4,
+  },
+  nutritionLabel: {
+    fontSize: 12,
+    fontFamily: fonts.medium,
+    color: colors.textSecondary,
+  },
+  foodItemsSection: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontFamily: fonts.weight.semibold,
+    color: colors.text,
+    marginBottom: 16,
+  },
+  foodItemCard: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  foodItemHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  foodItemInfo: {
+    flex: 1,
+  },
+  foodItemName: {
+    fontSize: 16,
+    fontFamily: fonts.weight.semibold,
+    color: colors.text,
+    marginBottom: 4,
+  },
+  foodItemServing: {
+    fontSize: 14,
+    fontFamily: fonts.medium,
+    color: colors.textSecondary,
+  },
+  removeButton: {
     padding: 4,
   },
-  modalText: {
-    fontSize: 16,
-    color: colors.textSecondary,
-    marginBottom: 20,
+  foodItemNutrition: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  shareOptions: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    marginBottom: 20,
-  },
-  shareOption: {
-    width: "48%",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  shareIconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  shareIconText: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-  },
-  shareOptionText: {
+  foodItemCalories: {
     fontSize: 14,
-    color: colors.text,
+    fontFamily: fonts.medium,
+    color: colors.primary,
   },
-  copyLinkButton: {
-    width: "100%",
+  foodItemMacros: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  macroText: {
+    fontSize: 12,
+    fontFamily: fonts.medium,
+    color: colors.textSecondary,
+  },
+  notesSection: {
+    marginBottom: 24,
+  },
+  notesText: {
+    fontSize: 14,
+    fontFamily: fonts.regular,
+    color: colors.text,
+    lineHeight: 20,
+  },
+  loadingText: {
+    fontSize: 16,
+    fontFamily: fonts.medium,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 100,
+  },
+  errorText: {
+    fontSize: 16,
+    fontFamily: fonts.medium,
+    color: colors.error,
+    textAlign: 'center',
+    marginTop: 100,
   },
 });

@@ -52,9 +52,8 @@ export interface WorkoutAnalysis {
 
 export interface ChatMessage {
   id: string;
-  role: "user" | "assistant" | "system";
   content: string;
-  timestamp: string;
+  role: 'user' | 'assistant';
 }
 
 export interface AiChat {
@@ -72,6 +71,8 @@ interface AiState {
   userMood: UserMood | null;
   userName: string;
   chats: AiChat[];
+  messages: ChatMessage[];
+  isLoading: boolean;
   
   // Actions
   addGoal: (goal: Goal) => void;
@@ -107,6 +108,9 @@ interface AiState {
   addChat: (chat: AiChat) => void;
   deleteChat: (chatId: string) => void;
   addMessageToChat: (chatId: string, message: Omit<ChatMessage, "id" | "timestamp">) => void;
+  addMessage: (message: ChatMessage) => void;
+  setLoading: (loading: boolean) => void;
+  clearMessages: () => void;
 }
 
 // Helper function to clean markdown formatting from text
@@ -128,6 +132,8 @@ export const useAiStore = create<AiState>()(
       userMood: null,
       userName: "",
       chats: [],
+      messages: [],
+      isLoading: false,
       
       addGoal: (goal) => set((state) => ({
         goals: [...state.goals, goal]
@@ -869,7 +875,11 @@ export const useAiStore = create<AiState>()(
             return chat;
           })
         }));
-      }
+      },
+      addMessage: (message) =>
+        set((state) => ({ messages: [...state.messages, message] })),
+      setLoading: (loading) => set({ isLoading: loading }),
+      clearMessages: () => set({ messages: [] }),
     }),
     {
       name: "ai-storage",

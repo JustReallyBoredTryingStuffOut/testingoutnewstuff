@@ -28,14 +28,12 @@ export type FoodPhoto = {
   isAnalyzed: boolean;
 };
 
-export type ProgressPhoto = {
+export interface ProgressPhoto {
   id: string;
   uri: string;
   date: string;
-  weight: number;
-  notes: string;
-  category: "front" | "side" | "back" | "other";
-};
+  notes?: string;
+}
 
 export type MediaType = {
   id: string;
