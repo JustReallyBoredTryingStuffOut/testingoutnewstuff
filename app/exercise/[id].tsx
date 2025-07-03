@@ -101,9 +101,9 @@ export default function ExerciseDetailScreen() {
           </TouchableOpacity>
         </View>
         <View style={styles.tags}>
-          {exercise.muscleGroups.map((muscle, index) => (
+          {(Array.isArray(exercise.muscleGroups) ? exercise.muscleGroups : [exercise.muscleGroups]).map((muscle, index) => (
             <View key={index} style={styles.tag}>
-              <Text style={styles.tagText}>{muscle.name}</Text>
+              <Text style={styles.tagText}>{typeof muscle === 'string' ? muscle : muscle.name || muscle}</Text>
             </View>
           ))}
         </View>
@@ -416,9 +416,11 @@ export default function ExerciseDetailScreen() {
                         Muscle Groups
                       </Text>
                       <View style={styles.aboutDetailTags}>
-                        {exercise.muscleGroups.map(group => (
-                          <View key={group.name} style={[styles.aboutDetailTag, { backgroundColor: "rgba(52, 152, 219, 0.1)" }]}>
-                            <Text style={[styles.aboutDetailTagText, { color: "#3498db" }]}>{group.name}</Text>
+                        {(Array.isArray(exercise.muscleGroups) ? exercise.muscleGroups : [exercise.muscleGroups]).map((group, idx) => (
+                          <View key={idx} style={[styles.aboutDetailTag, { backgroundColor: "rgba(52, 152, 219, 0.1)" }]}>
+                            <Text style={[styles.aboutDetailTagText, { color: "#3498db" }]}>
+                              {typeof group === 'string' ? group : group.name || group}
+                            </Text>
                           </View>
                         ))}
                       </View>
