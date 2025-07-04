@@ -5,6 +5,7 @@ import { Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { secureStore, generateEncryptionKey, storeEncryptionKey, getEncryptionVersion } from "@/utils/encryption";
 import * as Crypto from 'expo-crypto';
+import * as Random from 'expo-random';
 import * as FileSystem from 'expo-file-system';
 import { cleanupTempDecryptedFiles, deleteAllEncryptedPhotos } from "@/utils/fileEncryption";
 import { secureDeleteFile, secureWipeAllUserData } from "@/utils/secureDelete";
@@ -105,10 +106,16 @@ export const useSecureStore = create<SecureStoreState>()(
               );
             } else {
               // For native, generate a random ID
-              const randomBytes = await Crypto.getRandomBytesAsync(32);
-              deviceId = Array.from(randomBytes)
-                .map(b => b.toString(16).padStart(2, '0'))
-                .join('');
+              try {
+                const randomBytes = await Random.getRandomBytesAsync(32);
+                deviceId = Array.from(randomBytes)
+                  .map(b => b.toString(16).padStart(2, '0'))
+                  .join('');
+              } catch (error) {
+                console.warn('Error generating random device ID:', error);
+                // Fallback to timestamp-based ID
+                deviceId = 'device-' + Date.now().toString(36) + Math.random().toString(36).substring(2, 10);
+              }
             }
             
             await secureStore.setItem('device-id', deviceId);
@@ -260,21 +267,27 @@ export const useSecureStore = create<SecureStoreState>()(
               
               if (currentValue) {
                 // Generate random data of similar length
-                const randomBytes = await Crypto.getRandomBytesAsync(
-                  Math.max(currentValue.length, 32)
-                );
-                const randomData = Array.from(randomBytes)
-                  .map(b => String.fromCharCode(b % 94 + 32)) // Printable ASCII
-                  .join('');
-                
-                // Overwrite with random data
-                await SecureStore.setItemAsync(key, randomData);
-                
-                // Overwrite again with zeros
-                await SecureStore.setItemAsync(key, '0'.repeat(randomData.length));
-                
-                // Finally delete
-                await SecureStore.deleteItemAsync(key);
+                try {
+                  const randomBytes = await Random.getRandomBytesAsync(
+                    Math.max(currentValue.length, 32)
+                  );
+                  const randomData = Array.from(randomBytes)
+                    .map(b => String.fromCharCode(b % 94 + 32)) // Printable ASCII
+                    .join('');
+                  
+                  // Overwrite with random data
+                  await SecureStore.setItemAsync(key, randomData);
+                  
+                  // Overwrite again with zeros
+                  await SecureStore.setItemAsync(key, '0'.repeat(randomData.length));
+                  
+                  // Finally delete
+                  await SecureStore.deleteItemAsync(key);
+                } catch (error) {
+                  console.warn(`Error generating random data for key ${key}:`, error);
+                  // Fallback to simple deletion
+                  await SecureStore.deleteItemAsync(key);
+                }
               }
             } catch (keyError) {
               console.warn(`Error securely wiping key ${key}:`, keyError);

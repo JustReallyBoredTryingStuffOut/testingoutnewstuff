@@ -39,12 +39,12 @@ if (Platform.OS !== 'web') {
 const generateSecureFilename = async (sourceUri: string, baseFileName: string): Promise<string> => {
   try {
     // For local files, hash the content for a unique filename
-    if (sourceUri.startsWith('file://') || sourceUri.startsWith(FileSystem.documentDirectory)) {
+    if (sourceUri.startsWith('file://') || (FileSystem.documentDirectory && sourceUri.startsWith(FileSystem.documentDirectory))) {
       // Read a small portion of the file to create a hash
       // This avoids loading the entire file into memory
       const fileInfo = await FileSystem.getInfoAsync(sourceUri);
       
-      if (fileInfo.exists && fileInfo.size > 0) {
+      if (fileInfo.exists && fileInfo.size && fileInfo.size > 0) {
         // Read the first 4KB of the file
         const headerBytes = await FileSystem.readAsStringAsync(sourceUri, {
           encoding: FileSystem.EncodingType.Base64,
@@ -72,12 +72,18 @@ const generateSecureFilename = async (sourceUri: string, baseFileName: string): 
   }
   
   // Fallback to timestamp-based filename with random component
-  const randomBytes = await Random.getRandomBytesAsync(8);
-  const randomValue = Array.from(randomBytes)
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
-  
-  return `${baseFileName.split('.')[0]}_${Date.now()}_${randomValue}.enc`;
+  try {
+    const randomBytes = await Random.getRandomBytesAsync(8);
+    const randomValue = Array.from(randomBytes)
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+    
+    return `${baseFileName.split('.')[0]}_${Date.now()}_${randomValue}.enc`;
+  } catch (error) {
+    console.warn('Error generating random bytes for filename:', error);
+    // Use timestamp only as fallback
+    return `${baseFileName.split('.')[0]}_${Date.now()}.enc`;
+  }
 };
 
 // Encrypt and save a photo file
@@ -271,10 +277,10 @@ export const deleteEncryptedPhoto = async (uri: string): Promise<void> => {
           file.includes(baseFileName) || file.includes(uri.substring(uri.length - 20))
         );
         
-        // Delete any related temp files
-        for (const tempFile of relatedTempFiles) {
-          await secureDeleteFile(`${TEMP_DECRYPTED_DIR}${tempFile}`, 1);
-        }
+                  // Delete any related temp files
+          for (const tempFile of relatedTempFiles) {
+            await secureDeleteFile(`${TEMP_DECRYPTED_DIR}${tempFile}`);
+          }
       } catch (tempError) {
         // Ignore errors with temp cleanup
         console.warn('Error cleaning up temp files:', tempError);
@@ -321,8 +327,8 @@ export const getEncryptedPhotoInfo = async (uri: string): Promise<{
     }
     
     return {
-      size: fileInfo.size,
-      modificationTime: fileInfo.modificationTime,
+      size: fileInfo.exists ? fileInfo.size : 0,
+      modificationTime: fileInfo.exists ? fileInfo.modificationTime : undefined,
       exists: fileInfo.exists,
       metadata
     };
@@ -342,10 +348,10 @@ export const cleanupTempDecryptedFiles = async (): Promise<void> => {
       // Get all files in the temp directory
       const tempFiles = await FileSystem.readDirectoryAsync(TEMP_DECRYPTED_DIR);
       
-      // Delete each file
-      for (const file of tempFiles) {
-        await secureDeleteFile(`${TEMP_DECRYPTED_DIR}${file}`, 1);
-      }
+              // Delete each file
+        for (const file of tempFiles) {
+          await secureDeleteFile(`${TEMP_DECRYPTED_DIR}${file}`);
+        }
       
       console.log(`Cleaned up ${tempFiles.length} temporary decrypted files`);
     }
@@ -472,7 +478,7 @@ export const reEncryptFile = async (uri: string): Promise<string | null> => {
     await deleteEncryptedPhoto(uri);
     
     // Delete the temporary decrypted file
-    await secureDeleteFile(decryptedUri, 1);
+    await secureDeleteFile(decryptedUri);
     
     return newUri;
   } catch (error) {
@@ -481,24 +487,15 @@ export const reEncryptFile = async (uri: string): Promise<string | null> => {
   }
 };
 
+// Legacy functions for backward compatibility
 export const encryptFile = async (
   sourceUri: string, 
   destinationUri: string, 
   key: string
 ): Promise<boolean> => {
   try {
-    // Read the file
-    const fileContent = await FileSystem.readAsStringAsync(sourceUri, {
-      encoding: FileSystem.EncodingType.Base64
-    });
-
-    // Encrypt the content
-    const encryptedContent = await encryptData(fileContent, key);
-
-    // Write the encrypted content
-    await FileSystem.writeAsStringAsync(destinationUri, encryptedContent);
-
-    return true;
+    const encryptedUri = await encryptAndSavePhoto(sourceUri, destinationUri.split('/').pop() || 'encrypted.jpg');
+    return encryptedUri !== sourceUri;
   } catch (error) {
     console.error('Error encrypting file:', error);
     return false;
@@ -511,18 +508,16 @@ export const decryptFile = async (
   key: string
 ): Promise<boolean> => {
   try {
-    // Read the encrypted file
-    const encryptedContent = await FileSystem.readAsStringAsync(sourceUri);
-
-    // Decrypt the content
-    const decryptedContent = await decryptData(encryptedContent, key);
-
-    // Write the decrypted content
-    await FileSystem.writeAsStringAsync(destinationUri, decryptedContent, {
-      encoding: FileSystem.EncodingType.Base64
-    });
-
-    return true;
+    const decryptedUri = await decryptPhoto(sourceUri);
+    if (decryptedUri !== sourceUri) {
+      // Copy the decrypted file to the destination
+      await FileSystem.copyAsync({
+        from: decryptedUri,
+        to: destinationUri
+      });
+      return true;
+    }
+    return false;
   } catch (error) {
     console.error('Error decrypting file:', error);
     return false;
@@ -530,14 +525,5 @@ export const decryptFile = async (
 };
 
 export const isFileEncrypted = async (fileUri: string): Promise<boolean> => {
-  try {
-    const content = await FileSystem.readAsStringAsync(fileUri, {
-      length: 100 // Only read first 100 characters
-    });
-    
-    // Check if the content looks like encrypted data (hex string)
-    return /^[0-9a-f]+$/i.test(content);
-  } catch (error) {
-    return false;
-  }
+  return isEncryptedFile(fileUri);
 };

@@ -164,18 +164,16 @@ export const useAiStore = create<AiState>()(
       }),
       
       shouldShowGoalPrompt: () => {
-        const { lastPromptDate } = get();
+        const { lastPromptDate, goals } = get();
         
+        // If no previous prompt, show it (new user)
         if (!lastPromptDate) return true;
+        
+        // If user has no goals yet, show prompt regardless of day
+        if (!goals || goals.length === 0) return true;
         
         const lastPrompt = new Date(lastPromptDate);
         const now = new Date();
-        
-        // Check if it's the beginning of the week (Monday)
-        const isMonday = now.getDay() === 1;
-        
-        // Check if it's the beginning of the month (1st)
-        const isFirstOfMonth = now.getDate() === 1;
         
         // Check if it's been at least 7 days since the last prompt for weekly goals
         const diffTime = Math.abs(now.getTime() - lastPrompt.getTime());
@@ -184,6 +182,10 @@ export const useAiStore = create<AiState>()(
         
         // Check if it's been at least 30 days since the last prompt for monthly goals
         const isMonthlyInterval = diffDays >= 30;
+        
+        // Check if it's the beginning of the week (Monday) or month (1st)
+        const isMonday = now.getDay() === 1;
+        const isFirstOfMonth = now.getDate() === 1;
         
         // Show prompt if:
         // 1. It's Monday and it's been at least 7 days since the last prompt, or

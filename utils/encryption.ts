@@ -18,8 +18,29 @@ const ENCRYPTION_VERSION = 2; // Current encryption version
 
 // Generate a secure random encryption key
 export const generateEncryptionKey = async (): Promise<string> => {
-  const randomBytes = await Crypto.getRandomBytesAsync(32);
-  return Array.from(randomBytes, byte => byte.toString(16).padStart(2, '0')).join('');
+  try {
+    // Generate a cryptographically secure random key
+    const randomBytesBuffer = await Random.getRandomBytesAsync(32); // 256 bits
+    return bufferToBase64(randomBytesBuffer);
+  } catch (error) {
+    console.error('Error generating encryption key:', error);
+    // Fallback to a less secure but functional method
+    console.warn('Using fallback random key generation');
+    
+    if (Platform.OS === 'web' && window.crypto && window.crypto.getRandomValues) {
+      const array = new Uint8Array(32);
+      window.crypto.getRandomValues(array);
+      return bufferToBase64(array);
+    }
+    
+    // Last resort fallback - use a more robust random generation
+    const fallbackKey = 'secure-key-' + 
+      Math.random().toString(36).substring(2, 15) + 
+      Math.random().toString(36).substring(2, 15) +
+      Date.now().toString(36);
+    
+    return fallbackKey;
+  }
 };
 
 // Store the encryption key securely
@@ -120,7 +141,7 @@ const generateSalt = async (): Promise<Uint8Array> => {
   try {
     return await Random.getRandomBytesAsync(SALT_LENGTH);
   } catch (error) {
-    console.warn('Using fallback salt generation');
+    console.warn('Using fallback salt generation:', error);
     
     if (Platform.OS === 'web' && window.crypto && window.crypto.getRandomValues) {
       const salt = new Uint8Array(SALT_LENGTH);
@@ -142,7 +163,7 @@ const generateIV = async (): Promise<Uint8Array> => {
   try {
     return await Random.getRandomBytesAsync(IV_LENGTH);
   } catch (error) {
-    console.warn('Using fallback IV generation');
+    console.warn('Using fallback IV generation:', error);
     
     if (Platform.OS === 'web' && window.crypto && window.crypto.getRandomValues) {
       const iv = new Uint8Array(IV_LENGTH);
@@ -202,37 +223,271 @@ const deriveKey = async (masterKey: string, salt: Uint8Array): Promise<CryptoKey
 };
 
 // Encrypt data using AES-GCM when available, with fallback for older platforms
-export const encryptData = async (data: string, key: string): Promise<string> => {
-  // Simple XOR encryption for demo purposes
-  // In production, use a proper encryption library
-  const keyBytes = key.split('').map(char => char.charCodeAt(0));
-  const dataBytes = data.split('').map(char => char.charCodeAt(0));
+export const encryptData = async (data: string): Promise<string> => {
+  let masterKey = await getEncryptionKey();
   
-  const encrypted = dataBytes.map((byte, index) => 
-    byte ^ keyBytes[index % keyBytes.length]
-  );
+  if (!masterKey) {
+    // Generate a new key if none exists
+    masterKey = await generateEncryptionKey();
+    await storeEncryptionKey(masterKey);
+  }
   
-  return encrypted.map(byte => byte.toString(16).padStart(2, '0')).join('');
+  // Generate salt and IV
+  const salt = await generateSalt();
+  const iv = await generateIV();
+  
+  // Web implementation using Web Crypto API
+  if (Platform.OS === 'web' && window.crypto && window.crypto.subtle) {
+    try {
+      const derivedKey = await deriveKey(masterKey, salt);
+      
+      if (typeof derivedKey !== 'string') {
+        const encoder = new TextEncoder();
+        const dataBuffer = encoder.encode(data);
+        
+        const encryptedBuffer = await window.crypto.subtle.encrypt(
+          {
+            name: ALGORITHM,
+            iv: iv,
+            tagLength: TAG_LENGTH
+          },
+          derivedKey,
+          dataBuffer
+        );
+        
+        // Format: version + '.' + base64(salt) + '.' + base64(iv) + '.' + base64(encryptedData)
+        return ENCRYPTION_VERSION + '.' + 
+               bufferToBase64(salt) + '.' + 
+               bufferToBase64(iv) + '.' + 
+               bufferToBase64(encryptedBuffer);
+      }
+    } catch (error) {
+      console.error('Web Crypto encryption failed:', error);
+      // Fall back to simpler encryption
+    }
+  }
+  
+  // React Native implementation or fallback for web
+  try {
+    // Derive a key using PBKDF2 (simplified version)
+    const derivedKey = await deriveKey(masterKey, salt);
+    
+    if (typeof derivedKey === 'string') {
+      // Use the derived key hash with a simple encryption algorithm
+      // This is a simplified version - in production, use a native crypto module
+      const encryptedData = await simpleAesEncrypt(data, derivedKey, iv);
+      
+      // Format: version + '.' + base64(salt) + '.' + base64(iv) + '.' + base64(encryptedData)
+      return ENCRYPTION_VERSION + '.' + 
+             bufferToBase64(salt) + '.' + 
+             bufferToBase64(iv) + '.' + 
+             encryptedData;
+    }
+  } catch (error) {
+    console.error('Native encryption failed:', error);
+  }
+  
+  // Last resort fallback to very simple encryption
+  // This should almost never be used in production
+  console.warn('Using last resort encryption fallback - NOT SECURE FOR PRODUCTION');
+  return 'fallback.' + ENCRYPTION_VERSION + '.' + 
+         bufferToBase64(salt) + '.' + 
+         bufferToBase64(iv) + '.' + 
+         btoa(simpleEncrypt(data, masterKey));
 };
 
 // Decrypt data
-export const decryptData = async (encryptedData: string, key: string): Promise<string> => {
-  // Simple XOR decryption for demo purposes
-  const keyBytes = key.split('').map(char => char.charCodeAt(0));
-  const encryptedBytes = encryptedData.match(/.{1,2}/g)?.map(hex => parseInt(hex, 16)) || [];
+export const decryptData = async (encryptedData: string): Promise<string | null> => {
+  const masterKey = await getEncryptionKey();
   
-  const decrypted = encryptedBytes.map((byte, index) => 
-    byte ^ keyBytes[index % keyBytes.length]
+  if (!masterKey) {
+    console.error('No encryption key found');
+    return null;
+  }
+  
+  // Split the encrypted data into its components
+  const parts = encryptedData.split('.');
+  
+  // Check if this is our fallback format
+  if (parts[0] === 'fallback' && parts.length === 5) {
+    const salt = base64ToBuffer(parts[2]);
+    // We don't use IV in the fallback decryption
+    const encryptedText = atob(parts[4]);
+    return simpleEncrypt(encryptedText, masterKey); // XOR is its own inverse
+  }
+  
+  // Standard format: version + '.' + base64(salt) + '.' + base64(iv) + '.' + base64(encryptedData)
+  if (parts.length !== 4) {
+    console.error('Invalid encrypted data format');
+    return null;
+  }
+  
+  const version = parseInt(parts[0], 10);
+  const salt = base64ToBuffer(parts[1]);
+  const iv = base64ToBuffer(parts[2]);
+  const encryptedContent = parts[3];
+  
+  // Web implementation using Web Crypto API
+  if (Platform.OS === 'web' && window.crypto && window.crypto.subtle) {
+    try {
+      const derivedKey = await deriveKey(masterKey, salt);
+      
+      if (typeof derivedKey !== 'string') {
+        const encryptedBuffer = base64ToBuffer(encryptedContent);
+        
+        const decryptedBuffer = await window.crypto.subtle.decrypt(
+          {
+            name: ALGORITHM,
+            iv: iv,
+            tagLength: TAG_LENGTH
+          },
+          derivedKey,
+          encryptedBuffer
+        );
+        
+        const decoder = new TextDecoder();
+        return decoder.decode(decryptedBuffer);
+      }
+    } catch (error) {
+      console.error('Web Crypto decryption failed:', error);
+      // Fall back to simpler decryption
+    }
+  }
+  
+  // React Native implementation or fallback for web
+  try {
+    // Derive a key using PBKDF2 (simplified version)
+    const derivedKey = await deriveKey(masterKey, salt);
+    
+    if (typeof derivedKey === 'string') {
+      // Use the derived key hash with a simple decryption algorithm
+      return await simpleAesDecrypt(encryptedContent, derivedKey, iv);
+    }
+  } catch (error) {
+    console.error('Native decryption failed:', error);
+  }
+  
+  // If all else fails, return null
+  console.error('All decryption methods failed');
+  return null;
+};
+
+// Simple XOR encryption/decryption as absolute last resort
+// Note: This is NOT secure and should not be used in production
+const simpleEncrypt = (data: string, key: string): string => {
+  let result = '';
+  for (let i = 0; i < data.length; i++) {
+    const charCode = data.charCodeAt(i) ^ key.charCodeAt(i % key.length);
+    result += String.fromCharCode(charCode);
+  }
+  return result;
+};
+
+// Simplified AES encryption implementation
+// In production, use a native crypto module or library
+const simpleAesEncrypt = async (
+  data: string, 
+  key: string, 
+  iv: Uint8Array
+): Promise<string> => {
+  // This is a placeholder for a real AES implementation
+  // In a real app, you would use a native crypto module or library
+  
+  // For this example, we'll use a hash-based approach with the IV
+  const combinedKey = await Crypto.digestStringAsync(
+    Crypto.CryptoDigestAlgorithm.SHA256,
+    key + bufferToBase64(iv)
   );
   
-  return decrypted.map(byte => String.fromCharCode(byte)).join('');
+  // Create blocks and encrypt each block
+  const blockSize = 16; // AES block size
+  const blocks = [];
+  
+  for (let i = 0; i < data.length; i += blockSize) {
+    const block = data.substring(i, i + blockSize).padEnd(blockSize, '\0');
+    const encryptedBlock = simpleBlockEncrypt(block, combinedKey, i / blockSize);
+    blocks.push(encryptedBlock);
+  }
+  
+  return btoa(blocks.join(''));
+};
+
+// Simplified AES decryption implementation
+const simpleAesDecrypt = async (
+  encryptedData: string, 
+  key: string, 
+  iv: Uint8Array
+): Promise<string> => {
+  // This is a placeholder for a real AES implementation
+  
+  // For this example, we'll use a hash-based approach with the IV
+  const combinedKey = await Crypto.digestStringAsync(
+    Crypto.CryptoDigestAlgorithm.SHA256,
+    key + bufferToBase64(iv)
+  );
+  
+  try {
+    const encryptedText = atob(encryptedData);
+    const blockSize = 16; // AES block size
+    const blocks = [];
+    
+    for (let i = 0; i < encryptedText.length; i += blockSize) {
+      const block = encryptedText.substring(i, i + blockSize);
+      const decryptedBlock = simpleBlockEncrypt(block, combinedKey, i / blockSize);
+      blocks.push(decryptedBlock);
+    }
+    
+    // Remove padding
+    let result = blocks.join('');
+    const lastChar = result.charCodeAt(result.length - 1);
+    
+    if (lastChar < blockSize) {
+      // Check if the last character is a valid padding value
+      const paddingLength = lastChar;
+      let isPadding = true;
+      
+      for (let i = result.length - paddingLength; i < result.length; i++) {
+        if (result.charCodeAt(i) !== paddingLength) {
+          isPadding = false;
+          break;
+        }
+      }
+      
+      if (isPadding) {
+        result = result.substring(0, result.length - paddingLength);
+      }
+    }
+    
+    return result.replace(/\0+$/, ''); // Remove null padding
+  } catch (error) {
+    console.error('Error in AES decryption:', error);
+    return '';
+  }
+};
+
+// Simple block encryption (for the simplified AES implementation)
+const simpleBlockEncrypt = (block: string, key: string, blockIndex: number): string => {
+  // In a real implementation, this would be actual AES
+  // This is just a placeholder that mimics some aspects of block cipher behavior
+  
+  // Use the key and block index to create a unique key for this block
+  const blockKey = key.split('').map((char, index) => {
+    return String.fromCharCode(
+      char.charCodeAt(0) ^ 
+      (blockIndex & 0xFF) ^ 
+      index
+    );
+  }).join('');
+  
+  // XOR the block with the block key
+  return simpleEncrypt(block, blockKey);
 };
 
 // Helper to securely store sensitive data
 export const secureStore = {
   setItem: async (key: string, value: string): Promise<void> => {
     if (Platform.OS === 'web') {
-      const encrypted = await encryptData(value, key);
+      const encrypted = await encryptData(value);
       await AsyncStorage.setItem(key, encrypted);
     } else {
       await SecureStore.setItemAsync(key, value);
@@ -243,7 +498,7 @@ export const secureStore = {
     if (Platform.OS === 'web') {
       const encrypted = await AsyncStorage.getItem(key);
       if (!encrypted) return null;
-      return decryptData(encrypted, key);
+      return decryptData(encrypted);
     } else {
       return SecureStore.getItemAsync(key);
     }

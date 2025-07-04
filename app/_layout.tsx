@@ -6,10 +6,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useGamificationStore } from '@/store/gamificationStore';
 import { useMacroStore } from '@/store/macroStore';
 import { useWorkoutStore } from '@/store/workoutStore';
-import { Zap, Award, Trophy, X, User, Weight, Ruler, Calendar, Activity, ArrowRight, ChevronRight, Brain, Sparkles, Heart, AlertTriangle, Check } from 'lucide-react-native';
+import { Zap, Award, Trophy, X, User, Weight, Ruler, Calendar, Activity, ArrowRight, ChevronRight, Brain, Sparkles, Heart, AlertTriangle, Check, ArrowLeft } from 'lucide-react-native';
 import { colors } from '@/constants/colors';
 import { Picker } from '@react-native-picker/picker';
 import Button from '@/components/Button';
+import { LinearGradient } from 'expo-linear-gradient';
 
 // App name
 export const APP_NAME = "FitQuest";
@@ -56,6 +57,13 @@ export default function RootLayout() {
   const loadingBarWidth = useRef(new Animated.Value(0)).current;
   const welcomeFadeIn = useRef(new Animated.Value(0)).current;
   const progressAnim = useRef(new Animated.Value(0)).current;
+  
+  // Custom scrollbar state for health disclaimer
+  const [scrollY, setScrollY] = useState(0);
+  const [contentHeight, setContentHeight] = useState(1);
+  const [containerHeight, setContainerHeight] = useState(1);
+  const scrollViewRef = useRef(null);
+  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
   
   // Check if it's the first launch
   useEffect(() => {
@@ -485,7 +493,7 @@ export default function RootLayout() {
       description: "Let us know your current activity level and goals so we can tailor your experience.",
       icon: <Activity size={80} color={colors.primary} />,
       content: (
-        <ScrollView style={styles.formContainer}>
+        <View style={styles.formContainer}>
           <Text style={styles.formLabel}>Gender (Optional)</Text>
           <View style={styles.pickerContainer}>
             <Picker
@@ -495,13 +503,13 @@ export default function RootLayout() {
               dropdownIconColor="#FFFFFF"
               itemStyle={Platform.OS === 'ios' ? styles.pickerItemIOS : undefined}
             >
-              <Picker.Item label="Male" value="male" color={Platform.OS === 'android' ? '#FFFFFF' : '#333333'} />
-              <Picker.Item label="Female" value="female" color={Platform.OS === 'android' ? '#FFFFFF' : '#333333'} />
-              <Picker.Item label="Other" value="other" color={Platform.OS === 'android' ? '#FFFFFF' : '#333333'} />
-              <Picker.Item label="Prefer not to say" value="prefer-not-to-say" color={Platform.OS === 'android' ? '#FFFFFF' : '#333333'} />
+              <Picker.Item label="Male" value="male" color="#FFFFFF" />
+              <Picker.Item label="Female" value="female" color="#FFFFFF" />
+              <Picker.Item label="Other" value="other" color="#FFFFFF" />
+              <Picker.Item label="Prefer not to say" value="prefer-not-to-say" color="#FFFFFF" />
             </Picker>
           </View>
-          
+
           <Text style={styles.formLabel}>Activity Level</Text>
           <View style={styles.pickerContainer}>
             <Picker
@@ -511,14 +519,14 @@ export default function RootLayout() {
               dropdownIconColor="#FFFFFF"
               itemStyle={Platform.OS === 'ios' ? styles.pickerItemIOS : undefined}
             >
-              <Picker.Item label="Sedentary (little or no exercise)" value="sedentary" color={Platform.OS === 'android' ? '#FFFFFF' : '#333333'} />
-              <Picker.Item label="Lightly active (1-3 days/week)" value="light" color={Platform.OS === 'android' ? '#FFFFFF' : '#333333'} />
-              <Picker.Item label="Moderately active (3-5 days/week)" value="moderate" color={Platform.OS === 'android' ? '#FFFFFF' : '#333333'} />
-              <Picker.Item label="Very active (6-7 days/week)" value="active" color={Platform.OS === 'android' ? '#FFFFFF' : '#333333'} />
-              <Picker.Item label="Extra active (very hard exercise & physical job)" value="very_active" color={Platform.OS === 'android' ? '#FFFFFF' : '#333333'} />
+              <Picker.Item label="Sedentary (Little or no exercise)" value="sedentary" color="#FFFFFF" />
+              <Picker.Item label="Lightly active (1-3 days/week)" value="light" color="#FFFFFF" />
+              <Picker.Item label="Moderately active (3-5 days/week)" value="moderate" color="#FFFFFF" />
+              <Picker.Item label="Very active (6-7 days/week)" value="active" color="#FFFFFF" />
+              <Picker.Item label="Extra active (Very hard exercise & physical job)" value="very_active" color="#FFFFFF" />
             </Picker>
           </View>
-          
+
           <Text style={styles.formLabel}>Fitness Goal</Text>
           <View style={styles.pickerContainer}>
             <Picker
@@ -528,12 +536,12 @@ export default function RootLayout() {
               dropdownIconColor="#FFFFFF"
               itemStyle={Platform.OS === 'ios' ? styles.pickerItemIOS : undefined}
             >
-              <Picker.Item label="Lose Weight" value="lose" color={Platform.OS === 'android' ? '#FFFFFF' : '#333333'} />
-              <Picker.Item label="Maintain Weight" value="maintain" color={Platform.OS === 'android' ? '#FFFFFF' : '#333333'} />
-              <Picker.Item label="Gain Muscle" value="gain" color={Platform.OS === 'android' ? '#FFFFFF' : '#333333'} />
+              <Picker.Item label="Lose Weight" value="lose" color="#FFFFFF" />
+              <Picker.Item label="Maintain Weight" value="maintain" color="#FFFFFF" />
+              <Picker.Item label="Gain Muscle" value="gain" color="#FFFFFF" />
             </Picker>
           </View>
-          
+
           <Text style={styles.formLabel}>Fitness Level</Text>
           <View style={styles.pickerContainer}>
             <Picker
@@ -543,12 +551,12 @@ export default function RootLayout() {
               dropdownIconColor="#FFFFFF"
               itemStyle={Platform.OS === 'ios' ? styles.pickerItemIOS : undefined}
             >
-              <Picker.Item label="Beginner" value="beginner" color={Platform.OS === 'android' ? '#FFFFFF' : '#333333'} />
-              <Picker.Item label="Intermediate" value="intermediate" color={Platform.OS === 'android' ? '#FFFFFF' : '#333333'} />
-              <Picker.Item label="Advanced" value="advanced" color={Platform.OS === 'android' ? '#FFFFFF' : '#333333'} />
+              <Picker.Item label="Beginner" value="beginner" color="#FFFFFF" />
+              <Picker.Item label="Intermediate" value="intermediate" color="#FFFFFF" />
+              <Picker.Item label="Advanced" value="advanced" color="#FFFFFF" />
             </Picker>
           </View>
-        </ScrollView>
+        </View>
       ),
       action: () => handleContinue(),
       actionText: "Continue",
@@ -604,45 +612,91 @@ export default function RootLayout() {
       icon: <AlertTriangle size={80} color="#FF9500" />,
       content: (
         <View style={styles.healthDisclaimerContainer}>
-          <ScrollView style={styles.healthDisclaimerScroll}>
-            <Text style={styles.healthDisclaimerText}>
-              The information provided by {APP_NAME} is for general informational and educational purposes only. It is not intended to be a substitute for professional medical advice, diagnosis, or treatment.
-            </Text>
-            
-            <Text style={styles.healthDisclaimerText}>
-              Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition or before beginning any new exercise program.
-            </Text>
-            
-            <Text style={styles.healthDisclaimerText}>
-              Stop exercising immediately if you experience faintness, dizziness, pain or shortness of breath at any time while exercising and consult with your physician.
-            </Text>
-            
-            <Text style={styles.healthDisclaimerText}>
-              By using {APP_NAME}, you acknowledge that:
-            </Text>
-            
-            <View style={styles.healthDisclaimerBullets}>
-              <Text style={styles.healthDisclaimerBullet}>• You are in good physical condition and have no medical reason or impairment that might prevent you from safely using our app</Text>
-              <Text style={styles.healthDisclaimerBullet}>• You understand that results may vary and depend on factors including genetics, adherence to program, and individual effort</Text>
-              <Text style={styles.healthDisclaimerBullet}>• You assume all risk of injury from using the workouts, nutrition advice, and other content provided in this app</Text>
-            </View>
-            
-            <Text style={styles.healthDisclaimerText}>
-              {APP_NAME} is not responsible for any health problems that may result from training programs, products, or events you learn about through the app.
-            </Text>
-          </ScrollView>
+          <View style={{ position: 'relative' }}>
+            <ScrollView
+              ref={scrollViewRef}
+              style={styles.healthDisclaimerScroll}
+              showsVerticalScrollIndicator={false}
+              onScroll={e => {
+                setScrollY(e.nativeEvent.contentOffset.y);
+                // Check if scrolled to bottom
+                const y = e.nativeEvent.contentOffset.y;
+                const visibleHeight = e.nativeEvent.layoutMeasurement.height;
+                const totalHeight = e.nativeEvent.contentSize.height;
+                if (y + visibleHeight >= totalHeight - 8) {
+                  setHasScrolledToBottom(true);
+                }
+              }}
+              onContentSizeChange={(w, h) => setContentHeight(h)}
+              onLayout={e => setContainerHeight(e.nativeEvent.layout.height)}
+              scrollEventThrottle={16}
+            >
+              <Text style={styles.healthDisclaimerText}>
+                The information provided by {APP_NAME} is for general informational and educational purposes only. It is not intended to be a substitute for professional medical advice, diagnosis, or treatment.
+              </Text>
+              
+              <Text style={styles.healthDisclaimerText}>
+                Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition or before beginning any new exercise program.
+              </Text>
+              
+              <Text style={styles.healthDisclaimerText}>
+                Stop exercising immediately if you experience faintness, dizziness, pain or shortness of breath at any time while exercising and consult with your physician.
+              </Text>
+              
+              <Text style={styles.healthDisclaimerText}>
+                By using {APP_NAME}, you acknowledge that:
+              </Text>
+              
+              <View style={styles.healthDisclaimerBullets}>
+                <Text style={styles.healthDisclaimerBullet}>• You are in good physical condition and have no medical reason or impairment that might prevent you from safely using our app</Text>
+                <Text style={styles.healthDisclaimerBullet}>• You understand that results may vary and depend on factors including genetics, adherence to program, and individual effort</Text>
+                <Text style={styles.healthDisclaimerBullet}>• You assume all risk of injury from using the workouts, nutrition advice, and other content provided in this app</Text>
+              </View>
+              
+              <Text style={styles.healthDisclaimerText}>
+                {APP_NAME} is not responsible for any health problems that may result from training programs, products, or events you learn about through the app.
+              </Text>
+            </ScrollView>
+            <LinearGradient
+              colors={["rgba(35,35,35,0)", "#232323"]}
+              style={styles.scrollGradient}
+              pointerEvents="none"
+            />
+            {/* Custom persistent scrollbar */}
+            {contentHeight > containerHeight && (
+              <View style={styles.customScrollbarTrack} pointerEvents="none">
+                <View
+                  style={[
+                    styles.customScrollbarThumb,
+                    {
+                      height: Math.max((containerHeight / contentHeight) * containerHeight, 32),
+                      top: (scrollY / (contentHeight - containerHeight)) * (containerHeight - Math.max((containerHeight / contentHeight) * containerHeight, 32)),
+                    },
+                  ]}
+                />
+              </View>
+            )}
+          </View>
           
+          {!hasScrolledToBottom && (
+            <Text style={{ color: '#AAAAAA', fontSize: 12, textAlign: 'center', marginTop: -8 }}>
+              Scroll to the bottom to accept
+            </Text>
+          )}
           <View style={styles.healthDisclaimerCheckbox}>
             <TouchableOpacity
               style={[
                 styles.checkbox,
                 healthDisclaimerAccepted && styles.checkboxChecked
               ]}
-              onPress={() => setHealthDisclaimerAccepted(!healthDisclaimerAccepted)}
+              onPress={() => {
+                if (hasScrolledToBottom) setHealthDisclaimerAccepted(!healthDisclaimerAccepted);
+              }}
+              disabled={!hasScrolledToBottom}
             >
               {healthDisclaimerAccepted && <Check size={16} color="#FFFFFF" />}
             </TouchableOpacity>
-            <Text style={styles.healthDisclaimerCheckboxText}>
+            <Text style={[styles.healthDisclaimerCheckboxText, !hasScrolledToBottom && { color: '#888888' }]}>
               I have read and accept the health disclaimer
             </Text>
           </View>
@@ -703,6 +757,16 @@ export default function RootLayout() {
             }
           ]}
         >
+          {/* Back button, not shown on the first onboarding step */}
+          {currentOnboardingStep > 0 && (
+            <TouchableOpacity
+              style={styles.onboardingBackButton}
+              onPress={() => setCurrentOnboardingStep(currentOnboardingStep - 1)}
+              accessibilityLabel="Go back"
+            >
+              <ArrowLeft size={22} color="#FFFFFF" />
+            </TouchableOpacity>
+          )}
           <View style={styles.welcomeContent}>
             {currentStep.showSkip && (
               <TouchableOpacity 
@@ -938,7 +1002,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   textInput: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: '#232323',
     borderRadius: 8,
     padding: 12,
     color: '#FFFFFF',
@@ -966,22 +1030,23 @@ const styles = StyleSheet.create({
     width: '48%',
   },
   pickerContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: '#232323',
     borderRadius: 8,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: '#1A1A1A',
     overflow: 'hidden',
   },
   picker: {
     color: '#FFFFFF',
     height: 50,
+    backgroundColor: '#232323',
   },
   pickerItemIOS: {
     fontSize: 16,
     height: 120,
-    color: '#333333',
-    backgroundColor: '#FFFFFF',
+    color: '#FFFFFF',
+    backgroundColor: '#232323',
   },
   inputHint: {
     fontSize: 12,
@@ -1078,10 +1143,16 @@ const styles = StyleSheet.create({
   },
   healthDisclaimerScroll: {
     maxHeight: 200,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 8,
-    padding: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.10)',
+    borderRadius: 12,
+    padding: 20,
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#232323',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 4,
   },
   healthDisclaimerText: {
     color: '#FFFFFF',
@@ -1121,5 +1192,45 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     flex: 1,
+  },
+  scrollGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 32,
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
+  },
+  customScrollbarTrack: {
+    position: 'absolute',
+    right: 4,
+    top: 0,
+    bottom: 0,
+    width: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    zIndex: 10,
+  },
+  customScrollbarThumb: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    width: 6,
+  },
+  onboardingBackButton: {
+    position: 'absolute',
+    top: 40,
+    left: 24,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 20,
+    padding: 8,
+    zIndex: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 4,
   },
 });

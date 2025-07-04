@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from 'expo-file-system';
 import { Platform } from "react-native";
 import { 
   encryptAndSavePhoto, 
@@ -33,6 +33,8 @@ export interface ProgressPhoto {
   uri: string;
   date: string;
   notes?: string;
+  category: "front" | "side" | "back" | "other";
+  weight?: number;
 }
 
 export type MediaType = {

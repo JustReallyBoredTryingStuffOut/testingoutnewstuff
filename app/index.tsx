@@ -6,7 +6,7 @@ import { useGamificationStore } from '@/store/gamificationStore';
 export default function Index() {
   const [isFirstLaunch, setIsFirstLaunch] = useState<boolean | null>(null);
   const { onboardingCompleted } = useGamificationStore();
-  
+
   useEffect(() => {
     const checkFirstLaunch = async () => {
       try {
@@ -17,20 +17,19 @@ export default function Index() {
         setIsFirstLaunch(false);
       }
     };
-    
     checkFirstLaunch();
   }, []);
-  
+
   // If still checking first launch status, don't redirect yet
   if (isFirstLaunch === null) {
     return null;
   }
-  
+
   // If it's the first launch or onboarding is not completed, show the welcome screen
   if (isFirstLaunch || !onboardingCompleted) {
     return <Redirect href="/(tabs)" />;
   }
-  
+
   // Otherwise, go to the tabs
   return <Redirect href="/(tabs)" />;
 }
