@@ -205,23 +205,23 @@ export default function EquipmentSelector({
           >
             {filteredEquipment.map((equipment) => (
               <TouchableOpacity
-                key={equipment}
+                key={equipment.id || equipment.name}
                 style={[
                   styles.equipmentButton,
                   { backgroundColor: colors.card, borderColor: colors.border },
-                  selectedEquipment === equipment && [styles.selectedEquipment, { backgroundColor: colors.primary, borderColor: colors.primary }],
+                  selectedEquipment && (selectedEquipment.id === equipment.id || selectedEquipment.name === equipment.name) && [styles.selectedEquipment, { backgroundColor: colors.primary, borderColor: colors.primary }],
                 ]}
                 onPress={() => onSelectEquipment(equipment)}
               >
-                {getEquipmentIcon(equipment)}
+                {getEquipmentIcon(equipment.name)}
                 <Text
                   style={[
                     styles.equipmentText,
                     { color: colors.text },
-                    selectedEquipment === equipment && styles.selectedEquipmentText,
+                    selectedEquipment && (selectedEquipment.id === equipment.id || selectedEquipment.name === equipment.name) && styles.selectedEquipmentText,
                   ]}
                 >
-                  {equipment.replace('Machine', '').trim()}
+                  {equipment.name.replace('Machine', '').trim()}
                 </Text>
               </TouchableOpacity>
             ))}

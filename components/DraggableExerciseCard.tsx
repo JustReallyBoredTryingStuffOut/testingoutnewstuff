@@ -269,7 +269,7 @@ export default function DraggableExerciseCard({
               isCompleted && styles.completedText
             ]}
           >
-            {exerciseLog.sets.length} sets • {exercise.muscleGroups.join(', ')}
+            {exerciseLog.sets.length} sets • {(exercise.muscleGroups || []).map(group => typeof group === 'string' ? group : group.name).join(', ')}
           </Text>
         </View>
         
@@ -550,30 +550,18 @@ export default function DraggableExerciseCard({
                       <Text style={[styles.aboutDetailTitle, { color: colors.text }]}>
                         Muscle Groups
                       </Text>
-                      <View style={styles.aboutDetailTags}>
-                        {exercise.muscleGroups.map((group, idx) => (
-                          <View key={idx} style={[styles.aboutDetailTag, { backgroundColor: "rgba(52, 152, 219, 0.1)" }]}>
-                            <Text style={[styles.aboutDetailTagText, { color: "#3498db" }]}>
-                              {group}
-                            </Text>
-                          </View>
-                        ))}
-                      </View>
+                      <Text style={styles.aboutDetailText}>
+                        {(exercise.muscleGroups || []).map(group => typeof group === 'string' ? group : group.name).join(', ')}
+                      </Text>
                     </View>
                     
                     <View style={styles.aboutDetailItem}>
                       <Text style={[styles.aboutDetailTitle, { color: colors.text }]}>
                         Equipment
                       </Text>
-                      <View style={styles.aboutDetailTags}>
-                        {exercise.equipment.map((item, idx) => (
-                          <View key={idx} style={[styles.aboutDetailTag, { backgroundColor: "rgba(0, 0, 0, 0.05)" }]}>
-                            <Text style={[styles.aboutDetailTagText, { color: colors.textSecondary }]}>
-                              {item}
-                            </Text>
-                          </View>
-                        ))}
-                      </View>
+                      <Text style={styles.aboutDetailText}>
+                        {(exercise.equipment || []).map(item => typeof item === 'string' ? item : item.name).join(', ')}
+                      </Text>
                     </View>
                     
                     <View style={styles.aboutDetailItem}>
@@ -590,9 +578,7 @@ export default function DraggableExerciseCard({
                   
                   {exercise.imageUrl && (
                     <View style={styles.aboutImageContainer}>
-                      <Text style={[styles.aboutImageTitle, { color: colors.text }]}>
-                        Reference Image
-                      </Text>
+                      <Text style={[styles.aboutImageTitle, { color: colors.text }]}>Reference Image</Text>
                       <View style={styles.aboutImage}>
                         <Image 
                           source={{ uri: exercise.imageUrl }} 
@@ -945,18 +931,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginBottom: 8,
   },
-  aboutDetailTags: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  aboutDetailTag: {
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    marginRight: 8,
-    marginBottom: 8,
-  },
-  aboutDetailTagText: {
+  aboutDetailText: {
     fontSize: 14,
   },
   aboutDifficultyBadge: {

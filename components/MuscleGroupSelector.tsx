@@ -106,11 +106,11 @@ export default function MuscleGroupSelector({
       >
         {bodyRegions.map((region) => (
           <TouchableOpacity
-            key={region}
+            key={region.id || region.name}
             style={[
               styles.bodyRegionButton,
               { backgroundColor: colors.card, borderColor: colors.border },
-              selectedBodyRegion === region && [styles.selectedBodyRegion, { backgroundColor: colors.primary, borderColor: colors.primary }],
+              selectedBodyRegion && (selectedBodyRegion.id === region.id || selectedBodyRegion.name === region.name) && [styles.selectedBodyRegion, { backgroundColor: colors.primary, borderColor: colors.primary }],
             ]}
             onPress={() => onSelectBodyRegion(region)}
           >
@@ -118,10 +118,10 @@ export default function MuscleGroupSelector({
               style={[
                 styles.bodyRegionText,
                 { color: colors.text },
-                selectedBodyRegion === region && styles.selectedBodyRegionText,
+                selectedBodyRegion && (selectedBodyRegion.id === region.id || selectedBodyRegion.name === region.name) && styles.selectedBodyRegionText,
               ]}
             >
-              {region}
+              {region.name}
             </Text>
           </TouchableOpacity>
         ))}
@@ -172,11 +172,11 @@ export default function MuscleGroupSelector({
           <View style={styles.muscleGroupsContainer}>
             {muscleGroups.map((group) => (
               <TouchableOpacity
-                key={group}
+                key={group.id || group.name}
                 style={[
                   styles.muscleGroupButton,
                   { backgroundColor: colors.card, borderColor: colors.border },
-                  selectedMuscleGroup === group && [styles.selectedMuscleGroup, { backgroundColor: colors.primary, borderColor: colors.primary }],
+                  selectedMuscleGroup && (selectedMuscleGroup.id === group.id || selectedMuscleGroup.name === group.name) && [styles.selectedMuscleGroup, { backgroundColor: colors.primary, borderColor: colors.primary }],
                 ]}
                 onPress={() => onSelectMuscleGroup(group)}
               >
@@ -184,10 +184,10 @@ export default function MuscleGroupSelector({
                   style={[
                     styles.muscleGroupText,
                     { color: colors.text },
-                    selectedMuscleGroup === group && styles.selectedMuscleGroupText,
+                    selectedMuscleGroup && (selectedMuscleGroup.id === group.id || selectedMuscleGroup.name === group.name) && styles.selectedMuscleGroupText,
                   ]}
                 >
-                  {group}
+                  {group.name}
                 </Text>
               </TouchableOpacity>
             ))}

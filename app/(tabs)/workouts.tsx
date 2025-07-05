@@ -377,15 +377,15 @@ export default function WorkoutsScreen() {
                       <Text style={[styles.exerciseResultName, { color: colors.text }]}>{exercise.name}</Text>
                       <View style={styles.exerciseResultTags}>
                         {exercise.muscleGroups.slice(0, 2).map(group => (
-                          <View key={group} style={styles.exerciseResultTag}>
-                            <Text style={styles.exerciseResultTagText}>{group}</Text>
+                          <View key={typeof group === 'string' ? group : group.name} style={styles.exerciseResultTag}>
+                            <Text style={styles.exerciseResultTagText}>{typeof group === 'string' ? group : group.name}</Text>
                           </View>
                         ))}
                         {exercise.equipment.length > 0 && (
                           <View style={styles.exerciseResultEquipment}>
                             <Dumbbell size={12} color={colors.textSecondary} />
                             <Text style={[styles.exerciseResultEquipmentText, { color: colors.textSecondary }]}>
-                              {exercise.equipment[0]}
+                              {typeof exercise.equipment[0] === 'string' ? exercise.equipment[0] : exercise.equipment[0].name}
                             </Text>
                           </View>
                         )}

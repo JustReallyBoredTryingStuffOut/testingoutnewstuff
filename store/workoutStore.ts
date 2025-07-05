@@ -163,7 +163,7 @@ export const useWorkoutStore = create<WorkoutState>()(
   persist(
     (set, get) => ({
       exercises: exercises,
-      workouts: validateAllWorkouts(workouts, exercises),
+      workouts: workouts,
       workoutLogs: [], // Start with empty workout logs - no sample data
       scheduledWorkouts: [],
       activeWorkout: null,

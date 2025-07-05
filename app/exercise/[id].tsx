@@ -84,8 +84,8 @@ export default function ExerciseDetailScreen() {
         <Text style={styles.title}>{exercise.name}</Text>
         <View style={styles.tags}>
           {exercise.muscleGroups.map((muscle, index) => (
-            <View key={index} style={styles.tag}>
-              <Text style={styles.tagText}>{muscle}</Text>
+            <View key={typeof muscle === 'string' ? muscle : muscle.name} style={styles.tag}>
+              <Text style={styles.tagText}>{typeof muscle === 'string' ? muscle : muscle.name}</Text>
             </View>
           ))}
         </View>

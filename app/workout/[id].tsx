@@ -188,19 +188,14 @@ export default function WorkoutDetailScreen() {
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Exercises</Text>
           
-          {workout.exercises.map((exerciseItem, index) => {
-            const exercise = exercises.find(e => e.id === exerciseItem.id);
-            if (!exercise) return null;
-            
-            return (
-              <View key={exercise.id} style={styles.exerciseContainer}>
-                <View style={[styles.exerciseNumber, { backgroundColor: colors.primary }]}>
-                  <Text style={styles.exerciseNumberText}>{index + 1}</Text>
-                </View>
-                <ExerciseCard exercise={exercise} />
+          {workout.exercises.map((exercise, index) => (
+            <View key={exercise.id} style={styles.exerciseContainer}>
+              <View style={[styles.exerciseNumber, { backgroundColor: colors.primary }]}> 
+                <Text style={styles.exerciseNumberText}>{index + 1}</Text>
               </View>
-            );
-          })}
+              <ExerciseCard exercise={exercise} />
+            </View>
+          ))}
         </View>
       </ScrollView>
       

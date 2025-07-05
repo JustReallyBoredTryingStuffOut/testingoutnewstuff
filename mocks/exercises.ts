@@ -1,4 +1,13 @@
 import { Exercise, BodyRegion, MuscleGroup, EquipmentType } from "@/types";
+import { muscleGroups as allMuscleGroups, equipment as allEquipment } from "./filterData";
+
+// Helper functions to map string to object
+function getMuscleGroupObj(name) {
+  return allMuscleGroups.find(mg => mg.name.toLowerCase() === name.toLowerCase() || mg.id.toLowerCase() === name.toLowerCase()) || { id: name, name, icon: "" };
+}
+function getEquipmentObj(name) {
+  return allEquipment.find(eq => eq.name.toLowerCase() === name.toLowerCase() || eq.id.toLowerCase() === name.toLowerCase()) || { id: name, name, icon: "" };
+}
 
 export const exercises: Exercise[] = [
   // Chest Exercises
@@ -7,7 +16,7 @@ export const exercises: Exercise[] = [
     name: "Barbell Bench Press",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Chest", "Triceps", "Shoulders"],
+    muscleGroups: [getMuscleGroupObj("Chest"), getMuscleGroupObj("Triceps"), getMuscleGroupObj("Shoulders")],
     description: "A compound exercise that targets the chest, shoulders, and triceps.",
     instructions: [
       "Lie on a flat bench with your feet flat on the floor.",
@@ -17,7 +26,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=rT7DgCr-3pg",
     imageUrl: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Barbell", "Bench"],
+    equipment: [getEquipmentObj("Barbell"), getEquipmentObj("Bench")],
     difficulty: "intermediate",
   },
   {
@@ -25,7 +34,7 @@ export const exercises: Exercise[] = [
     name: "Incline Dumbbell Press",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Chest", "Shoulders", "Triceps"],
+    muscleGroups: [getMuscleGroupObj("Chest"), getMuscleGroupObj("Shoulders"), getMuscleGroupObj("Triceps")],
     description: "Targets the upper chest muscles with an incline bench position.",
     instructions: [
       "Set an adjustable bench to a 30-45 degree incline.",
@@ -35,7 +44,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=8iPEnn-ltC8",
     imageUrl: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Dumbbell", "Bench"],
+    equipment: [getEquipmentObj("Dumbbell"), getEquipmentObj("Bench")],
     difficulty: "intermediate",
   },
   {
@@ -43,7 +52,7 @@ export const exercises: Exercise[] = [
     name: "Cable Chest Fly",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Chest", "Shoulders"],
+    muscleGroups: [getMuscleGroupObj("Chest"), getMuscleGroupObj("Shoulders")],
     description: "Isolates the chest muscles using cables for constant tension.",
     instructions: [
       "Stand in the center of a cable machine with cables set at chest height.",
@@ -53,7 +62,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=Iwe6AmxVf7o",
     imageUrl: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Cable Machine"],
+    equipment: [getEquipmentObj("Cable Machine")],
     difficulty: "intermediate",
   },
   {
@@ -61,7 +70,7 @@ export const exercises: Exercise[] = [
     name: "Decline Push-up",
     category: "Bodyweight",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Chest", "Shoulders", "Triceps"],
+    muscleGroups: [getMuscleGroupObj("Chest"), getMuscleGroupObj("Shoulders"), getMuscleGroupObj("Triceps")],
     description: "A variation of the push-up that targets the lower chest muscles.",
     instructions: [
       "Place your feet on an elevated surface like a bench or step.",
@@ -71,7 +80,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=SKPab2YC8BE",
     imageUrl: "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bodyweight", "Bench"],
+    equipment: [getEquipmentObj("Bodyweight"), getEquipmentObj("Bench")],
     difficulty: "intermediate",
   },
   {
@@ -79,7 +88,7 @@ export const exercises: Exercise[] = [
     name: "Dumbbell Pullover",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Chest", "Lats", "Serratus Anterior"],
+    muscleGroups: [getMuscleGroupObj("Chest"), getMuscleGroupObj("Lats"), getMuscleGroupObj("Serratus Anterior")],
     description: "An exercise that targets both the chest and back muscles.",
     instructions: [
       "Lie on a flat bench with your feet flat on the floor.",
@@ -89,7 +98,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=tpLnfSQJ0gg",
     imageUrl: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Dumbbell", "Bench"],
+    equipment: [getEquipmentObj("Dumbbell"), getEquipmentObj("Bench")],
     difficulty: "intermediate",
   },
   
@@ -99,7 +108,7 @@ export const exercises: Exercise[] = [
     name: "Squat",
     category: "Strength",
     bodyRegion: "Lower Body",
-    muscleGroups: ["Quadriceps", "Hamstrings", "Glutes", "Lower Back"],
+    muscleGroups: [getMuscleGroupObj("Quadriceps"), getMuscleGroupObj("Hamstrings"), getMuscleGroupObj("Glutes"), getMuscleGroupObj("Lower Back")],
     description: "A compound exercise that targets the lower body and core.",
     instructions: [
       "Stand with feet shoulder-width apart.",
@@ -109,7 +118,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=ultWZbUMPL8",
     imageUrl: "https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Barbell"],
+    equipment: [getEquipmentObj("Barbell")],
     difficulty: "intermediate",
   },
   {
@@ -117,7 +126,7 @@ export const exercises: Exercise[] = [
     name: "Deadlift",
     category: "Strength",
     bodyRegion: "Lower Body",
-    muscleGroups: ["Lower Back", "Hamstrings", "Glutes", "Traps"],
+    muscleGroups: [getMuscleGroupObj("Lower Back"), getMuscleGroupObj("Hamstrings"), getMuscleGroupObj("Glutes"), getMuscleGroupObj("Traps")],
     description: "A compound exercise that targets the posterior chain.",
     instructions: [
       "Stand with feet hip-width apart, toes under the bar.",
@@ -127,7 +136,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=op9kVnSso6Q",
     imageUrl: "https://images.unsplash.com/photo-1598575285627-d1f27d332d05?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Barbell"],
+    equipment: [getEquipmentObj("Barbell")],
     difficulty: "advanced",
   },
   {
@@ -135,7 +144,7 @@ export const exercises: Exercise[] = [
     name: "Leg Press",
     category: "Strength",
     bodyRegion: "Lower Body",
-    muscleGroups: ["Quadriceps", "Hamstrings", "Glutes"],
+    muscleGroups: [getMuscleGroupObj("Quadriceps"), getMuscleGroupObj("Hamstrings"), getMuscleGroupObj("Glutes")],
     description: "A machine-based lower body exercise that targets the legs with less stress on the back.",
     instructions: [
       "Sit in the leg press machine with your back against the pad.",
@@ -145,7 +154,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=IZxyjW7MPJQ",
     imageUrl: "https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Leg Press Machine"],
+    equipment: [getEquipmentObj("Leg Press Machine")],
     difficulty: "beginner",
   },
   {
@@ -153,7 +162,7 @@ export const exercises: Exercise[] = [
     name: "Romanian Deadlift",
     category: "Strength",
     bodyRegion: "Lower Body",
-    muscleGroups: ["Hamstrings", "Glutes", "Lower Back"],
+    muscleGroups: [getMuscleGroupObj("Hamstrings"), getMuscleGroupObj("Glutes"), getMuscleGroupObj("Lower Back")],
     description: "Focuses on the posterior chain with emphasis on the hamstrings.",
     instructions: [
       "Stand with feet hip-width apart, holding a barbell in front of your thighs.",
@@ -163,7 +172,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=JCXUYuzwNrM",
     imageUrl: "https://images.unsplash.com/photo-1598575285627-d1f27d332d05?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Barbell", "Dumbbell"],
+    equipment: [getEquipmentObj("Barbell"), getEquipmentObj("Dumbbell")],
     difficulty: "intermediate",
   },
   {
@@ -171,7 +180,7 @@ export const exercises: Exercise[] = [
     name: "Leg Extension",
     category: "Strength",
     bodyRegion: "Lower Body",
-    muscleGroups: ["Quadriceps"],
+    muscleGroups: [getMuscleGroupObj("Quadriceps")],
     description: "An isolation exercise that targets the quadriceps muscles.",
     instructions: [
       "Sit on a leg extension machine with your back against the pad.",
@@ -181,7 +190,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=YyvSfVjQeL0",
     imageUrl: "https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Leg Extension Machine"],
+    equipment: [getEquipmentObj("Leg Extension Machine")],
     difficulty: "beginner",
   },
   {
@@ -189,7 +198,7 @@ export const exercises: Exercise[] = [
     name: "Leg Curl",
     category: "Strength",
     bodyRegion: "Lower Body",
-    muscleGroups: ["Hamstrings"],
+    muscleGroups: [getMuscleGroupObj("Hamstrings")],
     description: "An isolation exercise that targets the hamstring muscles.",
     instructions: [
       "Lie face down on a leg curl machine with your heels under the pad.",
@@ -199,7 +208,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=1Tq3QdYUuHs",
     imageUrl: "https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Leg Curl Machine"],
+    equipment: [getEquipmentObj("Leg Curl Machine")],
     difficulty: "beginner",
   },
   {
@@ -207,7 +216,7 @@ export const exercises: Exercise[] = [
     name: "Bulgarian Split Squat",
     category: "Bodyweight",
     bodyRegion: "Lower Body",
-    muscleGroups: ["Quadriceps", "Glutes", "Hamstrings", "Core"],
+    muscleGroups: [getMuscleGroupObj("Quadriceps"), getMuscleGroupObj("Glutes"), getMuscleGroupObj("Hamstrings"), getMuscleGroupObj("Core")],
     description: "A unilateral exercise that targets the legs and improves balance.",
     instructions: [
       "Stand about two feet in front of a bench or step.",
@@ -218,7 +227,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=2C-uNgKwPLE",
     imageUrl: "https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bodyweight", "Bench"],
+    equipment: [getEquipmentObj("Bodyweight"), getEquipmentObj("Bench")],
     difficulty: "intermediate",
   },
   {
@@ -226,7 +235,7 @@ export const exercises: Exercise[] = [
     name: "Glute Bridge",
     category: "Bodyweight",
     bodyRegion: "Lower Body",
-    muscleGroups: ["Glutes", "Hamstrings", "Lower Back"],
+    muscleGroups: [getMuscleGroupObj("Glutes"), getMuscleGroupObj("Hamstrings"), getMuscleGroupObj("Lower Back")],
     description: "An exercise that targets the glutes and posterior chain.",
     instructions: [
       "Lie on your back with knees bent and feet flat on the floor.",
@@ -237,7 +246,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=GkZYbFu8Q0s",
     imageUrl: "https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bodyweight"],
+    equipment: [getEquipmentObj("Bodyweight")],
     difficulty: "beginner",
   },
   {
@@ -245,7 +254,7 @@ export const exercises: Exercise[] = [
     name: "Calf Raise",
     category: "Bodyweight",
     bodyRegion: "Lower Body",
-    muscleGroups: ["Calves"],
+    muscleGroups: [getMuscleGroupObj("Calves")],
     description: "An exercise that targets the calf muscles.",
     instructions: [
       "Stand with feet hip-width apart, toes pointing forward.",
@@ -255,7 +264,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=gwLzBJYoWlI",
     imageUrl: "https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bodyweight"],
+    equipment: [getEquipmentObj("Bodyweight")],
     difficulty: "beginner",
   },
   
@@ -265,7 +274,7 @@ export const exercises: Exercise[] = [
     name: "Pull-up",
     category: "Bodyweight",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Back", "Biceps", "Lats"],
+    muscleGroups: [getMuscleGroupObj("Back"), getMuscleGroupObj("Biceps"), getMuscleGroupObj("Lats")],
     description: "A compound bodyweight exercise that targets the upper body.",
     instructions: [
       "Hang from a pull-up bar with hands shoulder-width apart.",
@@ -274,7 +283,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=eGo4IYlbE5g",
     imageUrl: "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Pull-up Bar"],
+    equipment: [getEquipmentObj("Pull-up Bar")],
     difficulty: "intermediate",
   },
   {
@@ -282,7 +291,7 @@ export const exercises: Exercise[] = [
     name: "Lat Pulldown",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Back", "Biceps", "Lats"],
+    muscleGroups: [getMuscleGroupObj("Back"), getMuscleGroupObj("Biceps"), getMuscleGroupObj("Lats")],
     description: "A machine exercise that targets the latissimus dorsi muscles.",
     instructions: [
       "Sit at a lat pulldown machine with your thighs secured under the pads.",
@@ -292,7 +301,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=CAwf7n6Luuc",
     imageUrl: "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Lat Pulldown Machine"],
+    equipment: [getEquipmentObj("Lat Pulldown Machine")],
     difficulty: "beginner",
   },
   {
@@ -300,7 +309,7 @@ export const exercises: Exercise[] = [
     name: "Seated Cable Row",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Back", "Biceps", "Lats"],
+    muscleGroups: [getMuscleGroupObj("Back"), getMuscleGroupObj("Biceps"), getMuscleGroupObj("Lats")],
     description: "A compound exercise that targets the middle back muscles.",
     instructions: [
       "Sit at a cable row machine with your feet on the platform and knees slightly bent.",
@@ -310,7 +319,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=GZbfZ033f74",
     imageUrl: "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Cable Machine"],
+    equipment: [getEquipmentObj("Cable Machine")],
     difficulty: "beginner",
   },
   {
@@ -318,7 +327,7 @@ export const exercises: Exercise[] = [
     name: "Barbell Row",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Back", "Biceps", "Lats", "Traps"],
+    muscleGroups: [getMuscleGroupObj("Back"), getMuscleGroupObj("Biceps"), getMuscleGroupObj("Lats"), getMuscleGroupObj("Traps")],
     description: "A compound exercise that targets the upper and middle back.",
     instructions: [
       "Stand with feet shoulder-width apart, holding a barbell with an overhand grip.",
@@ -328,7 +337,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=T3N-TO4reLQ",
     imageUrl: "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Barbell"],
+    equipment: [getEquipmentObj("Barbell")],
     difficulty: "intermediate",
   },
   {
@@ -336,7 +345,7 @@ export const exercises: Exercise[] = [
     name: "Single-Arm Dumbbell Row",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Back", "Lats", "Biceps", "Shoulders"],
+    muscleGroups: [getMuscleGroupObj("Back"), getMuscleGroupObj("Lats"), getMuscleGroupObj("Biceps"), getMuscleGroupObj("Shoulders")],
     description: "A unilateral exercise that targets the back muscles.",
     instructions: [
       "Place your right knee and right hand on a bench for support.",
@@ -347,7 +356,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=pYcpY20QaE8",
     imageUrl: "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Dumbbell", "Bench"],
+    equipment: [getEquipmentObj("Dumbbell"), getEquipmentObj("Bench")],
     difficulty: "beginner",
   },
   {
@@ -355,7 +364,7 @@ export const exercises: Exercise[] = [
     name: "Inverted Row",
     category: "Bodyweight",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Back", "Biceps", "Rear Deltoids"],
+    muscleGroups: [getMuscleGroupObj("Back"), getMuscleGroupObj("Biceps"), getMuscleGroupObj("Rear Deltoids")],
     description: "A bodyweight exercise that targets the upper back and biceps.",
     instructions: [
       "Set up a barbell in a rack at waist height or use a sturdy table.",
@@ -366,7 +375,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=hXTc1mDnZCw",
     imageUrl: "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bodyweight", "Barbell"],
+    equipment: [getEquipmentObj("Bodyweight"), getEquipmentObj("Barbell")],
     difficulty: "beginner",
   },
   
@@ -376,7 +385,7 @@ export const exercises: Exercise[] = [
     name: "Plank",
     category: "Bodyweight",
     bodyRegion: "Core",
-    muscleGroups: ["Core", "Abs"],
+    muscleGroups: [getMuscleGroupObj("Core"), getMuscleGroupObj("Abs")],
     description: "An isometric core exercise that also engages the shoulders and back.",
     instructions: [
       "Start in a push-up position with your forearms on the ground.",
@@ -385,7 +394,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=pSHjTRCQxIw",
     imageUrl: "https://images.unsplash.com/photo-1566241142559-40e1dab266c6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bodyweight"],
+    equipment: [getEquipmentObj("Bodyweight")],
     difficulty: "beginner",
   },
   {
@@ -393,7 +402,7 @@ export const exercises: Exercise[] = [
     name: "Russian Twist",
     category: "Bodyweight",
     bodyRegion: "Core",
-    muscleGroups: ["Core", "Obliques"],
+    muscleGroups: [getMuscleGroupObj("Core"), getMuscleGroupObj("Obliques")],
     description: "A rotational exercise that targets the obliques and core muscles.",
     instructions: [
       "Sit on the floor with knees bent and feet elevated slightly.",
@@ -403,7 +412,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=wkD8rjkodUI",
     imageUrl: "https://images.unsplash.com/photo-1566241142559-40e1dab266c6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bodyweight", "Dumbbell"],
+    equipment: [getEquipmentObj("Bodyweight"), getEquipmentObj("Dumbbell")],
     difficulty: "beginner",
   },
   {
@@ -411,7 +420,7 @@ export const exercises: Exercise[] = [
     name: "Hanging Leg Raise",
     category: "Bodyweight",
     bodyRegion: "Core",
-    muscleGroups: ["Core", "Abs", "Hip Flexors"],
+    muscleGroups: [getMuscleGroupObj("Core"), getMuscleGroupObj("Abs"), getMuscleGroupObj("Hip Flexors")],
     description: "A challenging exercise that targets the lower abdominal muscles.",
     instructions: [
       "Hang from a pull-up bar with arms fully extended.",
@@ -421,7 +430,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=hdng3Nm1x_E",
     imageUrl: "https://images.unsplash.com/photo-1566241142559-40e1dab266c6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Pull-up Bar"],
+    equipment: [getEquipmentObj("Pull-up Bar")],
     difficulty: "advanced",
   },
   {
@@ -429,7 +438,7 @@ export const exercises: Exercise[] = [
     name: "Ab Rollout",
     category: "Strength",
     bodyRegion: "Core",
-    muscleGroups: ["Core", "Abs", "Shoulders"],
+    muscleGroups: [getMuscleGroupObj("Core"), getMuscleGroupObj("Abs"), getMuscleGroupObj("Shoulders")],
     description: "A challenging exercise that targets the entire core and shoulders.",
     instructions: [
       "Kneel on the floor holding an ab wheel with both hands.",
@@ -438,7 +447,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=rqiTPdK1c_I",
     imageUrl: "https://images.unsplash.com/photo-1566241142559-40e1dab266c6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Ab Wheel"],
+    equipment: [getEquipmentObj("Ab Wheel")],
     difficulty: "advanced",
   },
   {
@@ -446,7 +455,7 @@ export const exercises: Exercise[] = [
     name: "Bicycle Crunch",
     category: "Bodyweight",
     bodyRegion: "Core",
-    muscleGroups: ["Abs", "Obliques"],
+    muscleGroups: [getMuscleGroupObj("Abs"), getMuscleGroupObj("Obliques")],
     description: "A dynamic exercise that targets the abdominal muscles and obliques.",
     instructions: [
       "Lie on your back with your hands behind your head and knees bent.",
@@ -456,7 +465,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=9FGilxCbdz8",
     imageUrl: "https://images.unsplash.com/photo-1566241142559-40e1dab266c6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bodyweight"],
+    equipment: [getEquipmentObj("Bodyweight")],
     difficulty: "intermediate",
   },
   {
@@ -464,7 +473,7 @@ export const exercises: Exercise[] = [
     name: "Dead Bug",
     category: "Bodyweight",
     bodyRegion: "Core",
-    muscleGroups: ["Core", "Abs", "Lower Back"],
+    muscleGroups: [getMuscleGroupObj("Core"), getMuscleGroupObj("Abs"), getMuscleGroupObj("Lower Back")],
     description: "A core stability exercise that helps improve coordination and balance.",
     instructions: [
       "Lie on your back with arms extended toward the ceiling and knees bent at 90 degrees.",
@@ -474,7 +483,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=4XLEnwUr1d8",
     imageUrl: "https://images.unsplash.com/photo-1566241142559-40e1dab266c6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bodyweight"],
+    equipment: [getEquipmentObj("Bodyweight")],
     difficulty: "beginner",
   },
   {
@@ -482,7 +491,7 @@ export const exercises: Exercise[] = [
     name: "Side Plank",
     category: "Bodyweight",
     bodyRegion: "Core",
-    muscleGroups: ["Obliques", "Core", "Shoulders"],
+    muscleGroups: [getMuscleGroupObj("Obliques"), getMuscleGroupObj("Core"), getMuscleGroupObj("Shoulders")],
     description: "An isometric exercise that targets the obliques and lateral core muscles.",
     instructions: [
       "Lie on your side with your legs straight and feet stacked.",
@@ -493,7 +502,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=rCxF2nG9vQ0",
     imageUrl: "https://images.unsplash.com/photo-1566241142559-40e1dab266c6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bodyweight"],
+    equipment: [getEquipmentObj("Bodyweight")],
     difficulty: "intermediate",
   },
   
@@ -503,7 +512,7 @@ export const exercises: Exercise[] = [
     name: "Dumbbell Shoulder Press",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Shoulders", "Triceps"],
+    muscleGroups: [getMuscleGroupObj("Shoulders"), getMuscleGroupObj("Triceps")],
     description: "An upper body exercise that targets the shoulders and triceps.",
     instructions: [
       "Sit on a bench with back support.",
@@ -513,7 +522,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=qEwKCR5JCog",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Dumbbell", "Bench"],
+    equipment: [getEquipmentObj("Dumbbell"), getEquipmentObj("Bench")],
     difficulty: "intermediate",
   },
   {
@@ -521,7 +530,7 @@ export const exercises: Exercise[] = [
     name: "Lateral Raise",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Shoulders"],
+    muscleGroups: [getMuscleGroupObj("Shoulders")],
     description: "An isolation exercise that targets the lateral deltoid muscles.",
     instructions: [
       "Stand with feet shoulder-width apart, holding dumbbells at your sides.",
@@ -531,7 +540,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=3VcKaXpzqRo",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Dumbbell"],
+    equipment: [getEquipmentObj("Dumbbell")],
     difficulty: "beginner",
   },
   {
@@ -539,7 +548,7 @@ export const exercises: Exercise[] = [
     name: "Front Raise",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Shoulders"],
+    muscleGroups: [getMuscleGroupObj("Shoulders")],
     description: "An isolation exercise that targets the anterior deltoid muscles.",
     instructions: [
       "Stand with feet shoulder-width apart, holding dumbbells in front of your thighs.",
@@ -549,7 +558,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=sOcYlBI85hc",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Dumbbell"],
+    equipment: [getEquipmentObj("Dumbbell")],
     difficulty: "beginner",
   },
   {
@@ -557,7 +566,7 @@ export const exercises: Exercise[] = [
     name: "Face Pull",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Shoulders", "Traps"],
+    muscleGroups: [getMuscleGroupObj("Shoulders"), getMuscleGroupObj("Traps")],
     description: "A compound exercise that targets the rear deltoids and upper back muscles.",
     instructions: [
       "Attach a rope handle to a cable machine at head height.",
@@ -567,7 +576,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=eIq5CB9JfKE",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Cable Machine", "Rope Attachment"],
+    equipment: [getEquipmentObj("Cable Machine"), getEquipmentObj("Rope Attachment")],
     difficulty: "intermediate",
   },
   {
@@ -575,7 +584,7 @@ export const exercises: Exercise[] = [
     name: "Arnold Press",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Shoulders", "Triceps"],
+    muscleGroups: [getMuscleGroupObj("Shoulders"), getMuscleGroupObj("Triceps")],
     description: "A variation of the shoulder press that targets all three heads of the deltoid.",
     instructions: [
       "Sit on a bench with back support, holding dumbbells at shoulder height with palms facing you.",
@@ -586,7 +595,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=6Z15_WdXmVw",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Dumbbell", "Bench"],
+    equipment: [getEquipmentObj("Dumbbell"), getEquipmentObj("Bench")],
     difficulty: "intermediate",
   },
   {
@@ -594,7 +603,7 @@ export const exercises: Exercise[] = [
     name: "Upright Row",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Shoulders", "Traps"],
+    muscleGroups: [getMuscleGroupObj("Shoulders"), getMuscleGroupObj("Traps")],
     description: "A compound exercise that targets the shoulders and upper traps.",
     instructions: [
       "Stand with feet shoulder-width apart, holding a barbell or dumbbells in front of your thighs.",
@@ -604,7 +613,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=amCU-ziHITM",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Barbell", "Dumbbell"],
+    equipment: [getEquipmentObj("Barbell"), getEquipmentObj("Dumbbell")],
     difficulty: "intermediate",
   },
   
@@ -614,7 +623,7 @@ export const exercises: Exercise[] = [
     name: "Push-up",
     category: "Bodyweight",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Chest", "Triceps", "Shoulders", "Core"],
+    muscleGroups: [getMuscleGroupObj("Chest"), getMuscleGroupObj("Triceps"), getMuscleGroupObj("Shoulders"), getMuscleGroupObj("Core")],
     description: "A classic bodyweight exercise that builds upper body strength.",
     instructions: [
       "Start in a plank position with hands slightly wider than shoulder-width.",
@@ -624,7 +633,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=IODxDxX7oi4",
     imageUrl: "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bodyweight"],
+    equipment: [getEquipmentObj("Bodyweight")],
     difficulty: "beginner",
   },
   {
@@ -632,7 +641,7 @@ export const exercises: Exercise[] = [
     name: "Bodyweight Squat",
     category: "Bodyweight",
     bodyRegion: "Lower Body",
-    muscleGroups: ["Quadriceps", "Hamstrings", "Glutes", "Core"],
+    muscleGroups: [getMuscleGroupObj("Quadriceps"), getMuscleGroupObj("Hamstrings"), getMuscleGroupObj("Glutes"), getMuscleGroupObj("Core")],
     description: "A fundamental lower body exercise that requires no equipment.",
     instructions: [
       "Stand with feet shoulder-width apart.",
@@ -642,7 +651,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=aclHkVaku9U",
     imageUrl: "https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bodyweight"],
+    equipment: [getEquipmentObj("Bodyweight")],
     difficulty: "beginner",
   },
   {
@@ -650,7 +659,7 @@ export const exercises: Exercise[] = [
     name: "Lunges",
     category: "Bodyweight",
     bodyRegion: "Lower Body",
-    muscleGroups: ["Quadriceps", "Hamstrings", "Glutes", "Core"],
+    muscleGroups: [getMuscleGroupObj("Quadriceps"), getMuscleGroupObj("Hamstrings"), getMuscleGroupObj("Glutes"), getMuscleGroupObj("Core")],
     description: "A unilateral exercise that improves balance and leg strength.",
     instructions: [
       "Stand with feet hip-width apart.",
@@ -660,7 +669,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=QOVaHwm-Q6U",
     imageUrl: "https://images.unsplash.com/photo-1434682881908-b43d0467b798?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bodyweight"],
+    equipment: [getEquipmentObj("Bodyweight")],
     difficulty: "beginner",
   },
   {
@@ -668,7 +677,7 @@ export const exercises: Exercise[] = [
     name: "Mountain Climbers",
     category: "Bodyweight",
     bodyRegion: "Core",
-    muscleGroups: ["Core", "Shoulders", "Chest", "Hip Flexors"],
+    muscleGroups: [getMuscleGroupObj("Core"), getMuscleGroupObj("Shoulders"), getMuscleGroupObj("Chest"), getMuscleGroupObj("Hip Flexors")],
     description: "A dynamic exercise that elevates heart rate while engaging multiple muscle groups.",
     instructions: [
       "Start in a push-up position.",
@@ -678,7 +687,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=nmwgirgXLYM",
     imageUrl: "https://images.unsplash.com/photo-1434682881908-b43d0467b798?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bodyweight"],
+    equipment: [getEquipmentObj("Bodyweight")],
     difficulty: "intermediate",
   },
   {
@@ -686,7 +695,7 @@ export const exercises: Exercise[] = [
     name: "Burpees",
     category: "Bodyweight",
     bodyRegion: "Full Body",
-    muscleGroups: ["Chest", "Shoulders", "Triceps", "Core", "Quadriceps", "Hamstrings", "Glutes"],
+    muscleGroups: [getMuscleGroupObj("Chest"), getMuscleGroupObj("Shoulders"), getMuscleGroupObj("Triceps"), getMuscleGroupObj("Core"), getMuscleGroupObj("Quadriceps"), getMuscleGroupObj("Hamstrings"), getMuscleGroupObj("Glutes")],
     description: "A high-intensity exercise that combines a squat, push-up, and jump.",
     instructions: [
       "Start standing, then squat down and place hands on the floor.",
@@ -696,7 +705,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=TU8QYVW0gDU",
     imageUrl: "https://images.unsplash.com/photo-1434682881908-b43d0467b798?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bodyweight"],
+    equipment: [getEquipmentObj("Bodyweight")],
     difficulty: "advanced",
   },
   {
@@ -704,7 +713,7 @@ export const exercises: Exercise[] = [
     name: "Dips",
     category: "Bodyweight",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Triceps", "Chest", "Shoulders"],
+    muscleGroups: [getMuscleGroupObj("Triceps"), getMuscleGroupObj("Chest"), getMuscleGroupObj("Shoulders")],
     description: "An upper body exercise that primarily targets the triceps.",
     instructions: [
       "Support yourself between parallel bars or on a bench.",
@@ -714,7 +723,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=2z8JmcrW-As",
     imageUrl: "https://images.unsplash.com/photo-1434682881908-b43d0467b798?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bodyweight", "Bench"],
+    equipment: [getEquipmentObj("Bodyweight"), getEquipmentObj("Bench")],
     difficulty: "intermediate",
   },
   {
@@ -722,7 +731,7 @@ export const exercises: Exercise[] = [
     name: "Pike Push-up",
     category: "Bodyweight",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Shoulders", "Triceps", "Upper Chest"],
+    muscleGroups: [getMuscleGroupObj("Shoulders"), getMuscleGroupObj("Triceps"), getMuscleGroupObj("Upper Chest")],
     description: "A variation of the push-up that targets the shoulders more intensely.",
     instructions: [
       "Start in a downward dog position with your hips high in the air.",
@@ -732,7 +741,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=sposDXWEB0A",
     imageUrl: "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bodyweight"],
+    equipment: [getEquipmentObj("Bodyweight")],
     difficulty: "intermediate",
   },
   {
@@ -740,7 +749,7 @@ export const exercises: Exercise[] = [
     name: "Diamond Push-up",
     category: "Bodyweight",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Triceps", "Chest", "Shoulders"],
+    muscleGroups: [getMuscleGroupObj("Triceps"), getMuscleGroupObj("Chest"), getMuscleGroupObj("Shoulders")],
     description: "A push-up variation that emphasizes the triceps.",
     instructions: [
       "Start in a plank position with your hands close together, forming a diamond shape with your thumbs and index fingers.",
@@ -750,7 +759,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=J0DnG1_S92I",
     imageUrl: "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bodyweight"],
+    equipment: [getEquipmentObj("Bodyweight")],
     difficulty: "intermediate",
   },
   
@@ -760,7 +769,7 @@ export const exercises: Exercise[] = [
     name: "Running",
     category: "Cardio",
     bodyRegion: "Cardio",
-    muscleGroups: ["Quadriceps", "Hamstrings", "Calves", "Core"],
+    muscleGroups: [getMuscleGroupObj("Quadriceps"), getMuscleGroupObj("Hamstrings"), getMuscleGroupObj("Calves"), getMuscleGroupObj("Core")],
     description: "A fundamental cardio exercise that improves endurance and burns calories.",
     instructions: [
       "Start with a proper warm-up of light jogging and dynamic stretches.",
@@ -770,7 +779,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=_kGESn8ArrU",
     imageUrl: "https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bodyweight"],
+    equipment: [getEquipmentObj("Bodyweight")],
     difficulty: "beginner",
   },
   {
@@ -778,7 +787,7 @@ export const exercises: Exercise[] = [
     name: "Cycling",
     category: "Cardio",
     bodyRegion: "Cardio",
-    muscleGroups: ["Quadriceps", "Hamstrings", "Calves"],
+    muscleGroups: [getMuscleGroupObj("Quadriceps"), getMuscleGroupObj("Hamstrings"), getMuscleGroupObj("Calves")],
     description: "A low-impact cardio exercise that strengthens the lower body.",
     instructions: [
       "Adjust the bike seat to the proper height for your leg length.",
@@ -788,7 +797,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=r6xj-KCfh_4",
     imageUrl: "https://images.unsplash.com/photo-1507035895480-2b3156c31fc8?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Machine"],
+    equipment: [getEquipmentObj("Machine")],
     difficulty: "beginner",
   },
   {
@@ -796,7 +805,7 @@ export const exercises: Exercise[] = [
     name: "Jump Rope",
     category: "Cardio",
     bodyRegion: "Cardio",
-    muscleGroups: ["Calves", "Shoulders", "Core"],
+    muscleGroups: [getMuscleGroupObj("Calves"), getMuscleGroupObj("Shoulders"), getMuscleGroupObj("Core")],
     description: "A high-intensity cardio exercise that improves coordination and burns calories.",
     instructions: [
       "Hold the handles with a firm but relaxed grip.",
@@ -806,7 +815,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=FJmRQ5iTXKE",
     imageUrl: "https://images.unsplash.com/photo-1434596922112-19c563067271?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bodyweight"],
+    equipment: [getEquipmentObj("Bodyweight")],
     difficulty: "beginner",
   },
   {
@@ -814,7 +823,7 @@ export const exercises: Exercise[] = [
     name: "High Knees",
     category: "Cardio",
     bodyRegion: "Cardio",
-    muscleGroups: ["Hip Flexors", "Quadriceps", "Calves"],
+    muscleGroups: [getMuscleGroupObj("Hip Flexors"), getMuscleGroupObj("Quadriceps"), getMuscleGroupObj("Calves")],
     description: "A dynamic cardio exercise that elevates heart rate and engages the core.",
     instructions: [
       "Stand with feet hip-width apart.",
@@ -824,7 +833,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=tx5rgpDAJRI",
     imageUrl: "https://images.unsplash.com/photo-1434682881908-b43d0467b798?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bodyweight"],
+    equipment: [getEquipmentObj("Bodyweight")],
     difficulty: "beginner",
   },
   {
@@ -832,7 +841,7 @@ export const exercises: Exercise[] = [
     name: "Jumping Jacks",
     category: "Cardio",
     bodyRegion: "Cardio",
-    muscleGroups: ["Shoulders", "Hip Flexors", "Calves"],
+    muscleGroups: [getMuscleGroupObj("Shoulders"), getMuscleGroupObj("Hip Flexors"), getMuscleGroupObj("Calves")],
     description: "A classic cardio exercise that works the entire body.",
     instructions: [
       "Stand with feet together and arms at your sides.",
@@ -842,7 +851,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=c4DAnQ6DtF8",
     imageUrl: "https://images.unsplash.com/photo-1434682881908-b43d0467b798?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bodyweight"],
+    equipment: [getEquipmentObj("Bodyweight")],
     difficulty: "beginner",
   },
   {
@@ -850,7 +859,7 @@ export const exercises: Exercise[] = [
     name: "Box Jumps",
     category: "Cardio",
     bodyRegion: "Lower Body",
-    muscleGroups: ["Quadriceps", "Hamstrings", "Glutes", "Calves"],
+    muscleGroups: [getMuscleGroupObj("Quadriceps"), getMuscleGroupObj("Hamstrings"), getMuscleGroupObj("Glutes"), getMuscleGroupObj("Calves")],
     description: "A plyometric exercise that builds explosive power in the legs.",
     instructions: [
       "Stand facing a sturdy box or platform.",
@@ -861,7 +870,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=52r_Ul5k03g",
     imageUrl: "https://images.unsplash.com/photo-1434682881908-b43d0467b798?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Box"],
+    equipment: [getEquipmentObj("Box")],
     difficulty: "intermediate",
   },
   
@@ -871,7 +880,7 @@ export const exercises: Exercise[] = [
     name: "Bicep Curl",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Biceps", "Forearms"],
+    muscleGroups: [getMuscleGroupObj("Biceps"), getMuscleGroupObj("Forearms")],
     description: "An isolation exercise that targets the biceps muscles.",
     instructions: [
       "Stand with feet shoulder-width apart, holding dumbbells at your sides.",
@@ -881,7 +890,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=ykJmrZ5v0Oo",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Dumbbell"],
+    equipment: [getEquipmentObj("Dumbbell")],
     difficulty: "beginner",
   },
   {
@@ -889,7 +898,7 @@ export const exercises: Exercise[] = [
     name: "Tricep Pushdown",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Triceps"],
+    muscleGroups: [getMuscleGroupObj("Triceps")],
     description: "An isolation exercise that targets the triceps muscles.",
     instructions: [
       "Stand facing a cable machine with a straight bar attachment at head height.",
@@ -899,7 +908,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=2-LAMcpzODU",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Cable Machine"],
+    equipment: [getEquipmentObj("Cable Machine")],
     difficulty: "beginner",
   },
   {
@@ -907,7 +916,7 @@ export const exercises: Exercise[] = [
     name: "Hammer Curl",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Biceps", "Forearms"],
+    muscleGroups: [getMuscleGroupObj("Biceps"), getMuscleGroupObj("Forearms")],
     description: "A variation of the bicep curl that also targets the forearm muscles.",
     instructions: [
       "Stand with feet shoulder-width apart, holding dumbbells at your sides.",
@@ -917,7 +926,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=zC3nLlEvin4",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Dumbbell"],
+    equipment: [getEquipmentObj("Dumbbell")],
     difficulty: "beginner",
   },
   {
@@ -925,7 +934,7 @@ export const exercises: Exercise[] = [
     name: "Skull Crusher",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Triceps"],
+    muscleGroups: [getMuscleGroupObj("Triceps")],
     description: "An isolation exercise that targets the triceps muscles.",
     instructions: [
       "Lie on a bench holding a barbell or dumbbells with arms extended above your chest.",
@@ -935,7 +944,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=d_KZxkY_0cM",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Barbell", "Dumbbell", "Bench"],
+    equipment: [getEquipmentObj("Barbell"), getEquipmentObj("Dumbbell"), getEquipmentObj("Bench")],
     difficulty: "intermediate",
   },
   {
@@ -943,7 +952,7 @@ export const exercises: Exercise[] = [
     name: "Concentration Curl",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Biceps"],
+    muscleGroups: [getMuscleGroupObj("Biceps")],
     description: "An isolation exercise that focuses on the biceps peak.",
     instructions: [
       "Sit on a bench with your legs spread and feet flat on the floor.",
@@ -954,7 +963,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=Jvj2wV0vOYU",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Dumbbell", "Bench"],
+    equipment: [getEquipmentObj("Dumbbell"), getEquipmentObj("Bench")],
     difficulty: "beginner",
   },
   {
@@ -962,7 +971,7 @@ export const exercises: Exercise[] = [
     name: "Overhead Tricep Extension",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Triceps"],
+    muscleGroups: [getMuscleGroupObj("Triceps")],
     description: "An isolation exercise that targets the long head of the triceps.",
     instructions: [
       "Stand or sit with feet shoulder-width apart.",
@@ -972,7 +981,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=YbX7Wd8jQ-Q",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Dumbbell"],
+    equipment: [getEquipmentObj("Dumbbell")],
     difficulty: "beginner",
   },
   {
@@ -980,7 +989,7 @@ export const exercises: Exercise[] = [
     name: "Preacher Curl",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Biceps"],
+    muscleGroups: [getMuscleGroupObj("Biceps")],
     description: "An isolation exercise that targets the biceps with support from a preacher bench.",
     instructions: [
       "Sit at a preacher bench and rest your upper arms on the pad.",
@@ -990,7 +999,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=fIWP-FRFNU0",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Barbell", "Dumbbell", "Preacher Bench"],
+    equipment: [getEquipmentObj("Barbell"), getEquipmentObj("Dumbbell"), getEquipmentObj("Preacher Bench")],
     difficulty: "intermediate",
   },
   {
@@ -998,7 +1007,7 @@ export const exercises: Exercise[] = [
     name: "Close-Grip Bench Press",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Triceps", "Chest", "Shoulders"],
+    muscleGroups: [getMuscleGroupObj("Triceps"), getMuscleGroupObj("Chest"), getMuscleGroupObj("Shoulders")],
     description: "A compound exercise that emphasizes the triceps.",
     instructions: [
       "Lie on a flat bench with your feet flat on the floor.",
@@ -1008,7 +1017,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=nEF0bv2FW94",
     imageUrl: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Barbell", "Bench"],
+    equipment: [getEquipmentObj("Barbell"), getEquipmentObj("Bench")],
     difficulty: "intermediate",
   },
   
@@ -1018,7 +1027,7 @@ export const exercises: Exercise[] = [
     name: "Kettlebell Swing",
     category: "Functional",
     bodyRegion: "Full Body",
-    muscleGroups: ["Glutes", "Hamstrings", "Lower Back", "Shoulders", "Core"],
+    muscleGroups: [getMuscleGroupObj("Glutes"), getMuscleGroupObj("Hamstrings"), getMuscleGroupObj("Lower Back"), getMuscleGroupObj("Shoulders"), getMuscleGroupObj("Core")],
     description: "A dynamic exercise that builds power and endurance.",
     instructions: [
       "Stand with feet slightly wider than shoulder-width apart, holding a kettlebell with both hands.",
@@ -1028,7 +1037,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=YSxHifyI6s8",
     imageUrl: "https://images.unsplash.com/photo-1517963879433-6ad2b056d712?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Kettlebell"],
+    equipment: [getEquipmentObj("Kettlebell")],
     difficulty: "intermediate",
   },
   {
@@ -1036,7 +1045,7 @@ export const exercises: Exercise[] = [
     name: "Medicine Ball Slam",
     category: "Functional",
     bodyRegion: "Full Body",
-    muscleGroups: ["Shoulders", "Core", "Back", "Arms"],
+    muscleGroups: [getMuscleGroupObj("Shoulders"), getMuscleGroupObj("Core"), getMuscleGroupObj("Back"), getMuscleGroupObj("Arms")],
     description: "An explosive exercise that builds power and releases tension.",
     instructions: [
       "Stand with feet shoulder-width apart, holding a medicine ball.",
@@ -1046,7 +1055,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=CkFzgR4gUXM",
     imageUrl: "https://images.unsplash.com/photo-1517963879433-6ad2b056d712?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Medicine Ball"],
+    equipment: [getEquipmentObj("Medicine Ball")],
     difficulty: "intermediate",
   },
   {
@@ -1054,7 +1063,7 @@ export const exercises: Exercise[] = [
     name: "Battle Ropes",
     category: "Functional",
     bodyRegion: "Full Body",
-    muscleGroups: ["Shoulders", "Arms", "Back", "Core"],
+    muscleGroups: [getMuscleGroupObj("Shoulders"), getMuscleGroupObj("Arms"), getMuscleGroupObj("Back"), getMuscleGroupObj("Core")],
     description: "A high-intensity exercise that builds endurance and power.",
     instructions: [
       "Stand with feet shoulder-width apart, holding one end of a battle rope in each hand.",
@@ -1064,7 +1073,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=r2Rzaf7SaGk",
     imageUrl: "https://images.unsplash.com/photo-1517963879433-6ad2b056d712?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Battle Ropes"],
+    equipment: [getEquipmentObj("Battle Ropes")],
     difficulty: "intermediate",
   },
   {
@@ -1072,7 +1081,7 @@ export const exercises: Exercise[] = [
     name: "Farmer's Walk",
     category: "Functional",
     bodyRegion: "Full Body",
-    muscleGroups: ["Forearms", "Traps", "Core", "Legs"],
+    muscleGroups: [getMuscleGroupObj("Forearms"), getMuscleGroupObj("Traps"), getMuscleGroupObj("Core"), getMuscleGroupObj("Legs")],
     description: "A simple yet effective exercise for building grip strength and overall stability.",
     instructions: [
       "Hold a heavy dumbbell or kettlebell in each hand at your sides.",
@@ -1082,7 +1091,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=rt17lmnaLSM",
     imageUrl: "https://images.unsplash.com/photo-1517963879433-6ad2b056d712?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Dumbbell", "Kettlebell"],
+    equipment: [getEquipmentObj("Dumbbell"), getEquipmentObj("Kettlebell")],
     difficulty: "beginner",
   },
   {
@@ -1090,7 +1099,7 @@ export const exercises: Exercise[] = [
     name: "Turkish Get-Up",
     category: "Functional",
     bodyRegion: "Full Body",
-    muscleGroups: ["Shoulders", "Core", "Legs", "Glutes"],
+    muscleGroups: [getMuscleGroupObj("Shoulders"), getMuscleGroupObj("Core"), getMuscleGroupObj("Legs"), getMuscleGroupObj("Glutes")],
     description: "A complex movement that builds total-body strength, stability, and mobility.",
     instructions: [
       "Lie on your back holding a kettlebell or dumbbell in your right hand, arm extended toward the ceiling.",
@@ -1102,7 +1111,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=jFK8FOiLa_M",
     imageUrl: "https://images.unsplash.com/photo-1517963879433-6ad2b056d712?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Kettlebell", "Dumbbell"],
+    equipment: [getEquipmentObj("Kettlebell"), getEquipmentObj("Dumbbell")],
     difficulty: "advanced",
   },
   
@@ -1112,7 +1121,7 @@ export const exercises: Exercise[] = [
     name: "Cable Crossover",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Chest", "Shoulders"],
+    muscleGroups: [getMuscleGroupObj("Chest"), getMuscleGroupObj("Shoulders")],
     description: "An isolation exercise that targets the chest muscles with constant tension throughout the movement.",
     instructions: [
       "Set the pulleys on a cable machine to the highest position.",
@@ -1123,7 +1132,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=taI4XduLpTk",
     imageUrl: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Cable Machine"],
+    equipment: [getEquipmentObj("Cable Machine")],
     difficulty: "intermediate",
   },
   {
@@ -1131,7 +1140,7 @@ export const exercises: Exercise[] = [
     name: "Low Cable Fly",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Chest", "Shoulders"],
+    muscleGroups: [getMuscleGroupObj("Chest"), getMuscleGroupObj("Shoulders")],
     description: "A variation of the cable fly that targets the upper chest muscles.",
     instructions: [
       "Set the pulleys on a cable machine to the lowest position.",
@@ -1142,7 +1151,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=M1N804yWA-8",
     imageUrl: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Cable Machine"],
+    equipment: [getEquipmentObj("Cable Machine")],
     difficulty: "intermediate",
   },
   {
@@ -1150,7 +1159,7 @@ export const exercises: Exercise[] = [
     name: "High Cable Fly",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Chest", "Shoulders"],
+    muscleGroups: [getMuscleGroupObj("Chest"), getMuscleGroupObj("Shoulders")],
     description: "A variation of the cable fly that targets the lower chest muscles.",
     instructions: [
       "Set the pulleys on a cable machine to a position above your head.",
@@ -1161,7 +1170,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=Iwe6AmxVf7o",
     imageUrl: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Cable Machine"],
+    equipment: [getEquipmentObj("Cable Machine")],
     difficulty: "intermediate",
   },
   {
@@ -1169,7 +1178,7 @@ export const exercises: Exercise[] = [
     name: "Single-Arm Cable Chest Press",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Chest", "Shoulders", "Triceps"],
+    muscleGroups: [getMuscleGroupObj("Chest"), getMuscleGroupObj("Shoulders"), getMuscleGroupObj("Triceps")],
     description: "A unilateral exercise that targets the chest while engaging core stabilizers.",
     instructions: [
       "Set the pulley on a cable machine to chest height.",
@@ -1181,7 +1190,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=GtP2bRjYLY0",
     imageUrl: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Cable Machine"],
+    equipment: [getEquipmentObj("Cable Machine")],
     difficulty: "intermediate",
   },
   
@@ -1191,7 +1200,7 @@ export const exercises: Exercise[] = [
     name: "Cable Lateral Raise",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Shoulders"],
+    muscleGroups: [getMuscleGroupObj("Shoulders")],
     description: "An isolation exercise that targets the lateral deltoids with constant tension.",
     instructions: [
       "Set the pulley on a cable machine to the lowest position.",
@@ -1203,7 +1212,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=ppx3LJSMkK8",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Cable Machine"],
+    equipment: [getEquipmentObj("Cable Machine")],
     difficulty: "intermediate",
   },
   {
@@ -1211,7 +1220,7 @@ export const exercises: Exercise[] = [
     name: "Cable Front Raise",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Shoulders"],
+    muscleGroups: [getMuscleGroupObj("Shoulders")],
     description: "An isolation exercise that targets the anterior deltoids with constant tension.",
     instructions: [
       "Set the pulley on a cable machine to the lowest position.",
@@ -1223,7 +1232,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=sOcYlBI85hc",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Cable Machine"],
+    equipment: [getEquipmentObj("Cable Machine")],
     difficulty: "beginner",
   },
   {
@@ -1231,7 +1240,7 @@ export const exercises: Exercise[] = [
     name: "Cable Rear Delt Fly",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Shoulders", "Rear Deltoids", "Upper Back"],
+    muscleGroups: [getMuscleGroupObj("Shoulders"), getMuscleGroupObj("Rear Deltoids"), getMuscleGroupObj("Upper Back")],
     description: "An isolation exercise that targets the posterior deltoids with constant tension.",
     instructions: [
       "Set the pulley on a cable machine to chest height.",
@@ -1243,7 +1252,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=wZnsZsMywrY",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Cable Machine"],
+    equipment: [getEquipmentObj("Cable Machine")],
     difficulty: "intermediate",
   },
   {
@@ -1251,7 +1260,7 @@ export const exercises: Exercise[] = [
     name: "Cable Upright Row",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Shoulders", "Traps"],
+    muscleGroups: [getMuscleGroupObj("Shoulders"), getMuscleGroupObj("Traps")],
     description: "A compound exercise that targets the shoulders and upper traps with constant tension.",
     instructions: [
       "Set the pulley on a cable machine to the lowest position.",
@@ -1262,7 +1271,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=L3T9Dk1xm2o",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Cable Machine"],
+    equipment: [getEquipmentObj("Cable Machine")],
     difficulty: "intermediate",
   },
   
@@ -1272,7 +1281,7 @@ export const exercises: Exercise[] = [
     name: "Cable Overhead Triceps Extension",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Triceps"],
+    muscleGroups: [getMuscleGroupObj("Triceps")],
     description: "An isolation exercise that targets the long head of the triceps with constant tension.",
     instructions: [
       "Set the pulley on a cable machine to the highest position.",
@@ -1283,7 +1292,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=GVt4uQ9XVnI",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Cable Machine", "Rope Attachment"],
+    equipment: [getEquipmentObj("Cable Machine"), getEquipmentObj("Rope Attachment")],
     difficulty: "intermediate",
   },
   {
@@ -1291,7 +1300,7 @@ export const exercises: Exercise[] = [
     name: "Cable Triceps Kickback",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Triceps"],
+    muscleGroups: [getMuscleGroupObj("Triceps")],
     description: "An isolation exercise that targets the triceps with constant tension.",
     instructions: [
       "Set the pulley on a cable machine to the lowest position.",
@@ -1303,7 +1312,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=GVt4uQ9XVnI",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Cable Machine"],
+    equipment: [getEquipmentObj("Cable Machine")],
     difficulty: "intermediate",
   },
   {
@@ -1311,7 +1320,7 @@ export const exercises: Exercise[] = [
     name: "Rope Pushdown",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Triceps"],
+    muscleGroups: [getMuscleGroupObj("Triceps")],
     description: "An isolation exercise that targets all three heads of the triceps with constant tension.",
     instructions: [
       "Set the pulley on a cable machine to the highest position.",
@@ -1322,7 +1331,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=vB5OHsJ3EME",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Cable Machine", "Rope Attachment"],
+    equipment: [getEquipmentObj("Cable Machine"), getEquipmentObj("Rope Attachment")],
     difficulty: "beginner",
   },
   
@@ -1332,7 +1341,7 @@ export const exercises: Exercise[] = [
     name: "Cable Curl",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Biceps", "Forearms"],
+    muscleGroups: [getMuscleGroupObj("Biceps"), getMuscleGroupObj("Forearms")],
     description: "An isolation exercise that targets the biceps with constant tension.",
     instructions: [
       "Set the pulley on a cable machine to the lowest position.",
@@ -1343,7 +1352,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=kwG2ipFRgfo",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Cable Machine", "Straight Bar Attachment"],
+    equipment: [getEquipmentObj("Cable Machine"), getEquipmentObj("Straight Bar Attachment")],
     difficulty: "beginner",
   },
   {
@@ -1351,7 +1360,7 @@ export const exercises: Exercise[] = [
     name: "Cable Hammer Curl",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Biceps", "Forearms"],
+    muscleGroups: [getMuscleGroupObj("Biceps"), getMuscleGroupObj("Forearms")],
     description: "A variation of the cable curl that targets the biceps and brachialis with constant tension.",
     instructions: [
       "Set the pulley on a cable machine to the lowest position.",
@@ -1362,7 +1371,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=vsLPwzEt8xA",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Cable Machine", "Rope Attachment"],
+    equipment: [getEquipmentObj("Cable Machine"), getEquipmentObj("Rope Attachment")],
     difficulty: "beginner",
   },
   {
@@ -1370,7 +1379,7 @@ export const exercises: Exercise[] = [
     name: "High Cable Curl",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Biceps"],
+    muscleGroups: [getMuscleGroupObj("Biceps")],
     description: "A variation of the cable curl that places emphasis on the short head of the biceps.",
     instructions: [
       "Set the pulleys on a cable machine to positions above shoulder height.",
@@ -1381,7 +1390,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=Ycn-2-jxVJ4",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Cable Machine"],
+    equipment: [getEquipmentObj("Cable Machine")],
     difficulty: "intermediate",
   },
   
@@ -1391,7 +1400,7 @@ export const exercises: Exercise[] = [
     name: "Straight-Arm Pulldown",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Lats", "Chest", "Triceps"],
+    muscleGroups: [getMuscleGroupObj("Lats"), getMuscleGroupObj("Chest"), getMuscleGroupObj("Triceps")],
     description: "An isolation exercise that targets the latissimus dorsi with constant tension.",
     instructions: [
       "Set the pulley on a cable machine to the highest position.",
@@ -1402,7 +1411,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=8fKNkiJl_Ro",
     imageUrl: "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Cable Machine", "Straight Bar Attachment"],
+    equipment: [getEquipmentObj("Cable Machine"), getEquipmentObj("Straight Bar Attachment")],
     difficulty: "intermediate",
   },
   {
@@ -1410,7 +1419,7 @@ export const exercises: Exercise[] = [
     name: "Face Pull",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Rear Deltoids", "Traps", "Rotator Cuff"],
+    muscleGroups: [getMuscleGroupObj("Rear Deltoids"), getMuscleGroupObj("Traps"), getMuscleGroupObj("Rotator Cuff")],
     description: "A compound exercise that targets the rear deltoids, upper back, and rotator cuff muscles.",
     instructions: [
       "Set the pulley on a cable machine to slightly above head height.",
@@ -1422,7 +1431,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=eIq5CB9JfKE",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Cable Machine", "Rope Attachment"],
+    equipment: [getEquipmentObj("Cable Machine"), getEquipmentObj("Rope Attachment")],
     difficulty: "intermediate",
   },
   {
@@ -1430,7 +1439,7 @@ export const exercises: Exercise[] = [
     name: "Cable Shrug",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Traps", "Shoulders"],
+    muscleGroups: [getMuscleGroupObj("Traps"), getMuscleGroupObj("Shoulders")],
     description: "An isolation exercise that targets the trapezius muscles with constant tension.",
     instructions: [
       "Set the pulley on a cable machine to the lowest position.",
@@ -1441,7 +1450,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=g6qbq4Lf1FI",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Cable Machine", "Straight Bar Attachment"],
+    equipment: [getEquipmentObj("Cable Machine"), getEquipmentObj("Straight Bar Attachment")],
     difficulty: "beginner",
   },
   {
@@ -1449,7 +1458,7 @@ export const exercises: Exercise[] = [
     name: "Single-Arm Cable Row",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Back", "Lats", "Biceps", "Rear Deltoids"],
+    muscleGroups: [getMuscleGroupObj("Back"), getMuscleGroupObj("Lats"), getMuscleGroupObj("Biceps"), getMuscleGroupObj("Rear Deltoids")],
     description: "A unilateral exercise that targets the back muscles while engaging core stabilizers.",
     instructions: [
       "Set the pulley on a cable machine to chest height.",
@@ -1462,7 +1471,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=xQNrFHEMhI4",
     imageUrl: "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Cable Machine"],
+    equipment: [getEquipmentObj("Cable Machine")],
     difficulty: "beginner",
   },
   {
@@ -1470,7 +1479,7 @@ export const exercises: Exercise[] = [
     name: "Wide-Grip Cable Pulldown",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Back", "Lats", "Biceps"],
+    muscleGroups: [getMuscleGroupObj("Back"), getMuscleGroupObj("Lats"), getMuscleGroupObj("Biceps")],
     description: "A compound exercise that targets the latissimus dorsi with constant tension.",
     instructions: [
       "Sit at a cable pulldown machine with thighs secured under the pads.",
@@ -1481,7 +1490,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=CAwf7n6Luuc",
     imageUrl: "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Cable Machine", "Wide Bar Attachment"],
+    equipment: [getEquipmentObj("Cable Machine"), getEquipmentObj("Wide Bar Attachment")],
     difficulty: "beginner",
   },
   {
@@ -1489,7 +1498,7 @@ export const exercises: Exercise[] = [
     name: "Reverse Cable Fly",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Rear Deltoids", "Upper Back"],
+    muscleGroups: [getMuscleGroupObj("Rear Deltoids"), getMuscleGroupObj("Upper Back")],
     description: "An isolation exercise that targets the rear deltoids and upper back with constant tension.",
     instructions: [
       "Set the pulleys on a cable machine to chest height.",
@@ -1501,7 +1510,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=wZnsZsMywrY",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Cable Machine"],
+    equipment: [getEquipmentObj("Cable Machine")],
     difficulty: "intermediate",
   },
   
@@ -1511,7 +1520,7 @@ export const exercises: Exercise[] = [
     name: "Incline Chest Press Machine",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Chest", "Shoulders", "Triceps"],
+    muscleGroups: [getMuscleGroupObj("Chest"), getMuscleGroupObj("Shoulders"), getMuscleGroupObj("Triceps")],
     description: "A machine exercise that targets the upper chest muscles with support and stability.",
     instructions: [
       "Adjust the seat height so that the handles are at upper chest level.",
@@ -1522,7 +1531,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=xKF3sxF8NRw",
     imageUrl: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Chest Press Machine"],
+    equipment: [getEquipmentObj("Chest Press Machine")],
     difficulty: "beginner",
   },
   {
@@ -1530,7 +1539,7 @@ export const exercises: Exercise[] = [
     name: "Flat Chest Press Machine",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Chest", "Shoulders", "Triceps"],
+    muscleGroups: [getMuscleGroupObj("Chest"), getMuscleGroupObj("Shoulders"), getMuscleGroupObj("Triceps")],
     description: "A machine exercise that targets the middle chest muscles with support and stability.",
     instructions: [
       "Adjust the seat height so that the handles are at mid-chest level.",
@@ -1541,7 +1550,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=xKF3sxF8NRw",
     imageUrl: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Chest Press Machine"],
+    equipment: [getEquipmentObj("Chest Press Machine")],
     difficulty: "beginner",
   },
   {
@@ -1549,7 +1558,7 @@ export const exercises: Exercise[] = [
     name: "Pec Deck Machine",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Chest", "Shoulders"],
+    muscleGroups: [getMuscleGroupObj("Chest"), getMuscleGroupObj("Shoulders")],
     description: "A machine exercise that isolates the chest muscles through a fly motion.",
     instructions: [
       "Adjust the seat height so your arms are parallel to the floor.",
@@ -1560,7 +1569,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=Qr7dstCeEzA",
     imageUrl: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Pec Deck Machine"],
+    equipment: [getEquipmentObj("Pec Deck Machine")],
     difficulty: "beginner",
   },
   {
@@ -1568,7 +1577,7 @@ export const exercises: Exercise[] = [
     name: "Seated Machine Chest Fly",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Chest", "Shoulders"],
+    muscleGroups: [getMuscleGroupObj("Chest"), getMuscleGroupObj("Shoulders")],
     description: "A machine exercise that isolates the chest muscles through a fly motion with adjustable resistance.",
     instructions: [
       "Adjust the seat height so your arms are parallel to the floor.",
@@ -1579,7 +1588,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=Z57CtFmRMxA",
     imageUrl: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Chest Fly Machine"],
+    equipment: [getEquipmentObj("Chest Fly Machine")],
     difficulty: "beginner",
   },
   {
@@ -1587,7 +1596,7 @@ export const exercises: Exercise[] = [
     name: "Smith Machine Bench Press",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Chest", "Shoulders", "Triceps"],
+    muscleGroups: [getMuscleGroupObj("Chest"), getMuscleGroupObj("Shoulders"), getMuscleGroupObj("Triceps")],
     description: "A guided barbell exercise that targets the chest muscles with added stability.",
     instructions: [
       "Lie on a flat bench positioned under a Smith machine bar.",
@@ -1598,7 +1607,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=WQRjDDXAu8c",
     imageUrl: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Smith Machine", "Bench"],
+    equipment: [getEquipmentObj("Smith Machine"), getEquipmentObj("Bench")],
     difficulty: "intermediate",
   },
   {
@@ -1606,7 +1615,7 @@ export const exercises: Exercise[] = [
     name: "Machine Dip",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Chest", "Triceps", "Shoulders"],
+    muscleGroups: [getMuscleGroupObj("Chest"), getMuscleGroupObj("Triceps"), getMuscleGroupObj("Shoulders")],
     description: "A machine-assisted exercise that targets the lower chest and triceps.",
     instructions: [
       "Adjust the weight to your desired resistance level.",
@@ -1617,7 +1626,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=Gg8Y6SHaGCE",
     imageUrl: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Dip Machine"],
+    equipment: [getEquipmentObj("Dip Machine")],
     difficulty: "beginner",
   },
   {
@@ -1625,7 +1634,7 @@ export const exercises: Exercise[] = [
     name: "Hammer Strength Chest Press",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Chest", "Shoulders", "Triceps"],
+    muscleGroups: [getMuscleGroupObj("Chest"), getMuscleGroupObj("Shoulders"), getMuscleGroupObj("Triceps")],
     description: "A plate-loaded machine exercise that targets the chest muscles with independent arm movement.",
     instructions: [
       "Adjust the seat height so the handles are at chest level.",
@@ -1636,7 +1645,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=M7tWtxV9hG4",
     imageUrl: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Hammer Strength Machine"],
+    equipment: [getEquipmentObj("Hammer Strength Machine")],
     difficulty: "intermediate",
   },
   {
@@ -1644,7 +1653,7 @@ export const exercises: Exercise[] = [
     name: "Machine Decline Chest Press",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Chest", "Shoulders", "Triceps"],
+    muscleGroups: [getMuscleGroupObj("Chest"), getMuscleGroupObj("Shoulders"), getMuscleGroupObj("Triceps")],
     description: "A machine exercise that targets the lower chest muscles with support and stability.",
     instructions: [
       "Adjust the seat height so that the handles are at lower chest level.",
@@ -1655,7 +1664,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=LfyQBUKR8SE",
     imageUrl: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Decline Chest Press Machine"],
+    equipment: [getEquipmentObj("Decline Chest Press Machine")],
     difficulty: "beginner",
   },
   
@@ -1665,7 +1674,7 @@ export const exercises: Exercise[] = [
     name: "Lat Pulldown Machine",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Back", "Biceps", "Lats"],
+    muscleGroups: [getMuscleGroupObj("Back"), getMuscleGroupObj("Biceps"), getMuscleGroupObj("Lats")],
     description: "A machine exercise that targets the latissimus dorsi muscles.",
     instructions: [
       "Sit at a lat pulldown machine with your thighs secured under the pads.",
@@ -1676,7 +1685,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=CAwf7n6Luuc",
     imageUrl: "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Lat Pulldown Machine"],
+    equipment: [getEquipmentObj("Lat Pulldown Machine")],
     difficulty: "beginner",
   },
   {
@@ -1684,7 +1693,7 @@ export const exercises: Exercise[] = [
     name: "Seated Row Machine",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Back", "Biceps", "Lats"],
+    muscleGroups: [getMuscleGroupObj("Back"), getMuscleGroupObj("Biceps"), getMuscleGroupObj("Lats")],
     description: "A machine exercise that targets the middle back muscles.",
     instructions: [
       "Sit at a seated row machine with your feet on the platform and knees slightly bent.",
@@ -1695,7 +1704,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=GZbfZ033f74",
     imageUrl: "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Seated Row Machine"],
+    equipment: [getEquipmentObj("Seated Row Machine")],
     difficulty: "beginner",
   },
   {
@@ -1703,7 +1712,7 @@ export const exercises: Exercise[] = [
     name: "Machine Back Extension",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Lower Back", "Glutes"],
+    muscleGroups: [getMuscleGroupObj("Lower Back"), getMuscleGroupObj("Glutes")],
     description: "A machine exercise that targets the lower back muscles with support and stability.",
     instructions: [
       "Adjust the machine so the pad is at your lower chest.",
@@ -1714,7 +1723,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=vx0jZBEmZcE",
     imageUrl: "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Back Extension Machine"],
+    equipment: [getEquipmentObj("Back Extension Machine")],
     difficulty: "beginner",
   },
   {
@@ -1722,7 +1731,7 @@ export const exercises: Exercise[] = [
     name: "Hammer Strength Pulldown",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Back", "Lats", "Biceps"],
+    muscleGroups: [getMuscleGroupObj("Back"), getMuscleGroupObj("Lats"), getMuscleGroupObj("Biceps")],
     description: "A plate-loaded machine exercise that targets the latissimus dorsi with independent arm movement.",
     instructions: [
       "Adjust the seat height so you can comfortably reach the handles.",
@@ -1733,7 +1742,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=oeJe-MjpACE",
     imageUrl: "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Hammer Strength Machine"],
+    equipment: [getEquipmentObj("Hammer Strength Machine")],
     difficulty: "intermediate",
   },
   {
@@ -1741,7 +1750,7 @@ export const exercises: Exercise[] = [
     name: "T-Bar Row Machine",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Back", "Lats", "Traps", "Biceps"],
+    muscleGroups: [getMuscleGroupObj("Back"), getMuscleGroupObj("Lats"), getMuscleGroupObj("Traps"), getMuscleGroupObj("Biceps")],
     description: "A machine exercise that targets the middle and upper back muscles.",
     instructions: [
       "Position yourself on the T-bar row machine with your chest against the pad.",
@@ -1752,7 +1761,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=KDEl3AmZbVE",
     imageUrl: "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["T-Bar Row Machine"],
+    equipment: [getEquipmentObj("T-Bar Row Machine")],
     difficulty: "intermediate",
   },
   {
@@ -1760,7 +1769,7 @@ export const exercises: Exercise[] = [
     name: "Seated Lat Row Machine",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Back", "Lats", "Biceps"],
+    muscleGroups: [getMuscleGroupObj("Back"), getMuscleGroupObj("Lats"), getMuscleGroupObj("Biceps")],
     description: "A machine exercise that targets the latissimus dorsi and middle back muscles.",
     instructions: [
       "Sit at the machine with your feet on the platform and chest against the pad.",
@@ -1771,7 +1780,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=GZbfZ033f74",
     imageUrl: "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Lat Row Machine"],
+    equipment: [getEquipmentObj("Lat Row Machine")],
     difficulty: "beginner",
   },
   {
@@ -1779,7 +1788,7 @@ export const exercises: Exercise[] = [
     name: "Assisted Pull-up Machine",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Back", "Biceps", "Lats"],
+    muscleGroups: [getMuscleGroupObj("Back"), getMuscleGroupObj("Biceps"), getMuscleGroupObj("Lats")],
     description: "A machine-assisted exercise that helps develop strength for performing unassisted pull-ups.",
     instructions: [
       "Adjust the weight to provide the appropriate amount of assistance.",
@@ -1790,7 +1799,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=quFhQn7H6QM",
     imageUrl: "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Assisted Pull-up Machine"],
+    equipment: [getEquipmentObj("Assisted Pull-up Machine")],
     difficulty: "beginner",
   },
   {
@@ -1798,7 +1807,7 @@ export const exercises: Exercise[] = [
     name: "Machine Reverse Fly",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Rear Deltoids", "Upper Back"],
+    muscleGroups: [getMuscleGroupObj("Rear Deltoids"), getMuscleGroupObj("Upper Back")],
     description: "A machine exercise that targets the rear deltoids and upper back muscles.",
     instructions: [
       "Adjust the seat height so your arms are parallel to the floor.",
@@ -1809,7 +1818,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=6yMdhi2DVao",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Reverse Fly Machine"],
+    equipment: [getEquipmentObj("Reverse Fly Machine")],
     difficulty: "beginner",
   },
   {
@@ -1817,7 +1826,7 @@ export const exercises: Exercise[] = [
     name: "Machine Shrug",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Traps", "Shoulders"],
+    muscleGroups: [getMuscleGroupObj("Traps"), getMuscleGroupObj("Shoulders")],
     description: "A machine exercise that targets the trapezius muscles.",
     instructions: [
       "Adjust the seat height so the handles are at your sides.",
@@ -1828,7 +1837,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=g6qbq4Lf1FI",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Shrug Machine"],
+    equipment: [getEquipmentObj("Shrug Machine")],
     difficulty: "beginner",
   },
   
@@ -1838,7 +1847,7 @@ export const exercises: Exercise[] = [
     name: "Smith Machine Squats",
     category: "Machine",
     bodyRegion: "Lower Body",
-    muscleGroups: ["Quadriceps", "Hamstrings", "Glutes", "Lower Back"],
+    muscleGroups: [getMuscleGroupObj("Quadriceps"), getMuscleGroupObj("Hamstrings"), getMuscleGroupObj("Glutes"), getMuscleGroupObj("Lower Back")],
     description: "A guided barbell exercise that targets the lower body with added stability.",
     instructions: [
       "Position yourself under the Smith machine bar with feet shoulder-width apart.",
@@ -1850,7 +1859,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=Xh1PoqeG3-U",
     imageUrl: "https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Smith Machine"],
+    equipment: [getEquipmentObj("Smith Machine")],
     difficulty: "intermediate",
   },
   {
@@ -1858,7 +1867,7 @@ export const exercises: Exercise[] = [
     name: "Seated Leg Curl Machine",
     category: "Machine",
     bodyRegion: "Lower Body",
-    muscleGroups: ["Hamstrings"],
+    muscleGroups: [getMuscleGroupObj("Hamstrings")],
     description: "A machine exercise that isolates the hamstring muscles.",
     instructions: [
       "Adjust the machine so the pad is just above your ankles.",
@@ -1869,7 +1878,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=ELOCsoDSmrg",
     imageUrl: "https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Leg Curl Machine"],
+    equipment: [getEquipmentObj("Leg Curl Machine")],
     difficulty: "beginner",
   },
   {
@@ -1877,7 +1886,7 @@ export const exercises: Exercise[] = [
     name: "Smith Machine Lunge",
     category: "Machine",
     bodyRegion: "Lower Body",
-    muscleGroups: ["Quadriceps", "Hamstrings", "Glutes"],
+    muscleGroups: [getMuscleGroupObj("Quadriceps"), getMuscleGroupObj("Hamstrings"), getMuscleGroupObj("Glutes")],
     description: "A guided barbell exercise that targets the legs with added stability.",
     instructions: [
       "Position the Smith machine bar across your upper back/shoulders.",
@@ -1888,7 +1897,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=eFaRR7-ukdU",
     imageUrl: "https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Smith Machine"],
+    equipment: [getEquipmentObj("Smith Machine")],
     difficulty: "intermediate",
   },
   {
@@ -1896,7 +1905,7 @@ export const exercises: Exercise[] = [
     name: "Glute Kickback Machine",
     category: "Machine",
     bodyRegion: "Lower Body",
-    muscleGroups: ["Glutes", "Hamstrings"],
+    muscleGroups: [getMuscleGroupObj("Glutes"), getMuscleGroupObj("Hamstrings")],
     description: "A machine exercise that isolates the gluteal muscles.",
     instructions: [
       "Position yourself on the machine with your chest against the pad and hands on the handles.",
@@ -1907,7 +1916,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=4ZZg8ihZ1n0",
     imageUrl: "https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Glute Kickback Machine"],
+    equipment: [getEquipmentObj("Glute Kickback Machine")],
     difficulty: "beginner",
   },
   {
@@ -1915,7 +1924,7 @@ export const exercises: Exercise[] = [
     name: "Seated Calf Raise Machine",
     category: "Machine",
     bodyRegion: "Lower Body",
-    muscleGroups: ["Calves"],
+    muscleGroups: [getMuscleGroupObj("Calves")],
     description: "A machine exercise that targets the soleus muscle of the calves.",
     instructions: [
       "Sit on the machine with the balls of your feet on the platform and knees under the pad.",
@@ -1926,7 +1935,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=JbyjNymZOt0",
     imageUrl: "https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Seated Calf Raise Machine"],
+    equipment: [getEquipmentObj("Seated Calf Raise Machine")],
     difficulty: "beginner",
   },
   {
@@ -1934,7 +1943,7 @@ export const exercises: Exercise[] = [
     name: "Standing Calf Raise Machine",
     category: "Machine",
     bodyRegion: "Lower Body",
-    muscleGroups: ["Calves"],
+    muscleGroups: [getMuscleGroupObj("Calves")],
     description: "A machine exercise that targets the gastrocnemius muscle of the calves.",
     instructions: [
       "Position yourself on the machine with shoulders under the pads and balls of your feet on the platform.",
@@ -1945,7 +1954,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=YMmgqO8Jo-k",
     imageUrl: "https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Standing Calf Raise Machine"],
+    equipment: [getEquipmentObj("Standing Calf Raise Machine")],
     difficulty: "beginner",
   },
   {
@@ -1953,7 +1962,7 @@ export const exercises: Exercise[] = [
     name: "Abductor Machine",
     category: "Machine",
     bodyRegion: "Lower Body",
-    muscleGroups: ["Hip Abductors", "Glutes"],
+    muscleGroups: [getMuscleGroupObj("Hip Abductors"), getMuscleGroupObj("Glutes")],
     description: "A machine exercise that targets the outer thigh and hip muscles.",
     instructions: [
       "Sit on the machine with your back against the pad and legs inside the pads.",
@@ -1964,7 +1973,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=TAq4p1Q_hDA",
     imageUrl: "https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Abductor Machine"],
+    equipment: [getEquipmentObj("Abductor Machine")],
     difficulty: "beginner",
   },
   {
@@ -1972,7 +1981,7 @@ export const exercises: Exercise[] = [
     name: "Adductor Machine",
     category: "Machine",
     bodyRegion: "Lower Body",
-    muscleGroups: ["Hip Adductors", "Inner Thighs"],
+    muscleGroups: [getMuscleGroupObj("Hip Adductors"), getMuscleGroupObj("Inner Thighs")],
     description: "A machine exercise that targets the inner thigh muscles.",
     instructions: [
       "Sit on the machine with your back against the pad and legs outside the pads.",
@@ -1983,7 +1992,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=Gg8Y6SHaGCE",
     imageUrl: "https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Adductor Machine"],
+    equipment: [getEquipmentObj("Adductor Machine")],
     difficulty: "beginner",
   },
   
@@ -1993,7 +2002,7 @@ export const exercises: Exercise[] = [
     name: "Seated Shoulder Press Machine",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Shoulders", "Triceps"],
+    muscleGroups: [getMuscleGroupObj("Shoulders"), getMuscleGroupObj("Triceps")],
     description: "A machine exercise that targets the deltoid muscles with support and stability.",
     instructions: [
       "Adjust the seat height so the handles are at shoulder level.",
@@ -2004,7 +2013,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=Wqq43dKW1TU",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Shoulder Press Machine"],
+    equipment: [getEquipmentObj("Shoulder Press Machine")],
     difficulty: "beginner",
   },
   {
@@ -2012,7 +2021,7 @@ export const exercises: Exercise[] = [
     name: "Machine Lateral Raise",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Shoulders"],
+    muscleGroups: [getMuscleGroupObj("Shoulders")],
     description: "A machine exercise that isolates the lateral deltoid muscles.",
     instructions: [
       "Adjust the seat height so your shoulders align with the pivot point of the machine.",
@@ -2023,7 +2032,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=0FUpcwj_1z4",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Lateral Raise Machine"],
+    equipment: [getEquipmentObj("Lateral Raise Machine")],
     difficulty: "beginner",
   },
   {
@@ -2031,7 +2040,7 @@ export const exercises: Exercise[] = [
     name: "Smith Machine Overhead Press",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Shoulders", "Triceps"],
+    muscleGroups: [getMuscleGroupObj("Shoulders"), getMuscleGroupObj("Triceps")],
     description: "A guided barbell exercise that targets the shoulder muscles with added stability.",
     instructions: [
       "Position a bench in the Smith machine and sit facing away from the machine.",
@@ -2043,7 +2052,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=Dx-U4rui0ZA",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Smith Machine", "Bench"],
+    equipment: [getEquipmentObj("Smith Machine"), getEquipmentObj("Bench")],
     difficulty: "intermediate",
   },
   {
@@ -2051,7 +2060,7 @@ export const exercises: Exercise[] = [
     name: "Machine Front Raise",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Shoulders"],
+    muscleGroups: [getMuscleGroupObj("Shoulders")],
     description: "A machine exercise that isolates the anterior deltoid muscles.",
     instructions: [
       "Adjust the seat height so your shoulders align with the pivot point of the machine.",
@@ -2062,7 +2071,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=sOcYlBI85hc",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Front Raise Machine"],
+    equipment: [getEquipmentObj("Front Raise Machine")],
     difficulty: "beginner",
   },
   {
@@ -2070,7 +2079,7 @@ export const exercises: Exercise[] = [
     name: "Hammer Strength Shoulder Press",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Shoulders", "Triceps"],
+    muscleGroups: [getMuscleGroupObj("Shoulders"), getMuscleGroupObj("Triceps")],
     description: "A plate-loaded machine exercise that targets the deltoid muscles with independent arm movement.",
     instructions: [
       "Adjust the seat height so the handles are at shoulder level.",
@@ -2081,7 +2090,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=0JfYxMRsUCQ",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Hammer Strength Machine"],
+    equipment: [getEquipmentObj("Hammer Strength Machine")],
     difficulty: "intermediate",
   },
   {
@@ -2089,7 +2098,7 @@ export const exercises: Exercise[] = [
     name: "Seated Machine Rear Delt Fly",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Rear Deltoids", "Upper Back"],
+    muscleGroups: [getMuscleGroupObj("Rear Deltoids"), getMuscleGroupObj("Upper Back")],
     description: "A machine exercise that isolates the posterior deltoid muscles.",
     instructions: [
       "Adjust the seat height so your shoulders align with the pivot point of the machine.",
@@ -2100,7 +2109,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=6yMdhi2DVao",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Rear Delt Fly Machine"],
+    equipment: [getEquipmentObj("Rear Delt Fly Machine")],
     difficulty: "beginner",
   },
   
@@ -2110,7 +2119,7 @@ export const exercises: Exercise[] = [
     name: "Machine Bicep Curl",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Biceps", "Forearms"],
+    muscleGroups: [getMuscleGroupObj("Biceps"), getMuscleGroupObj("Forearms")],
     description: "A machine exercise that isolates the biceps muscles with support and stability.",
     instructions: [
       "Adjust the seat height so your arms are fully extended when holding the handles.",
@@ -2121,7 +2130,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=9ZuXKqRbT9k",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bicep Curl Machine"],
+    equipment: [getEquipmentObj("Bicep Curl Machine")],
     difficulty: "beginner",
   },
   {
@@ -2129,7 +2138,7 @@ export const exercises: Exercise[] = [
     name: "Preacher Curl Machine",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Biceps"],
+    muscleGroups: [getMuscleGroupObj("Biceps")],
     description: "A machine exercise that isolates the biceps with support from a preacher pad.",
     instructions: [
       "Adjust the seat height so your armpits rest on the top of the preacher pad.",
@@ -2140,7 +2149,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=fIWP-FRFNU0",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Preacher Curl Machine"],
+    equipment: [getEquipmentObj("Preacher Curl Machine")],
     difficulty: "beginner",
   },
   {
@@ -2148,7 +2157,7 @@ export const exercises: Exercise[] = [
     name: "Seated Machine Bicep Curl",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Biceps", "Forearms"],
+    muscleGroups: [getMuscleGroupObj("Biceps"), getMuscleGroupObj("Forearms")],
     description: "A machine exercise that isolates the biceps muscles with a fixed movement path.",
     instructions: [
       "Adjust the seat height so your elbows align with the pivot point of the machine.",
@@ -2159,7 +2168,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=9ZuXKqRbT9k",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bicep Curl Machine"],
+    equipment: [getEquipmentObj("Bicep Curl Machine")],
     difficulty: "beginner",
   },
   {
@@ -2167,7 +2176,7 @@ export const exercises: Exercise[] = [
     name: "Smith Machine Bicep Curl",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Biceps", "Forearms"],
+    muscleGroups: [getMuscleGroupObj("Biceps"), getMuscleGroupObj("Forearms")],
     description: "A guided barbell exercise that targets the biceps with added stability.",
     instructions: [
       "Position yourself in front of a Smith machine with the bar set at thigh height.",
@@ -2178,7 +2187,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=jPLdzuHckI8",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Smith Machine"],
+    equipment: [getEquipmentObj("Smith Machine")],
     difficulty: "intermediate",
   },
   {
@@ -2186,7 +2195,7 @@ export const exercises: Exercise[] = [
     name: "Hammer Strength Bicep Curl",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Biceps", "Forearms"],
+    muscleGroups: [getMuscleGroupObj("Biceps"), getMuscleGroupObj("Forearms")],
     description: "A plate-loaded machine exercise that targets the biceps with independent arm movement.",
     instructions: [
       "Adjust the seat height so your arms are fully extended when holding the handles.",
@@ -2197,7 +2206,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=nXZYlkk4P0Q",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Hammer Strength Machine"],
+    equipment: [getEquipmentObj("Hammer Strength Machine")],
     difficulty: "intermediate",
   },
   {
@@ -2205,7 +2214,7 @@ export const exercises: Exercise[] = [
     name: "Machine Concentration Curl",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Biceps"],
+    muscleGroups: [getMuscleGroupObj("Biceps")],
     description: "A machine exercise that isolates the biceps with a fixed movement path.",
     instructions: [
       "Adjust the seat height so your arm is fully extended when holding the handle.",
@@ -2217,7 +2226,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=Jvj2wV0vOYU",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Concentration Curl Machine"],
+    equipment: [getEquipmentObj("Concentration Curl Machine")],
     difficulty: "beginner",
   },
   {
@@ -2225,7 +2234,7 @@ export const exercises: Exercise[] = [
     name: "Machine Hammer Curl",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Biceps", "Forearms"],
+    muscleGroups: [getMuscleGroupObj("Biceps"), getMuscleGroupObj("Forearms")],
     description: "A machine exercise that targets the biceps and brachialis with a neutral grip.",
     instructions: [
       "Adjust the seat height so your arms are fully extended when holding the handles.",
@@ -2236,7 +2245,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=zC3nLlEvin4",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Hammer Curl Machine"],
+    equipment: [getEquipmentObj("Hammer Curl Machine")],
     difficulty: "beginner",
   },
   
@@ -2246,7 +2255,7 @@ export const exercises: Exercise[] = [
     name: "Tricep Pushdown Machine",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Triceps"],
+    muscleGroups: [getMuscleGroupObj("Triceps")],
     description: "A machine exercise that isolates the triceps muscles.",
     instructions: [
       "Stand facing the machine with feet shoulder-width apart.",
@@ -2257,7 +2266,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=2-LAMcpzODU",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Cable Machine"],
+    equipment: [getEquipmentObj("Cable Machine")],
     difficulty: "beginner",
   },
   {
@@ -2265,7 +2274,7 @@ export const exercises: Exercise[] = [
     name: "Seated Tricep Extension Machine",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Triceps"],
+    muscleGroups: [getMuscleGroupObj("Triceps")],
     description: "A machine exercise that isolates the triceps with a fixed movement path.",
     instructions: [
       "Adjust the seat height so your elbows align with the pivot point of the machine.",
@@ -2276,7 +2285,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=YbX7Wd8jQ-Q",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Tricep Extension Machine"],
+    equipment: [getEquipmentObj("Tricep Extension Machine")],
     difficulty: "beginner",
   },
   {
@@ -2284,7 +2293,7 @@ export const exercises: Exercise[] = [
     name: "Tricep Dip Machine",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Triceps", "Chest", "Shoulders"],
+    muscleGroups: [getMuscleGroupObj("Triceps"), getMuscleGroupObj("Chest"), getMuscleGroupObj("Shoulders")],
     description: "A machine exercise that targets the triceps with support and stability.",
     instructions: [
       "Adjust the seat height so your hands comfortably reach the handles.",
@@ -2295,7 +2304,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=Gg8Y6SHaGCE",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Dip Machine"],
+    equipment: [getEquipmentObj("Dip Machine")],
     difficulty: "beginner",
   },
   {
@@ -2303,7 +2312,7 @@ export const exercises: Exercise[] = [
     name: "Smith Machine Close-Grip Bench Press",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Triceps", "Chest", "Shoulders"],
+    muscleGroups: [getMuscleGroupObj("Triceps"), getMuscleGroupObj("Chest"), getMuscleGroupObj("Shoulders")],
     description: "A guided barbell exercise that emphasizes the triceps with added stability.",
     instructions: [
       "Lie on a flat bench positioned under a Smith machine bar.",
@@ -2315,7 +2324,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=nEF0bv2FW94",
     imageUrl: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Smith Machine", "Bench"],
+    equipment: [getEquipmentObj("Smith Machine"), getEquipmentObj("Bench")],
     difficulty: "intermediate",
   },
   {
@@ -2323,7 +2332,7 @@ export const exercises: Exercise[] = [
     name: "Machine Tricep Kickback",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Triceps"],
+    muscleGroups: [getMuscleGroupObj("Triceps")],
     description: "A machine exercise that isolates the triceps with a fixed movement path.",
     instructions: [
       "Adjust the seat height so your arm is properly positioned on the pad.",
@@ -2335,7 +2344,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=GVt4uQ9XVnI",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Tricep Kickback Machine"],
+    equipment: [getEquipmentObj("Tricep Kickback Machine")],
     difficulty: "beginner",
   },
   {
@@ -2343,7 +2352,7 @@ export const exercises: Exercise[] = [
     name: "Assisted Dips Machine",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Triceps", "Chest", "Shoulders"],
+    muscleGroups: [getMuscleGroupObj("Triceps"), getMuscleGroupObj("Chest"), getMuscleGroupObj("Shoulders")],
     description: "A machine-assisted exercise that helps develop strength for performing unassisted dips.",
     instructions: [
       "Adjust the weight to provide the appropriate amount of assistance.",
@@ -2355,7 +2364,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=6kALZikXxLc",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Assisted Dip Machine"],
+    equipment: [getEquipmentObj("Assisted Dip Machine")],
     difficulty: "beginner",
   },
   {
@@ -2363,7 +2372,7 @@ export const exercises: Exercise[] = [
     name: "Hammer Strength Tricep Press",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Triceps"],
+    muscleGroups: [getMuscleGroupObj("Triceps")],
     description: "A plate-loaded machine exercise that targets the triceps with independent arm movement.",
     instructions: [
       "Adjust the seat height so your arms are properly positioned on the pads.",
@@ -2374,7 +2383,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=nEF0bv2FW94",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Hammer Strength Machine"],
+    equipment: [getEquipmentObj("Hammer Strength Machine")],
     difficulty: "intermediate",
   },
   {
@@ -2382,7 +2391,7 @@ export const exercises: Exercise[] = [
     name: "Overhead Tricep Extension Machine",
     category: "Machine",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Triceps"],
+    muscleGroups: [getMuscleGroupObj("Triceps")],
     description: "A machine exercise that targets the long head of the triceps.",
     instructions: [
       "Adjust the seat height so your elbows align with the pivot point of the machine.",
@@ -2393,7 +2402,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=YbX7Wd8jQ-Q",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Tricep Extension Machine"],
+    equipment: [getEquipmentObj("Tricep Extension Machine")],
     difficulty: "beginner",
   },
   
@@ -2403,7 +2412,7 @@ export const exercises: Exercise[] = [
     name: "Ab Crunch Machine",
     category: "Machine",
     bodyRegion: "Core",
-    muscleGroups: ["Abs"],
+    muscleGroups: [getMuscleGroupObj("Abs")],
     description: "A machine exercise that targets the abdominal muscles with added resistance.",
     instructions: [
       "Adjust the seat height so your shoulders align with the pivot point of the machine.",
@@ -2415,7 +2424,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=_O1xunCfYEM",
     imageUrl: "https://images.unsplash.com/photo-1566241142559-40e1dab266c6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Ab Crunch Machine"],
+    equipment: [getEquipmentObj("Ab Crunch Machine")],
     difficulty: "beginner",
   },
   {
@@ -2423,7 +2432,7 @@ export const exercises: Exercise[] = [
     name: "Seated Leg Raise Machine",
     category: "Machine",
     bodyRegion: "Core",
-    muscleGroups: ["Lower Abs", "Hip Flexors"],
+    muscleGroups: [getMuscleGroupObj("Lower Abs"), getMuscleGroupObj("Hip Flexors")],
     description: "A machine exercise that targets the lower abdominal muscles.",
     instructions: [
       "Sit on the machine with your back against the pad and hands gripping the handles.",
@@ -2434,7 +2443,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=Pr1ieGZ5atk",
     imageUrl: "https://images.unsplash.com/photo-1566241142559-40e1dab266c6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Leg Raise Machine"],
+    equipment: [getEquipmentObj("Leg Raise Machine")],
     difficulty: "beginner",
   },
   {
@@ -2442,7 +2451,7 @@ export const exercises: Exercise[] = [
     name: "Machine Russian Twist",
     category: "Machine",
     bodyRegion: "Core",
-    muscleGroups: ["Obliques", "Abs"],
+    muscleGroups: [getMuscleGroupObj("Obliques"), getMuscleGroupObj("Abs")],
     description: "A machine exercise that targets the oblique muscles with added resistance.",
     instructions: [
       "Adjust the seat height so your torso is properly positioned.",
@@ -2453,7 +2462,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=wkD8rjkodUI",
     imageUrl: "https://images.unsplash.com/photo-1566241142559-40e1dab266c6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Rotary Torso Machine"],
+    equipment: [getEquipmentObj("Rotary Torso Machine")],
     difficulty: "beginner",
   },
   {
@@ -2461,7 +2470,7 @@ export const exercises: Exercise[] = [
     name: "Vertical Leg Raise Machine",
     category: "Machine",
     bodyRegion: "Core",
-    muscleGroups: ["Lower Abs", "Hip Flexors"],
+    muscleGroups: [getMuscleGroupObj("Lower Abs"), getMuscleGroupObj("Hip Flexors")],
     description: "A machine exercise that targets the lower abdominal muscles with support for the upper body.",
     instructions: [
       "Position yourself in the machine with your back against the pad and arms on the handles or pads.",
@@ -2472,7 +2481,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=hdng3Nm1x_E",
     imageUrl: "https://images.unsplash.com/photo-1566241142559-40e1dab266c6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Vertical Leg Raise Machine"],
+    equipment: [getEquipmentObj("Vertical Leg Raise Machine")],
     difficulty: "intermediate",
   },
   {
@@ -2480,7 +2489,7 @@ export const exercises: Exercise[] = [
     name: "Abdominal Rollout Machine",
     category: "Machine",
     bodyRegion: "Core",
-    muscleGroups: ["Abs", "Shoulders"],
+    muscleGroups: [getMuscleGroupObj("Abs"), getMuscleGroupObj("Shoulders")],
     description: "A machine version of the ab wheel rollout that targets the entire core.",
     instructions: [
       "Kneel on the pad of the machine and grasp the handles.",
@@ -2490,7 +2499,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=rqiTPdK1c_I",
     imageUrl: "https://images.unsplash.com/photo-1566241142559-40e1dab266c6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Ab Rollout Machine"],
+    equipment: [getEquipmentObj("Ab Rollout Machine")],
     difficulty: "intermediate",
   },
   {
@@ -2498,7 +2507,7 @@ export const exercises: Exercise[] = [
     name: "Roman Chair",
     category: "Machine",
     bodyRegion: "Core",
-    muscleGroups: ["Lower Back", "Glutes", "Core"],
+    muscleGroups: [getMuscleGroupObj("Lower Back"), getMuscleGroupObj("Glutes"), getMuscleGroupObj("Core")],
     description: "A machine exercise that targets the lower back and core muscles.",
     instructions: [
       "Position yourself in the Roman chair with your hips on the pad and feet secured under the foot pads.",
@@ -2509,7 +2518,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=vx0jZBEmZcE",
     imageUrl: "https://images.unsplash.com/photo-1566241142559-40e1dab266c6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Roman Chair"],
+    equipment: [getEquipmentObj("Roman Chair")],
     difficulty: "intermediate",
   },
   {
@@ -2517,7 +2526,7 @@ export const exercises: Exercise[] = [
     name: "Cable Woodchopper",
     category: "Machine",
     bodyRegion: "Core",
-    muscleGroups: ["Obliques", "Abs", "Shoulders"],
+    muscleGroups: [getMuscleGroupObj("Obliques"), getMuscleGroupObj("Abs"), getMuscleGroupObj("Shoulders")],
     description: "A cable exercise that targets the obliques and core through a rotational movement.",
     instructions: [
       "Set the pulley on a cable machine to a high position.",
@@ -2529,7 +2538,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=pAplQXk3dkU",
     imageUrl: "https://images.unsplash.com/photo-1566241142559-40e1dab266c6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Cable Machine"],
+    equipment: [getEquipmentObj("Cable Machine")],
     difficulty: "intermediate",
   },
   {
@@ -2537,7 +2546,7 @@ export const exercises: Exercise[] = [
     name: "Torso Rotation Machine",
     category: "Machine",
     bodyRegion: "Core",
-    muscleGroups: ["Obliques", "Abs"],
+    muscleGroups: [getMuscleGroupObj("Obliques"), getMuscleGroupObj("Abs")],
     description: "A machine exercise that targets the oblique muscles through rotational movement.",
     instructions: [
       "Adjust the seat height so your torso is properly positioned.",
@@ -2549,7 +2558,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=wkD8rjkodUI",
     imageUrl: "https://images.unsplash.com/photo-1566241142559-40e1dab266c6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Torso Rotation Machine"],
+    equipment: [getEquipmentObj("Torso Rotation Machine")],
     difficulty: "beginner",
   },
   {
@@ -2557,7 +2566,7 @@ export const exercises: Exercise[] = [
     name: "Seated Oblique Machine",
     category: "Machine",
     bodyRegion: "Core",
-    muscleGroups: ["Obliques", "Abs"],
+    muscleGroups: [getMuscleGroupObj("Obliques"), getMuscleGroupObj("Abs")],
     description: "A machine exercise that targets the oblique muscles with lateral flexion.",
     instructions: [
       "Adjust the seat height so your torso is properly positioned.",
@@ -2568,7 +2577,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=3xF_PwV7eCU",
     imageUrl: "https://images.unsplash.com/photo-1566241142559-40e1dab266c6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Oblique Machine"],
+    equipment: [getEquipmentObj("Oblique Machine")],
     difficulty: "beginner",
   },
   
@@ -2578,7 +2587,7 @@ export const exercises: Exercise[] = [
     name: "Standing Hip Abduction",
     category: "Strength",
     bodyRegion: "Lower Body",
-    muscleGroups: ["Hip Abductors", "Glutes"],
+    muscleGroups: [getMuscleGroupObj("Hip Abductors"), getMuscleGroupObj("Glutes")],
     description: "An exercise that targets the hip abductor muscles while standing.",
     instructions: [
       "Stand next to a support (like a wall or chair) and hold it with one hand for balance.",
@@ -2590,7 +2599,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=ZVfcRHhcBgg",
     imageUrl: "https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bodyweight"],
+    equipment: [getEquipmentObj("Bodyweight")],
     difficulty: "beginner",
   },
   {
@@ -2598,7 +2607,7 @@ export const exercises: Exercise[] = [
     name: "Side-Lying Hip Abduction",
     category: "Bodyweight",
     bodyRegion: "Lower Body",
-    muscleGroups: ["Hip Abductors", "Glutes"],
+    muscleGroups: [getMuscleGroupObj("Hip Abductors"), getMuscleGroupObj("Glutes")],
     description: "A bodyweight exercise that targets the hip abductor muscles.",
     instructions: [
       "Lie on your side with your legs straight and stacked on top of each other.",
@@ -2610,7 +2619,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=ZVfcRHhcBgg",
     imageUrl: "https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bodyweight"],
+    equipment: [getEquipmentObj("Bodyweight")],
     difficulty: "beginner",
   },
   {
@@ -2618,7 +2627,7 @@ export const exercises: Exercise[] = [
     name: "Resistance Band Hip Abduction",
     category: "Strength",
     bodyRegion: "Lower Body",
-    muscleGroups: ["Hip Abductors", "Glutes"],
+    muscleGroups: [getMuscleGroupObj("Hip Abductors"), getMuscleGroupObj("Glutes")],
     description: "An exercise that targets the hip abductor muscles using a resistance band.",
     instructions: [
       "Place a resistance band around your legs, just above your knees.",
@@ -2630,7 +2639,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=ZVfcRHhcBgg",
     imageUrl: "https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Resistance Band"],
+    equipment: [getEquipmentObj("Resistance Band")],
     difficulty: "beginner",
   },
   {
@@ -2638,7 +2647,7 @@ export const exercises: Exercise[] = [
     name: "Cable Hip Abduction",
     category: "Strength",
     bodyRegion: "Lower Body",
-    muscleGroups: ["Hip Abductors", "Glutes"],
+    muscleGroups: [getMuscleGroupObj("Hip Abductors"), getMuscleGroupObj("Glutes")],
     description: "An exercise that targets the hip abductor muscles using a cable machine.",
     instructions: [
       "Attach an ankle cuff to a low pulley on a cable machine.",
@@ -2651,7 +2660,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=ZVfcRHhcBgg",
     imageUrl: "https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Cable Machine"],
+    equipment: [getEquipmentObj("Cable Machine")],
     difficulty: "intermediate",
   },
   {
@@ -2659,7 +2668,7 @@ export const exercises: Exercise[] = [
     name: "Clamshell",
     category: "Bodyweight",
     bodyRegion: "Lower Body",
-    muscleGroups: ["Hip Abductors", "Glutes"],
+    muscleGroups: [getMuscleGroupObj("Hip Abductors"), getMuscleGroupObj("Glutes")],
     description: "A bodyweight exercise that targets the hip abductor muscles and glutes.",
     instructions: [
       "Lie on your side with your knees bent at a 45-degree angle and your feet together.",
@@ -2670,7 +2679,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=ZVfcRHhcBgg",
     imageUrl: "https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bodyweight"],
+    equipment: [getEquipmentObj("Bodyweight")],
     difficulty: "beginner",
   },
   
@@ -2680,7 +2689,7 @@ export const exercises: Exercise[] = [
     name: "Standing Hip Adduction",
     category: "Strength",
     bodyRegion: "Lower Body",
-    muscleGroups: ["Hip Adductors", "Inner Thighs"],
+    muscleGroups: [getMuscleGroupObj("Hip Adductors"), getMuscleGroupObj("Inner Thighs")],
     description: "An exercise that targets the hip adductor muscles while standing.",
     instructions: [
       "Stand next to a support (like a wall or chair) and hold it with one hand for balance.",
@@ -2692,7 +2701,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=ZVfcRHhcBgg",
     imageUrl: "https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bodyweight"],
+    equipment: [getEquipmentObj("Bodyweight")],
     difficulty: "beginner",
   },
   {
@@ -2700,7 +2709,7 @@ export const exercises: Exercise[] = [
     name: "Side-Lying Hip Adduction",
     category: "Bodyweight",
     bodyRegion: "Lower Body",
-    muscleGroups: ["Hip Adductors", "Inner Thighs"],
+    muscleGroups: [getMuscleGroupObj("Hip Adductors"), getMuscleGroupObj("Inner Thighs")],
     description: "A bodyweight exercise that targets the hip adductor muscles.",
     instructions: [
       "Lie on your side with your bottom leg straight and your top leg bent, foot flat on the floor in front of your bottom leg.",
@@ -2712,7 +2721,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=ZVfcRHhcBgg",
     imageUrl: "https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bodyweight"],
+    equipment: [getEquipmentObj("Bodyweight")],
     difficulty: "beginner",
   },
   {
@@ -2720,7 +2729,7 @@ export const exercises: Exercise[] = [
     name: "Resistance Band Hip Adduction",
     category: "Strength",
     bodyRegion: "Lower Body",
-    muscleGroups: ["Hip Adductors", "Inner Thighs"],
+    muscleGroups: [getMuscleGroupObj("Hip Adductors"), getMuscleGroupObj("Inner Thighs")],
     description: "An exercise that targets the hip adductor muscles using a resistance band.",
     instructions: [
       "Secure a resistance band to a stable anchor point at ankle height.",
@@ -2733,7 +2742,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=ZVfcRHhcBgg",
     imageUrl: "https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Resistance Band"],
+    equipment: [getEquipmentObj("Resistance Band")],
     difficulty: "beginner",
   },
   {
@@ -2741,7 +2750,7 @@ export const exercises: Exercise[] = [
     name: "Cable Hip Adduction",
     category: "Strength",
     bodyRegion: "Lower Body",
-    muscleGroups: ["Hip Adductors", "Inner Thighs"],
+    muscleGroups: [getMuscleGroupObj("Hip Adductors"), getMuscleGroupObj("Inner Thighs")],
     description: "An exercise that targets the hip adductor muscles using a cable machine.",
     instructions: [
       "Attach an ankle cuff to a low pulley on a cable machine.",
@@ -2754,7 +2763,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=ZVfcRHhcBgg",
     imageUrl: "https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Cable Machine"],
+    equipment: [getEquipmentObj("Cable Machine")],
     difficulty: "intermediate",
   },
   {
@@ -2762,7 +2771,7 @@ export const exercises: Exercise[] = [
     name: "Sumo Squat",
     category: "Strength",
     bodyRegion: "Lower Body",
-    muscleGroups: ["Hip Adductors", "Inner Thighs", "Quadriceps", "Glutes"],
+    muscleGroups: [getMuscleGroupObj("Hip Adductors"), getMuscleGroupObj("Inner Thighs"), getMuscleGroupObj("Quadriceps"), getMuscleGroupObj("Glutes")],
     description: "A compound exercise that targets the hip adductors, quadriceps, and glutes.",
     instructions: [
       "Stand with feet wider than shoulder-width apart, toes pointed outward at about 45 degrees.",
@@ -2773,7 +2782,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=ZVfcRHhcBgg",
     imageUrl: "https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Dumbbell", "Kettlebell"],
+    equipment: [getEquipmentObj("Dumbbell"), getEquipmentObj("Kettlebell")],
     difficulty: "intermediate",
   },
   
@@ -2783,7 +2792,7 @@ export const exercises: Exercise[] = [
     name: "External Rotation with Resistance Band",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Rotator Cuff", "Shoulders"],
+    muscleGroups: [getMuscleGroupObj("Rotator Cuff"), getMuscleGroupObj("Shoulders")],
     description: "An exercise that targets the external rotators of the shoulder.",
     instructions: [
       "Secure a resistance band to a stable anchor point at elbow height.",
@@ -2795,7 +2804,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=ZVfcRHhcBgg",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Resistance Band"],
+    equipment: [getEquipmentObj("Resistance Band")],
     difficulty: "beginner",
   },
   {
@@ -2803,7 +2812,7 @@ export const exercises: Exercise[] = [
     name: "Internal Rotation with Resistance Band",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Rotator Cuff", "Shoulders"],
+    muscleGroups: [getMuscleGroupObj("Rotator Cuff"), getMuscleGroupObj("Shoulders")],
     description: "An exercise that targets the internal rotators of the shoulder.",
     instructions: [
       "Secure a resistance band to a stable anchor point at elbow height.",
@@ -2815,7 +2824,7 @@ export const exercises: Exercise[] = [
     ],
     videoUrl: "https://www.youtube.com/watch?v=ZVfcRHhcBgg",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Resistance Band"],
+    equipment: [getEquipmentObj("Resistance Band")],
     difficulty: "beginner",
   },
   {
@@ -2823,436 +2832,19 @@ export const exercises: Exercise[] = [
     name: "Dumbbell External Rotation",
     category: "Strength",
     bodyRegion: "Upper Body",
-    muscleGroups: ["Rotator Cuff", "Shoulders"],
+    muscleGroups: [getMuscleGroupObj("Rotator Cuff"), getMuscleGroupObj("Shoulders")],
     description: "An exercise that targets the external rotators of the shoulder using a dumbbell.",
     instructions: [
-      "Lie on your side with your head supported by your lower arm.",
-      "Hold a light dumbbell in your upper hand with your elbow bent at 90 degrees and pressed against your side.",
-      "Keeping your elbow against your side, rotate your forearm upward.",
-      "Hold briefly at the top of the movement.",
-      "Slowly lower the dumbbell back to the starting position.",
-      "Complete all reps before switching sides.",
-    ],
-    videoUrl: "https://www.youtube.com/watch?v=ZVfcRHhcBgg",
-    imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Dumbbell"],
-    difficulty: "beginner",
-  },
-  {
-    id: "ex-rotator-4",
-    name: "Dumbbell Internal Rotation",
-    category: "Strength",
-    bodyRegion: "Upper Body",
-    muscleGroups: ["Rotator Cuff", "Shoulders"],
-    description: "An exercise that targets the internal rotators of the shoulder using a dumbbell.",
-    instructions: [
-      "Lie on your side with your head supported by your lower arm.",
-      "Hold a light dumbbell in your upper hand with your elbow bent at 90 degrees and pressed against your side.",
-      "Keeping your elbow against your side, rotate your forearm downward toward your body.",
-      "Hold briefly at the bottom of the movement.",
-      "Slowly raise the dumbbell back to the starting position.",
-      "Complete all reps before switching sides.",
-    ],
-    videoUrl: "https://www.youtube.com/watch?v=ZVfcRHhcBgg",
-    imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Dumbbell"],
-    difficulty: "beginner",
-  },
-  {
-    id: "ex-rotator-5",
-    name: "Cable External Rotation",
-    category: "Strength",
-    bodyRegion: "Upper Body",
-    muscleGroups: ["Rotator Cuff", "Shoulders"],
-    description: "An exercise that targets the external rotators of the shoulder using a cable machine.",
-    instructions: [
-      "Set the pulley on a cable machine to elbow height.",
-      "Stand sideways to the machine with the arm closest to the machine bent at 90 degrees, elbow at your side.",
-      "Grasp the handle and rotate your forearm away from your body, keeping your elbow pressed against your side.",
+      "Lie on your side with your arm bent at 90 degrees, elbow at your side.",
+      "Hold a dumbbell in your hand and rotate your forearm away from your body.",
+      "Keep your elbow pressed against your side throughout the movement.",
       "Hold briefly at the end of the movement.",
       "Slowly return to the starting position.",
       "Complete all reps before switching sides.",
     ],
     videoUrl: "https://www.youtube.com/watch?v=ZVfcRHhcBgg",
     imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Cable Machine"],
-    difficulty: "intermediate",
-  },
-  
-  // Additional Exercises for Serratus Anterior
-  {
-    id: "ex-serratus-1",
-    name: "Serratus Punch",
-    category: "Bodyweight",
-    bodyRegion: "Upper Body",
-    muscleGroups: ["Serratus Anterior", "Shoulders"],
-    description: "An exercise that targets the serratus anterior muscles.",
-    instructions: [
-      "Stand with feet shoulder-width apart or lie on your back.",
-      "Extend your arms in front of you at shoulder height with a slight bend in your elbows.",
-      "Push your arms forward as if punching, focusing on protraction of the shoulder blades.",
-      "Hold briefly at the end of the movement.",
-      "Slowly return to the starting position.",
-    ],
-    videoUrl: "https://www.youtube.com/watch?v=ZVfcRHhcBgg",
-    imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bodyweight"],
+    equipment: [getEquipmentObj("Dumbbell")],
     difficulty: "beginner",
   },
-  {
-    id: "ex-serratus-2",
-    name: "Dumbbell Pullover",
-    category: "Strength",
-    bodyRegion: "Upper Body",
-    muscleGroups: ["Serratus Anterior", "Chest", "Lats"],
-    description: "A compound exercise that targets the serratus anterior, chest, and back muscles.",
-    instructions: [
-      "Lie on a flat bench with your feet flat on the floor.",
-      "Hold a dumbbell with both hands above your chest, arms extended.",
-      "Keeping your arms slightly bent, lower the dumbbell behind your head in an arcing motion.",
-      "Feel the stretch in your chest and lats.",
-      "Return the dumbbell to the starting position by reversing the motion.",
-    ],
-    videoUrl: "https://www.youtube.com/watch?v=ZVfcRHhcBgg",
-    imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Dumbbell", "Bench"],
-    difficulty: "intermediate",
-  },
-  {
-    id: "ex-serratus-3",
-    name: "Push-up Plus",
-    category: "Bodyweight",
-    bodyRegion: "Upper Body",
-    muscleGroups: ["Serratus Anterior", "Chest", "Shoulders", "Triceps"],
-    description: "A variation of the push-up that emphasizes the serratus anterior muscles.",
-    instructions: [
-      "Start in a standard push-up position with hands slightly wider than shoulder-width apart.",
-      "Perform a regular push-up by lowering your chest toward the floor.",
-      "Push back up to the starting position.",
-      "At the top of the movement, continue pushing your upper back toward the ceiling by protracting your shoulder blades.",
-      "Hold briefly at the top of the movement.",
-      "Return to the normal push-up position and repeat.",
-    ],
-    videoUrl: "https://www.youtube.com/watch?v=ZVfcRHhcBgg",
-    imageUrl: "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bodyweight"],
-    difficulty: "intermediate",
-  },
-  {
-    id: "ex-serratus-4",
-    name: "Cable Serratus Punch",
-    category: "Strength",
-    bodyRegion: "Upper Body",
-    muscleGroups: ["Serratus Anterior", "Shoulders"],
-    description: "An exercise that targets the serratus anterior muscles using a cable machine.",
-    instructions: [
-      "Set the pulley on a cable machine to shoulder height.",
-      "Stand facing away from the machine and grasp the handle with one hand.",
-      "Step forward to create tension in the cable, with your arm extended at shoulder height.",
-      "Push your arm forward, focusing on protraction of the shoulder blade.",
-      "Hold briefly at the end of the movement.",
-      "Slowly return to the starting position.",
-      "Complete all reps before switching sides.",
-    ],
-    videoUrl: "https://www.youtube.com/watch?v=ZVfcRHhcBgg",
-    imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Cable Machine"],
-    difficulty: "intermediate",
-  },
-  {
-    id: "ex-serratus-5",
-    name: "Incline Dumbbell Pullover",
-    category: "Strength",
-    bodyRegion: "Upper Body",
-    muscleGroups: ["Serratus Anterior", "Chest", "Lats"],
-    description: "A variation of the dumbbell pullover performed on an incline bench.",
-    instructions: [
-      "Set an adjustable bench to a 30-45 degree incline.",
-      "Lie on the bench with your head at the high end and your feet flat on the floor.",
-      "Hold a dumbbell with both hands above your chest, arms extended.",
-      "Keeping your arms slightly bent, lower the dumbbell behind your head in an arcing motion.",
-      "Feel the stretch in your chest and lats.",
-      "Return the dumbbell to the starting position by reversing the motion.",
-    ],
-    videoUrl: "https://www.youtube.com/watch?v=ZVfcRHhcBgg",
-    imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Dumbbell", "Bench"],
-    difficulty: "intermediate",
-  },
-  
-  // Additional Exercises for Forearms
-  {
-    id: "ex-forearm-1",
-    name: "Wrist Curl",
-    category: "Strength",
-    bodyRegion: "Upper Body",
-    muscleGroups: ["Forearms"],
-    description: "An isolation exercise that targets the flexor muscles of the forearm.",
-    instructions: [
-      "Sit on a bench with your forearms resting on your thighs, palms facing up.",
-      "Hold a dumbbell in each hand with your wrists just beyond your knees.",
-      "Lower the dumbbells by bending your wrists as far as comfortable.",
-      "Curl the dumbbells up by flexing your wrists as high as possible.",
-      "Hold briefly at the top of the movement.",
-      "Slowly lower the dumbbells back to the starting position.",
-    ],
-    videoUrl: "https://www.youtube.com/watch?v=ZVfcRHhcBgg",
-    imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Dumbbell"],
-    difficulty: "beginner",
-  },
-  {
-    id: "ex-forearm-2",
-    name: "Reverse Wrist Curl",
-    category: "Strength",
-    bodyRegion: "Upper Body",
-    muscleGroups: ["Forearms"],
-    description: "An isolation exercise that targets the extensor muscles of the forearm.",
-    instructions: [
-      "Sit on a bench with your forearms resting on your thighs, palms facing down.",
-      "Hold a dumbbell in each hand with your wrists just beyond your knees.",
-      "Lower the dumbbells by bending your wrists as far as comfortable.",
-      "Curl the dumbbells up by extending your wrists as high as possible.",
-      "Hold briefly at the top of the movement.",
-      "Slowly lower the dumbbells back to the starting position.",
-    ],
-    videoUrl: "https://www.youtube.com/watch?v=ZVfcRHhcBgg",
-    imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Dumbbell"],
-    difficulty: "beginner",
-  },
-  {
-    id: "ex-forearm-3",
-    name: "Plate Pinch",
-    category: "Strength",
-    bodyRegion: "Upper Body",
-    muscleGroups: ["Forearms", "Grip Strength"],
-    description: "An exercise that targets grip strength and forearm muscles.",
-    instructions: [
-      "Hold two weight plates together with the smooth sides facing out.",
-      "Pinch the plates between your thumb and fingers.",
-      "Hold this position for the prescribed time.",
-      "Switch hands and repeat.",
-    ],
-    videoUrl: "https://www.youtube.com/watch?v=ZVfcRHhcBgg",
-    imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Weight Plates"],
-    difficulty: "intermediate",
-  },
-  {
-    id: "ex-forearm-4",
-    name: "Barbell Wrist Curl",
-    category: "Strength",
-    bodyRegion: "Upper Body",
-    muscleGroups: ["Forearms"],
-    description: "An isolation exercise that targets the flexor muscles of the forearm using a barbell.",
-    instructions: [
-      "Sit on a bench with your forearms resting on your thighs, palms facing up.",
-      "Hold a barbell with an underhand grip, wrists just beyond your knees.",
-      "Lower the barbell by bending your wrists as far as comfortable.",
-      "Curl the barbell up by flexing your wrists as high as possible.",
-      "Hold briefly at the top of the movement.",
-      "Slowly lower the barbell back to the starting position.",
-    ],
-    videoUrl: "https://www.youtube.com/watch?v=ZVfcRHhcBgg",
-    imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Barbell"],
-    difficulty: "beginner",
-  },
-  {
-    id: "ex-forearm-5",
-    name: "Barbell Reverse Wrist Curl",
-    category: "Strength",
-    bodyRegion: "Upper Body",
-    muscleGroups: ["Forearms"],
-    description: "An isolation exercise that targets the extensor muscles of the forearm using a barbell.",
-    instructions: [
-      "Sit on a bench with your forearms resting on your thighs, palms facing down.",
-      "Hold a barbell with an overhand grip, wrists just beyond your knees.",
-      "Lower the barbell by bending your wrists as far as comfortable.",
-      "Curl the barbell up by extending your wrists as high as possible.",
-      "Hold briefly at the top of the movement.",
-      "Slowly lower the barbell back to the starting position.",
-    ],
-    videoUrl: "https://www.youtube.com/watch?v=ZVfcRHhcBgg",
-    imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Barbell"],
-    difficulty: "beginner",
-  },
-  {
-    id: "ex-forearm-6",
-    name: "Farmer's Walk",
-    category: "Functional",
-    bodyRegion: "Full Body",
-    muscleGroups: ["Forearms", "Grip Strength", "Traps", "Core"],
-    description: "A functional exercise that builds grip strength and overall stability.",
-    instructions: [
-      "Hold a heavy dumbbell or kettlebell in each hand at your sides.",
-      "Stand tall with shoulders back and core engaged.",
-      "Walk forward with controlled steps for a specified distance or time.",
-      "Keep your shoulders down and avoid leaning to either side.",
-    ],
-    videoUrl: "https://www.youtube.com/watch?v=rt17lmnaLSM",
-    imageUrl: "https://images.unsplash.com/photo-1517963879433-6ad2b056d712?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Dumbbell", "Kettlebell"],
-    difficulty: "beginner",
-  },
-  {
-    id: "ex-forearm-7",
-    name: "Hand Gripper",
-    category: "Strength",
-    bodyRegion: "Upper Body",
-    muscleGroups: ["Forearms", "Grip Strength"],
-    description: "An exercise that specifically targets grip strength using a hand gripper.",
-    instructions: [
-      "Hold a hand gripper in one hand.",
-      "Squeeze the gripper until the handles touch or as close as possible.",
-      "Hold briefly at the point of maximum contraction.",
-      "Slowly release the gripper back to the starting position.",
-      "Complete all reps before switching hands.",
-    ],
-    videoUrl: "https://www.youtube.com/watch?v=ZVfcRHhcBgg",
-    imageUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Hand Gripper"],
-    difficulty: "beginner",
-  },
-  
-  // Additional Exercises for Hip Flexors
-  {
-    id: "ex-hipflex-1",
-    name: "Standing Hip Flexor Stretch",
-    category: "Flexibility",
-    bodyRegion: "Lower Body",
-    muscleGroups: ["Hip Flexors"],
-    description: "A stretch that targets the hip flexor muscles.",
-    instructions: [
-      "Stand with feet hip-width apart.",
-      "Take a large step forward with one foot, creating a split stance.",
-      "Keeping your torso upright, lower your back knee toward the floor.",
-      "Gently push your hips forward until you feel a stretch in the front of your back hip.",
-      "Hold the stretch for the prescribed time.",
-      "Switch legs and repeat.",
-    ],
-    videoUrl: "https://www.youtube.com/watch?v=ZVfcRHhcBgg",
-    imageUrl: "https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bodyweight"],
-    difficulty: "beginner",
-  },
-  {
-    id: "ex-hipflex-2",
-    name: "Lying Hip Flexor Stretch",
-    category: "Flexibility",
-    bodyRegion: "Lower Body",
-    muscleGroups: ["Hip Flexors"],
-    description: "A stretch that targets the hip flexor muscles while lying down.",
-    instructions: [
-      "Lie on your back near the edge of a bed or table.",
-      "Bring both knees to your chest.",
-      "Hold one knee to your chest and let the other leg hang off the edge.",
-      "Allow gravity to pull the hanging leg down, creating a stretch in the hip flexor.",
-      "Hold the stretch for the prescribed time.",
-      "Switch legs and repeat.",
-    ],
-    videoUrl: "https://www.youtube.com/watch?v=ZVfcRHhcBgg",
-    imageUrl: "https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bodyweight"],
-    difficulty: "beginner",
-  },
-  {
-    id: "ex-hipflex-3",
-    name: "Seated Hip Flexor Stretch",
-    category: "Flexibility",
-    bodyRegion: "Lower Body",
-    muscleGroups: ["Hip Flexors"],
-    description: "A stretch that targets the hip flexor muscles while seated.",
-    instructions: [
-      "Sit on the edge of a chair with feet flat on the floor.",
-      "Extend one leg behind you, keeping the foot on the floor.",
-      "Lean forward slightly from the hips while keeping your back straight.",
-      "Feel the stretch in the front of the extended hip.",
-      "Hold the stretch for the prescribed time.",
-      "Switch legs and repeat.",
-    ],
-    videoUrl: "https://www.youtube.com/watch?v=ZVfcRHhcBgg",
-    imageUrl: "https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bodyweight", "Chair"],
-    difficulty: "beginner",
-  },
-  {
-    id: "ex-hipflex-4",
-    name: "Kneeling Hip Flexor Stretch",
-    category: "Flexibility",
-    bodyRegion: "Lower Body",
-    muscleGroups: ["Hip Flexors"],
-    description: "A stretch that targets the hip flexor muscles from a kneeling position.",
-    instructions: [
-      "Kneel on one knee with the other foot flat on the floor in front of you.",
-      "Place your hands on your front thigh for support.",
-      "Keeping your torso upright, gently push your hips forward.",
-      "Feel the stretch in the front of your back hip.",
-      "Hold the stretch for the prescribed time.",
-      "Switch legs and repeat.",
-    ],
-    videoUrl: "https://www.youtube.com/watch?v=ZVfcRHhcBgg",
-    imageUrl: "https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bodyweight"],
-    difficulty: "beginner",
-  },
-  {
-    id: "ex-hipflex-5",
-    name: "Lying Leg Raise",
-    category: "Strength",
-    bodyRegion: "Core",
-    muscleGroups: ["Hip Flexors", "Lower Abs"],
-    description: "An exercise that targets the hip flexors and lower abdominal muscles.",
-    instructions: [
-      "Lie on your back with legs straight and arms at your sides.",
-      "Keeping your legs straight, raise them toward the ceiling until your hips are slightly off the floor.",
-      "Hold briefly at the top of the movement.",
-      "Slowly lower your legs back to the starting position without letting them touch the floor.",
-    ],
-    videoUrl: "https://www.youtube.com/watch?v=ZVfcRHhcBgg",
-    imageUrl: "https://images.unsplash.com/photo-1566241142559-40e1dab266c6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bodyweight"],
-    difficulty: "intermediate",
-  },
-  {
-    id: "ex-hipflex-6",
-    name: "Mountain Climbers",
-    category: "Cardio",
-    bodyRegion: "Full Body",
-    muscleGroups: ["Hip Flexors", "Core", "Shoulders"],
-    description: "A dynamic exercise that targets the hip flexors and core while elevating heart rate.",
-    instructions: [
-      "Start in a push-up position with arms straight and hands under your shoulders.",
-      "Keeping your core tight, bring one knee toward your chest.",
-      "Quickly switch legs, extending the bent leg back while bringing the other knee forward.",
-      "Continue alternating legs in a running motion.",
-    ],
-    videoUrl: "https://www.youtube.com/watch?v=nmwgirgXLYM",
-    imageUrl: "https://images.unsplash.com/photo-1434682881908-b43d0467b798?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Bodyweight"],
-    difficulty: "intermediate",
-  },
-  {
-    id: "ex-hipflex-7",
-    name: "Cable Hip Flexion",
-    category: "Strength",
-    bodyRegion: "Lower Body",
-    muscleGroups: ["Hip Flexors"],
-    description: "An exercise that targets the hip flexor muscles using a cable machine.",
-    instructions: [
-      "Attach an ankle cuff to a low pulley on a cable machine.",
-      "Stand facing away from the machine and attach the cuff to one ankle.",
-      "Hold onto a support for balance if needed.",
-      "Keeping your leg straight or slightly bent, raise it forward as high as comfortable.",
-      "Hold briefly at the top of the movement.",
-      "Slowly lower your leg back to the starting position.",
-      "Complete all reps before switching legs.",
-    ],
-    videoUrl: "https://www.youtube.com/watch?v=ZVfcRHhcBgg",
-    imageUrl: "https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
-    equipment: ["Cable Machine"],
-    difficulty: "intermediate",
-  }
 ];

@@ -72,16 +72,16 @@ export default function ExerciseCard({ exercise, onPress, compact = false }: Exe
             <Text style={[styles.compactTitle, { color: colors.text }]} numberOfLines={1}>{exercise.name}</Text>
           </TouchableOpacity>
           <View style={styles.compactTags}>
-            {exercise.muscleGroups.slice(0, 1).map(group => (
-              <View key={group} style={[styles.compactTag, { backgroundColor: "rgba(52, 152, 219, 0.1)" }]}>
-                <Text style={[styles.compactTagText, { color: "#3498db" }]}>{group}</Text>
+            {(exercise.muscleGroups || []).slice(0, 1).map(group => (
+              <View key={typeof group === 'string' ? group : group.name} style={[styles.compactTag, { backgroundColor: "rgba(52, 152, 219, 0.1)" }]}> 
+                <Text style={[styles.compactTagText, { color: "#3498db" }]}>{typeof group === 'string' ? group : group.name}</Text>
               </View>
             ))}
-            {exercise.equipment.length > 0 && (
-              <View style={[styles.compactEquipment, { backgroundColor: "rgba(0, 0, 0, 0.05)" }]}>
+            {(exercise.equipment || []).length > 0 && (
+              <View style={[styles.compactEquipment, { backgroundColor: "rgba(0, 0, 0, 0.05)" }]}> 
                 <Dumbbell size={10} color={colors.textSecondary} />
-                <Text style={[styles.compactEquipmentText, { color: colors.textSecondary }]}>
-                  {exercise.equipment[0]}
+                <Text style={[styles.compactEquipmentText, { color: colors.textSecondary }]}> 
+                  {typeof exercise.equipment[0] === 'string' ? exercise.equipment[0] : exercise.equipment[0].name}
                 </Text>
               </View>
             )}
@@ -90,7 +90,6 @@ export default function ExerciseCard({ exercise, onPress, compact = false }: Exe
         <TouchableOpacity onPress={handlePress}>
           <ChevronRight size={16} color={colors.textLight} />
         </TouchableOpacity>
-        
         {/* Records History Modal */}
         <RecordsHistoryModal 
           visible={showRecordsModal}
@@ -114,33 +113,29 @@ export default function ExerciseCard({ exercise, onPress, compact = false }: Exe
           <TouchableOpacity onPress={handleNamePress} style={styles.titleContainer}>
             <Text style={[styles.title, { color: colors.text }]}>{exercise.name}</Text>
           </TouchableOpacity>
-          <View style={[styles.badge, { backgroundColor: getBadgeColor(exercise.difficulty) }]}>
+          <View style={[styles.badge, { backgroundColor: getBadgeColor(exercise.difficulty) }]}> 
             <Text style={styles.badgeText}>{exercise.difficulty}</Text>
           </View>
         </View>
-        
         <Text style={[styles.description, { color: colors.textSecondary }]} numberOfLines={2}>
           {exercise.description}
         </Text>
-        
         <View style={styles.tags}>
-          {exercise.muscleGroups.map(group => (
-            <View key={group} style={[styles.tag, { backgroundColor: "rgba(52, 152, 219, 0.1)" }]}>
-              <Text style={[styles.tagText, { color: "#3498db" }]}>{group}</Text>
+          {(exercise.muscleGroups || []).map(group => (
+            <View key={typeof group === 'string' ? group : group.name} style={[styles.tag, { backgroundColor: "rgba(52, 152, 219, 0.1)" }]}> 
+              <Text style={[styles.tagText, { color: "#3498db" }]}>{typeof group === 'string' ? group : group.name}</Text>
             </View>
           ))}
         </View>
-        
         <View style={styles.equipment}>
-          {exercise.equipment.map(item => (
-            <View key={item} style={[styles.equipmentItem, { backgroundColor: "rgba(0, 0, 0, 0.05)" }]}>
+          {(exercise.equipment || []).map(item => (
+            <View key={typeof item === 'string' ? item : item.name} style={[styles.equipmentItem, { backgroundColor: "rgba(0, 0, 0, 0.05)" }]}> 
               <Dumbbell size={12} color={colors.textSecondary} />
-              <Text style={[styles.equipmentText, { color: colors.textSecondary }]}>{item}</Text>
+              <Text style={[styles.equipmentText, { color: colors.textSecondary }]}>{typeof item === 'string' ? item : item.name}</Text>
             </View>
           ))}
         </View>
       </View>
-      
       {exercise.imageUrl && (
         <View style={styles.imageContainer}>
           <Image 
@@ -150,11 +145,9 @@ export default function ExerciseCard({ exercise, onPress, compact = false }: Exe
           />
         </View>
       )}
-      
       <TouchableOpacity style={styles.arrow} onPress={handlePress}>
         <ChevronRight size={20} color={colors.textLight} />
       </TouchableOpacity>
-      
       {/* Records History Modal */}
       <RecordsHistoryModal 
         visible={showRecordsModal}
@@ -404,30 +397,18 @@ function RecordsHistoryModal({
                     <Text style={[styles.aboutDetailTitle, { color: colors.text }]}>
                       Muscle Groups
                     </Text>
-                    <View style={styles.aboutDetailTags}>
-                      {exercise.muscleGroups.map((group, idx) => (
-                        <View key={idx} style={[styles.aboutDetailTag, { backgroundColor: "rgba(52, 152, 219, 0.1)" }]}>
-                          <Text style={[styles.aboutDetailTagText, { color: "#3498db" }]}>
-                            {group}
-                          </Text>
-                        </View>
-                      ))}
-                    </View>
+                    <Text style={styles.aboutDetailText}>
+                      {(exercise.muscleGroups || []).map(group => typeof group === 'string' ? group : group.name).join(', ')}
+                    </Text>
                   </View>
                   
                   <View style={styles.aboutDetailItem}>
                     <Text style={[styles.aboutDetailTitle, { color: colors.text }]}>
                       Equipment
                     </Text>
-                    <View style={styles.aboutDetailTags}>
-                      {exercise.equipment.map((item, idx) => (
-                        <View key={idx} style={[styles.aboutDetailTag, { backgroundColor: "rgba(0, 0, 0, 0.05)" }]}>
-                          <Text style={[styles.aboutDetailTagText, { color: colors.textSecondary }]}>
-                            {item}
-                          </Text>
-                        </View>
-                      ))}
-                    </View>
+                    <Text style={styles.aboutDetailText}>
+                      {(exercise.equipment || []).map(item => typeof item === 'string' ? item : item.name).join(', ')}
+                    </Text>
                   </View>
                   
                   <View style={styles.aboutDetailItem}>
@@ -444,9 +425,7 @@ function RecordsHistoryModal({
                 
                 {exercise.imageUrl && (
                   <View style={styles.aboutImageContainer}>
-                    <Text style={[styles.aboutImageTitle, { color: colors.text }]}>
-                      Reference Image
-                    </Text>
+                    <Text style={[styles.aboutImageTitle, { color: colors.text }]}>Reference Image</Text>
                     <View style={styles.aboutImage}>
                       <Image 
                         source={{ uri: exercise.imageUrl }} 
@@ -810,18 +789,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginBottom: 8,
   },
-  aboutDetailTags: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  aboutDetailTag: {
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    marginRight: 8,
-    marginBottom: 8,
-  },
-  aboutDetailTagText: {
+  aboutDetailText: {
     fontSize: 14,
   },
   aboutDifficultyBadge: {
