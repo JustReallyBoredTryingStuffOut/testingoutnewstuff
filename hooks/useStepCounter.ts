@@ -4,8 +4,7 @@ import { Pedometer } from "expo-sensors";
 import { useHealthStore } from "@/store/healthStore";
 import * as ExpoDevice from "expo-device";
 
-// Import the CoreBluetooth module with correct path
-import CoreBluetooth from "@/src/NativeModules/CoreBluetooth";
+
 
 // Import the HealthKit module (production-ready implementation)
 import HealthKit from "@/src/NativeModules/HealthKit";
@@ -14,7 +13,6 @@ import HealthKit from "@/src/NativeModules/HealthKit";
 const ERROR_TYPES = {
   PERMISSION_DENIED: 'PERMISSION_DENIED',
   DEVICE_NOT_SUPPORTED: 'DEVICE_NOT_SUPPORTED',
-  BLUETOOTH_DISABLED: 'BLUETOOTH_DISABLED',
   CONNECTION_ERROR: 'CONNECTION_ERROR',
   HEALTHKIT_ERROR: 'HEALTHKIT_ERROR',
   UNKNOWN_ERROR: 'UNKNOWN_ERROR'
@@ -29,8 +27,7 @@ export default function useStepCounter() {
   const [deviceName, setDeviceName] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [useMockData, setUseMockData] = useState(false);
-  const [bluetoothState, setBluetoothState] = useState<string | null>(null);
-  const [permissionStatus, setPermissionStatus] = useState<"unknown" | "granted" | "denied">("unknown");
+
   const [healthKitAvailable, setHealthKitAvailable] = useState(false);
   const [healthKitAuthorized, setHealthKitAuthorized] = useState(false);
   const [dataSource, setDataSource] = useState<"healthKit" | "pedometer" | "connectedDevice" | "mock">("pedometer");
@@ -49,67 +46,18 @@ export default function useStepCounter() {
   
   const syncTimerRef = useRef<NodeJS.Timeout | null>(null);
   const mockDataTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const bluetoothListenerRef = useRef<(() => void) | null>(null);
+
   const healthKitObserverRef = useRef<(() => void) | null>(null);
   const lastSyncTimeRef = useRef<number>(0);
   const stepCountCacheRef = useRef<{[date: string]: number}>({});
   
-  // Initialize Bluetooth state and permissions
+  // Initialize step counting
   useEffect(() => {
     if (Platform.OS === "web") {
       setError("Step counting is not available on web");
       setErrorType(ERROR_TYPES.DEVICE_NOT_SUPPORTED);
       return;
     }
-    
-    const initializeBluetooth = async () => {
-      if (Platform.OS === 'ios') {
-        try {
-          // Check Bluetooth state
-          const stateResult = await CoreBluetooth.getBluetoothState();
-          setBluetoothState(stateResult.state);
-          
-          // Request permissions
-          const permissionResult = await CoreBluetooth.requestPermissions();
-          setPermissionStatus(permissionResult.granted ? "granted" : "denied");
-          
-          if (stateResult.state !== "poweredOn") {
-            setError("Bluetooth is not powered on. Please enable Bluetooth in your device settings.");
-            setErrorType(ERROR_TYPES.BLUETOOTH_DISABLED);
-          } else if (!permissionResult.granted) {
-            setError("Bluetooth permissions are required to connect to devices.");
-            setErrorType(ERROR_TYPES.PERMISSION_DENIED);
-          } else {
-            setError(null);
-            setErrorType(null);
-          }
-          
-          // Set up Bluetooth state change listener
-          if (bluetoothListenerRef.current) {
-            bluetoothListenerRef.current();
-          }
-          
-          bluetoothListenerRef.current = CoreBluetooth.addListener(
-            'bluetoothStateChanged',
-            (event) => {
-              setBluetoothState(event.state);
-              
-              if (event.state !== 'poweredOn') {
-                setError("Bluetooth is not powered on. Please enable Bluetooth in your device settings.");
-                setErrorType(ERROR_TYPES.BLUETOOTH_DISABLED);
-              } else {
-                setError(null);
-                setErrorType(null);
-              }
-            }
-          );
-        } catch (error: any) {
-          console.error("Error initializing Bluetooth:", error);
-          setError(`Error initializing Bluetooth: ${error.message}`);
-          setErrorType(ERROR_TYPES.CONNECTION_ERROR);
-        }
-      }
-    };
     
     // Initialize HealthKit if on iOS
     const initializeHealthKit = async () => {
@@ -257,15 +205,9 @@ export default function useStepCounter() {
       }
     };
     
-    initializeBluetooth();
     initializeHealthKit();
     
     return () => {
-      if (bluetoothListenerRef.current) {
-        bluetoothListenerRef.current();
-        bluetoothListenerRef.current = null;
-      }
-      
       if (healthKitObserverRef.current) {
         healthKitObserverRef.current();
         healthKitObserverRef.current = null;
@@ -292,7 +234,7 @@ export default function useStepCounter() {
     // Set up periodic sync for connected devices
     if (isUsingConnectedDevice && isTrackingSteps) {
       syncTimerRef.current = setInterval(() => {
-        syncWithConnectedDevice();
+        // syncWithConnectedDevice();
       }, 15 * 60 * 1000); // Sync every 15 minutes
     }
     
@@ -304,7 +246,7 @@ export default function useStepCounter() {
         clearInterval(mockDataTimerRef.current);
       }
     };
-  }, [isTrackingSteps, isUsingConnectedDevice, connectedDevices, bluetoothState, permissionStatus]);
+  }, [isTrackingSteps, isUsingConnectedDevice, connectedDevices]);
   
   // Start/stop step tracking
   useEffect(() => {
@@ -330,7 +272,7 @@ export default function useStepCounter() {
         
         // If using a connected device, sync with it
         if (isUsingConnectedDevice) {
-          await syncWithConnectedDevice();
+          // await syncWithConnectedDevice();
           
           // Get today's existing log if any
           const todayLog = getStepsForDate(today.toISOString());
@@ -342,7 +284,7 @@ export default function useStepCounter() {
           
           // Set up polling to periodically sync with the device
           pollInterval = setInterval(() => {
-            syncWithConnectedDevice();
+            // syncWithConnectedDevice();
           }, 5 * 60 * 1000); // Sync every 5 minutes
           
           return;
@@ -669,66 +611,7 @@ export default function useStepCounter() {
     return Math.round(steps * 0.04);
   };
   
-  const syncWithConnectedDevice = async () => {
-    // Prevent multiple syncs at once
-    if (isSyncing) return;
-    
-    // Throttle syncs to once per minute
-    const now = Date.now();
-    if (now - lastSyncTimeRef.current < 60000) {
-      return;
-    }
-    
-    setIsSyncing(true);
-    lastSyncTimeRef.current = now;
-    
-    try {
-      // Find connected device
-      const appleWatch = getConnectedDeviceByType("appleWatch");
-      const fitbit = getConnectedDeviceByType("fitbit");
-      const garmin = getConnectedDeviceByType("garmin");
-      
-      const connectedDevice = appleWatch || fitbit || garmin;
-      
-      if (!connectedDevice || !connectedDevice.connected) {
-        setIsUsingConnectedDevice(false);
-        setDeviceName(null);
-        setIsSyncing(false);
-        return;
-      }
-      
-      // Get today's date
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      // Get yesterday's date
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
-      
-      // Import step data from the device
-      const success = await importDataFromDevice(
-        connectedDevice.id,
-        "steps",
-        yesterday.toISOString(),
-        new Date().toISOString()
-      );
-      
-      if (success) {
-        // Update current step count from the latest log
-        const todayLog = getStepsForDate(today.toISOString());
-        if (todayLog) {
-          setCurrentStepCount(todayLog.steps);
-          
-          // Cache the step count
-          stepCountCacheRef.current[today.toISOString()] = todayLog.steps;
-        }
-      }
-    } catch (error) {
-      console.error("Error syncing with connected device:", error);
-    } finally {
-      setIsSyncing(false);
-    }
-  };
+
   
   const retryPedometerConnection = async () => {
     if (retryCount >= 3 || isUsingConnectedDevice) return false;
@@ -800,24 +683,7 @@ export default function useStepCounter() {
           }
         }
         
-        // If HealthKit is not available or authorization denied, check Bluetooth
-        const stateResult = await CoreBluetooth.getBluetoothState();
-        setBluetoothState(stateResult.state);
-        
-        if (stateResult.state !== "poweredOn") {
-          setError("Bluetooth is not powered on. Please enable Bluetooth in your device settings.");
-          setErrorType(ERROR_TYPES.BLUETOOTH_DISABLED);
-          return false;
-        }
-        
-        const permissionResult = await CoreBluetooth.requestPermissions();
-        setPermissionStatus(permissionResult.granted ? "granted" : "denied");
-        
-        if (!permissionResult.granted) {
-          setError("Bluetooth permissions are required to connect to devices.");
-          setErrorType(ERROR_TYPES.PERMISSION_DENIED);
-          return false;
-        }
+
       }
       
       // Check if pedometer is available
@@ -889,7 +755,7 @@ export default function useStepCounter() {
     
     // If using a connected device, sync immediately
     if (isUsingConnectedDevice) {
-      syncWithConnectedDevice();
+      // await syncWithConnectedDevice();
     }
     
     // If using HealthKit, refresh the data
@@ -956,7 +822,7 @@ export default function useStepCounter() {
     
     try {
       if (isUsingConnectedDevice) {
-        await syncWithConnectedDevice();
+        // await syncWithConnectedDevice();
         setIsSyncing(false);
         return true;
       }
@@ -1034,8 +900,6 @@ export default function useStepCounter() {
     deviceName,
     useMockData,
     retryPedometerConnection,
-    bluetoothState,
-    permissionStatus,
     dataSource,
     healthKitAvailable,
     healthKitAuthorized,

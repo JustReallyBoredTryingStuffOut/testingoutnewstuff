@@ -4,7 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { WeightLog, StepLog, HealthGoals, HealthDevice, ActivityLog, WaterIntake, DeviceSync, DeviceData, DailyNote } from "@/types";
 import { Platform } from "react-native";
 import HealthKitService from "../src/services/HealthKitService";
-import BluetoothService from "../src/services/BluetoothService";
+
 
 interface HealthState {
   weightLogs: WeightLog[];

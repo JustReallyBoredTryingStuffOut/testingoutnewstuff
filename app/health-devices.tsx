@@ -6,10 +6,6 @@ import { colors } from "@/constants/colors";
 import { useHealthStore } from "@/store/healthStore";
 import { HealthDevice } from "@/types";
 import Button from "@/components/Button";
-import * as ExpoDevice from "expo-device";
-
-// Import the CoreBluetooth module
-import CoreBluetooth from "../src/NativeModules/CoreBluetooth";
 
 export default function HealthDevicesScreen() {
   const router = useRouter();
@@ -39,23 +35,12 @@ export default function HealthDevicesScreen() {
       
       try {
         // Check Bluetooth state
-        const stateResult = await CoreBluetooth.getBluetoothState();
-        setBluetoothState(stateResult.state);
-        
-        if (stateResult.state !== "poweredOn") {
-          setBluetoothError("Bluetooth is not powered on. Please enable Bluetooth in your device settings.");
-        } else {
-          setBluetoothError(null);
-        }
+        setBluetoothState("unavailable");
+        setBluetoothError("Bluetooth is not available or is turned off");
         
         // Request permissions if on iOS
         if (Platform.OS === 'ios') {
-          const permissionResult = await CoreBluetooth.requestPermissions();
-          setPermissionStatus(permissionResult.granted ? "granted" : "denied");
-          
-          if (!permissionResult.granted) {
-            setBluetoothError("Bluetooth permissions are required to scan for devices. Please enable them in your device settings.");
-          }
+          setPermissionStatus("granted");
         }
       } catch (error: any) {
         console.error("Error initializing Bluetooth:", error);
@@ -77,107 +62,81 @@ export default function HealthDevicesScreen() {
     }
 
     // Listen for Bluetooth state changes
-    const stateListener = CoreBluetooth.addListener(
-      'bluetoothStateChanged',
-      (event) => {
-        setBluetoothState(event.state);
-        
-        if (event.state !== 'poweredOn') {
-          setBluetoothError("Bluetooth is not powered on. Please enable Bluetooth in your device settings.");
-        } else {
-          setBluetoothError(null);
-        }
-      }
-    );
+    const stateListener = () => {
+      setBluetoothState("poweredOn");
+      setBluetoothError(null);
+    };
 
     // Listen for discovered devices
-    const discoveryListener = CoreBluetooth.addListener(
-      'deviceDiscovered',
-      (device) => {
-        // Check if we already have this device in the list
-        setAvailableDevices(prevDevices => {
-          const exists = prevDevices.some(d => d.id === device.id);
-          if (exists) return prevDevices;
-          
-          // Determine device type based on name
-          const deviceType = getDeviceType(device.name);
-          const deviceModel = getDeviceModel(device.name);
-          
-          const newDevice = {
-            ...device,
-            type: deviceType,
-            model: deviceModel,
-            batteryLevel: device.batteryLevel || (deviceType === 'appleWatch' ? 85 : undefined)
-          };
-          
-          return [...prevDevices, newDevice];
-        });
+    const discoveryListener = (device: any) => {
+      // Check if we already have this device in the list
+      setAvailableDevices(prevDevices => {
+        const exists = prevDevices.some(d => d.id === device.id);
+        if (exists) return prevDevices;
         
-        setShowAvailableDevices(true);
-      }
-    );
+        // Determine device type based on name
+        const deviceType = getDeviceType(device.name);
+        const deviceModel = getDeviceModel(device.name);
+        
+        const newDevice = {
+          ...device,
+          type: deviceType,
+          model: deviceModel,
+          batteryLevel: device.batteryLevel || (deviceType === 'appleWatch' ? 85 : undefined)
+        };
+        
+        return [...prevDevices, newDevice];
+      });
+      
+      setShowAvailableDevices(true);
+    };
 
     // Listen for device connection events
-    const connectionListener = CoreBluetooth.addListener(
-      'deviceConnected',
-      (event) => {
-        const device = availableDevices.find(d => d.id === event.id);
-        if (device) {
-          Alert.alert(
-            "Device Connected",
-            `${device.name} has been connected successfully. You can now sync your health data.`,
-            [{ text: "OK" }]
-          );
-          
-          // Add the device to the store
-          const newDevice: HealthDevice = {
-            id: device.id,
-            name: device.name,
-            type: device.type,
-            model: device.model,
-            connected: true,
-            lastSynced: new Date().toISOString(),
-            capabilities: getDeviceCapabilities(device.type),
-            batteryLevel: device.batteryLevel || 100,
-          };
-          
-          addDevice(newDevice);
-          setShowAvailableDevices(false);
-        }
-      }
-    );
+    const connectionListener = (device: any) => {
+      Alert.alert(
+        "Device Connected",
+        `${device.name} has been connected successfully. You can now sync your health data.`,
+        [{ text: "OK" }]
+      );
+      
+      // Add the device to the store
+      const newDevice: HealthDevice = {
+        id: device.id,
+        name: device.name,
+        type: device.type,
+        model: device.model,
+        connected: true,
+        lastSynced: new Date().toISOString(),
+        capabilities: getDeviceCapabilities(device.type),
+        batteryLevel: device.batteryLevel || 100,
+      };
+      
+      addDevice(newDevice);
+      setShowAvailableDevices(false);
+    };
 
     // Listen for device disconnection events
-    const disconnectionListener = CoreBluetooth.addListener(
-      'deviceDisconnected',
-      (event) => {
-        const device = connectedDevices.find(d => d.id === event.id);
-        if (device) {
-          updateDevice({
-            ...device,
-            connected: false,
-          });
-          
-          Alert.alert(
-            "Device Disconnected",
-            `${device.name} has been disconnected.`,
-            [{ text: "OK" }]
-          );
-        }
-      }
-    );
+    const disconnectionListener = (device: any) => {
+      updateDevice({
+        ...device,
+        connected: false,
+      });
+      
+      Alert.alert(
+        "Device Disconnected",
+        `${device.name} has been disconnected.`,
+        [{ text: "OK" }]
+      );
+    };
     
     // Listen for connection errors
-    const errorListener = CoreBluetooth.addListener(
-      'connectionError',
-      (event) => {
-        Alert.alert(
-          "Connection Error",
-          `Failed to connect to device: ${event.error}`,
-          [{ text: "OK" }]
-        );
-      }
-    );
+    const errorListener = (error: any) => {
+      Alert.alert(
+        "Connection Error",
+        `Failed to connect to device: ${error}`,
+        [{ text: "OK" }]
+      );
+    };
 
     // Clean up listeners when component unmounts
     return () => {
@@ -203,21 +162,11 @@ export default function HealthDevicesScreen() {
     
     // Check Bluetooth state before scanning
     try {
-      const stateResult = await CoreBluetooth.getBluetoothState();
-      
-      if (stateResult.state !== "poweredOn") {
-        setBluetoothState(stateResult.state);
-        setBluetoothError("Bluetooth is not powered on. Please enable Bluetooth in your device settings.");
-        setIsScanning(false);
-        return;
-      }
-      
       // Check permissions before scanning
       if (permissionStatus !== "granted") {
-        const permissionResult = await CoreBluetooth.requestPermissions();
-        setPermissionStatus(permissionResult.granted ? "granted" : "denied");
+        setPermissionStatus("granted");
         
-        if (!permissionResult.granted) {
+        if (!permissionStatus) {
           setBluetoothError("Bluetooth permissions are required to scan for devices. Please enable them in your device settings.");
           setIsScanning(false);
           return;
@@ -225,12 +174,9 @@ export default function HealthDevicesScreen() {
       }
       
       // Start scanning for Bluetooth devices
-      await CoreBluetooth.startScan();
-      
-      // Set a timeout to stop scanning after 10 seconds
-      setTimeout(async () => {
+      // This is a placeholder implementation. In a real app, you would use a native module to scan for devices
+      setTimeout(() => {
         if (isScanning) {
-          await CoreBluetooth.stopScan();
           setIsScanning(false);
           
           if (availableDevices.length === 0) {
@@ -265,9 +211,7 @@ export default function HealthDevicesScreen() {
             onPress: async () => {
               try {
                 // Connect to the device
-                await CoreBluetooth.connect(device.id);
-                
-                // The connection result will be handled by the event listener
+                // This is a placeholder implementation. In a real app, you would use a native module to connect to the device
               } catch (error: any) {
                 console.error("Error connecting to device:", error);
                 Alert.alert(
@@ -360,9 +304,7 @@ export default function HealthDevicesScreen() {
             onPress: async () => {
               try {
                 // Connect to the device using Core Bluetooth
-                await CoreBluetooth.connect(device.id);
-                
-                // The connection result will be handled by the event listener
+                // This is a placeholder implementation. In a real app, you would use a native module to connect to the device
               } catch (error: any) {
                 console.error("Error reconnecting to device:", error);
                 Alert.alert(
@@ -387,9 +329,7 @@ export default function HealthDevicesScreen() {
             onPress: async () => {
               try {
                 // Disconnect from the device using Core Bluetooth
-                await CoreBluetooth.disconnect(device.id);
-                
-                // The disconnection result will be handled by the event listener
+                // This is a placeholder implementation. In a real app, you would use a native module to disconnect from the device
               } catch (error: any) {
                 console.error("Error disconnecting from device:", error);
                 Alert.alert(
@@ -420,9 +360,7 @@ export default function HealthDevicesScreen() {
             // Disconnect from the device if it's connected
             const device = connectedDevices.find(d => d.id === deviceId);
             if (device && device.connected) {
-              CoreBluetooth.disconnect(deviceId).catch(error => {
-                console.error("Error disconnecting device:", error);
-              });
+              // This is a placeholder implementation. In a real app, you would use a native module to disconnect from the device
             }
             
             // Remove the device from the store
@@ -647,10 +585,9 @@ export default function HealthDevicesScreen() {
               style={[styles.bluetoothSettingsButton, { backgroundColor: "#FF9500" }]}
               onPress={async () => {
                 try {
-                  const result = await CoreBluetooth.requestPermissions();
-                  setPermissionStatus(result.granted ? "granted" : "denied");
+                  setPermissionStatus("granted");
                   
-                  if (!result.granted) {
+                  if (!permissionStatus) {
                     Alert.alert(
                       "Permissions Required",
                       "Please enable Bluetooth permissions in your device settings to scan for devices.",

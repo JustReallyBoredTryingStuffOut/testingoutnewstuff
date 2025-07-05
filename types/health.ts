@@ -60,65 +60,7 @@ export interface DateOfBirthResult {
   dateOfBirth: string;
 }
 
-// Core Bluetooth Types
-export interface BluetoothState {
-  state: 'unknown' | 'resetting' | 'unsupported' | 'unauthorized' | 'poweredOff' | 'poweredOn';
-}
 
-export interface BluetoothPermissions {
-  granted: boolean;
-  reason?: string;
-}
-
-export interface BluetoothDevice {
-  id: string;
-  name: string;
-  rssi: number;
-  services: string[];
-  manufacturerData: string;
-}
-
-export interface BluetoothConnection {
-  id: string;
-  name: string;
-}
-
-export interface BluetoothDisconnection {
-  id: string;
-  name: string;
-  error?: string;
-}
-
-export interface BluetoothError {
-  id?: string;
-  name?: string;
-  error: string;
-}
-
-export interface BluetoothDataReceived {
-  peripheralId: string;
-  serviceUUID: string;
-  characteristicUUID: string;
-  data: string; // base64 encoded
-  value: any; // parsed value based on characteristic type
-}
-
-// Parsed Bluetooth Data Types
-export interface HeartRateBluetoothData {
-  heartRate: number;
-  sensorContactSupported: boolean;
-  sensorContactDetected: boolean;
-}
-
-export interface BatteryLevelBluetoothData {
-  batteryLevel: number;
-}
-
-export interface RSCBluetoothData {
-  speed: number; // m/s
-  cadence: number; // steps per minute
-  strideLength: boolean;
-}
 
 // Native Module Interfaces
 export interface HealthKitModule {
@@ -142,25 +84,7 @@ export interface HealthKitModule {
   getAuthorizationStatus(dataType: string): Promise<HealthKitAuthorizationStatus>;
 }
 
-export interface CoreBluetoothModule {
-  getState(): Promise<BluetoothState>;
-  requestPermissions(): Promise<BluetoothPermissions>;
-  startScan(): Promise<void>;
-  stopScan(): Promise<void>;
-  connect(peripheralId: string): Promise<BluetoothConnection>;
-  disconnect(peripheralId: string): Promise<BluetoothConnection>;
-  readCharacteristic(
-    peripheralId: string,
-    serviceUUID: string,
-    characteristicUUID: string
-  ): Promise<void>;
-  writeCharacteristic(
-    peripheralId: string,
-    serviceUUID: string,
-    characteristicUUID: string,
-    data: string
-  ): Promise<void>;
-}
+
 
 // Event Types for React Native Event Emitters
 export type HealthKitEvents = {
@@ -172,14 +96,7 @@ export type HealthKitEvents = {
   onAuthorizationStatusChange: (status: HealthKitAuthorizationStatus) => void;
 };
 
-export type CoreBluetoothEvents = {
-  onBluetoothStateChange: (state: BluetoothState) => void;
-  onDeviceDiscovered: (device: BluetoothDevice) => void;
-  onDeviceConnected: (connection: BluetoothConnection) => void;
-  onDeviceDisconnected: (disconnection: BluetoothDisconnection) => void;
-  onDataReceived: (data: BluetoothDataReceived) => void;
-  onError: (error: BluetoothError) => void;
-};
+
 
 // Workout Activity Types (matching HealthKit)
 export enum HKWorkoutActivityType {

@@ -30,8 +30,6 @@ import ActivityMap from "@/components/ActivityMap";
 import Button from "@/components/Button";
 import HealthKitService from '../../src/services/HealthKitService';
 
-// Import CoreBluetooth with correct path
-import CoreBluetooth from "@/src/NativeModules/CoreBluetooth";
 // Import HealthKit module
 import HealthKit from "@/src/NativeModules/HealthKit";
 
@@ -52,44 +50,13 @@ export default function HealthScreen() {
   const { colors } = useTheme();
   
   const [isSyncingAll, setIsSyncingAll] = useState(false);
-  const [bluetoothState, setBluetoothState] = useState<string | null>("poweredOn"); // Default to poweredOn
-  const [permissionStatus, setPermissionStatus] = useState<"unknown" | "granted" | "denied">("granted"); // Default to granted
+
   const [healthKitAvailable, setHealthKitAvailable] = useState(false);
   const [healthKitAuthorized, setHealthKitAuthorized] = useState(false);
   
-  // Initialize Bluetooth state and permissions
-  useEffect(() => {
-    if (Platform.OS === 'ios') {
-      const checkBluetoothState = async () => {
-        try {
-          const stateResult = await CoreBluetooth.getBluetoothState();
-          setBluetoothState(stateResult.state);
-          
-          const permissionResult = await CoreBluetooth.requestPermissions();
-          setPermissionStatus(permissionResult.granted ? "granted" : "denied");
-        } catch (error) {
-          console.error("Error checking Bluetooth state:", error);
-          // Default to working state on error
-          setBluetoothState("poweredOn");
-          setPermissionStatus("granted");
-        }
-      };
-      
-      checkBluetoothState();
-      
-      // Set up Bluetooth state change listener
-      const stateListener = CoreBluetooth.addListener(
-        'bluetoothStateChanged',
-        (event: any) => {
-          setBluetoothState(event.state);
-        }
-      );
-      
-      return () => {
-        stateListener();
-      };
-    }
-  }, []);
+  // Bluetooth and permission state
+  const [bluetoothState, setBluetoothState] = useState<string | null>(null);
+  const [permissionStatus, setPermissionStatus] = useState<string>("unknown");
   
   // Initialize HealthKit
   useEffect(() => {
@@ -119,6 +86,28 @@ export default function HealthScreen() {
       };
       
       initializeHealthKit();
+    }
+  }, []);
+  
+  // Initialize Bluetooth state and permissions
+  useEffect(() => {
+    if (Platform.OS === 'ios') {
+      // Initialize bluetooth state
+      setBluetoothState("unavailable");
+      
+      // Check for bluetooth permissions
+      const checkBluetoothPermissions = async () => {
+        try {
+          // For now, we'll set a default state
+          // In a real app, you would check actual bluetooth permissions
+          setPermissionStatus("unknown");
+        } catch (error) {
+          console.error("Error checking bluetooth permissions:", error);
+          setPermissionStatus("denied");
+        }
+      };
+      
+      checkBluetoothPermissions();
     }
   }, []);
   
@@ -411,28 +400,7 @@ export default function HealthScreen() {
             </Text>
           </View>
           
-          <TouchableOpacity 
-            style={styles.bluetoothSettingsButton}
-            onPress={() => {
-              CoreBluetooth.requestPermissions()
-                .then(result => {
-                  setPermissionStatus(result.granted ? "granted" : "denied");
-                  
-                  if (!result.granted) {
-                    Alert.alert(
-                      "Permissions Required",
-                      "Please enable Bluetooth permissions in your device settings to connect to health devices.",
-                      [{ text: "OK" }]
-                    );
-                  }
-                })
-                .catch(error => {
-                  console.error("Error requesting permissions:", error);
-                });
-            }}
-          >
-            <Text style={styles.bluetoothSettingsText}>Request Permissions</Text>
-          </TouchableOpacity>
+
         </View>
       )}
       

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Platform } from "react-native";
-import { Play, Pause, Award, RefreshCw, Watch, AlertTriangle, Bluetooth, Zap } from "lucide-react-native";
+import { Play, Pause, Award, RefreshCw, Watch, AlertTriangle, Zap } from "lucide-react-native";
 import { colors } from "@/constants/colors";
 import { useHealthStore } from "@/store/healthStore";
 import useStepCounter from "@/hooks/useStepCounter";
@@ -24,8 +24,6 @@ export default function StepCounter({ compact = false }: StepCounterProps) {
     deviceName,
     useMockData,
     retryPedometerConnection,
-    bluetoothState,
-    permissionStatus,
     dataSource,
     healthKitAvailable,
     healthKitAuthorized,
@@ -93,94 +91,6 @@ export default function StepCounter({ compact = false }: StepCounterProps) {
     if (useMockData) return "Sample Data";
     return "Unknown";
   };
-  
-  // For error states that need user attention
-  if (error && !useMockData && !isTracking) {
-    return (
-      <View style={[styles.container, compact && styles.compactContainer]}>
-        <View style={styles.errorContainer}>
-          <AlertTriangle size={24} color={colors.warning} style={styles.errorIcon} />
-          <Text style={styles.errorText}>{error}</Text>
-        </View>
-        
-        {/* Show HealthKit status for iOS */}
-        {Platform.OS === 'ios' && (
-          <View style={styles.healthKitStatusContainer}>
-            <View style={styles.healthKitStatusContent}>
-              <Zap size={16} color={healthKitAvailable ? colors.primary : colors.error} />
-              <Text style={[
-                styles.healthKitStatusText, 
-                { color: healthKitAvailable ? colors.primary : colors.error }
-              ]}>
-                Apple Health: {healthKitAvailable ? "Available" : "Not Available"}
-              </Text>
-            </View>
-            
-            {healthKitAvailable && (
-              <View style={styles.healthKitStatusContent}>
-                <AlertTriangle size={16} color={healthKitAuthorized ? colors.primary : colors.warning} />
-                <Text style={[
-                  styles.healthKitStatusText, 
-                  { color: healthKitAuthorized ? colors.primary : colors.warning }
-                ]}>
-                  Permissions: {healthKitAuthorized ? "Granted" : "Required"}
-                </Text>
-              </View>
-            )}
-          </View>
-        )}
-        
-        {/* Show Bluetooth status for iOS */}
-        {Platform.OS === 'ios' && (
-          <View style={styles.bluetoothStatusContainer}>
-            <View style={styles.bluetoothStatusContent}>
-              <Bluetooth size={16} color={bluetoothState === "poweredOn" ? colors.primary : colors.error} />
-              <Text style={[
-                styles.bluetoothStatusText, 
-                { color: bluetoothState === "poweredOn" ? colors.primary : colors.error }
-              ]}>
-                Bluetooth: {bluetoothState === "poweredOn" ? "On" : "Off"}
-              </Text>
-            </View>
-            
-            <View style={styles.bluetoothStatusContent}>
-              <AlertTriangle size={16} color={permissionStatus === "granted" ? colors.primary : colors.warning} />
-              <Text style={[
-                styles.bluetoothStatusText, 
-                { color: permissionStatus === "granted" ? colors.primary : colors.warning }
-              ]}>
-                Permissions: {permissionStatus === "granted" ? "Granted" : "Required"}
-              </Text>
-            </View>
-          </View>
-        )}
-        
-        <View style={styles.errorActions}>
-          <TouchableOpacity 
-            style={styles.retryButton}
-            onPress={handleRetry}
-            disabled={isRetrying}
-          >
-            {isRetrying ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
-            ) : (
-              <>
-                <RefreshCw size={16} color="#FFFFFF" />
-                <Text style={styles.retryButtonText}>Retry</Text>
-              </>
-            )}
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.mockDataButton}
-            onPress={startTracking}
-          >
-            <Text style={styles.mockDataButtonText}>Use Sample Data</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
   
   if (compact) {
     return (
@@ -286,57 +196,6 @@ export default function StepCounter({ compact = false }: StepCounterProps) {
             <Text style={styles.deviceText}>
               Data from {deviceName}
             </Text>
-          </View>
-        )}
-        
-        {/* Show HealthKit status for iOS */}
-        {Platform.OS === 'ios' && dataSource === "healthKit" && (
-          <View style={styles.healthKitStatusRow}>
-            <View style={[
-              styles.healthKitStatusBadge,
-              { backgroundColor: "rgba(76, 217, 100, 0.1)" }
-            ]}>
-              <Zap size={12} color="#4CD964" />
-              <Text style={[
-                styles.healthKitStatusBadgeText, 
-                { color: "#4CD964" }
-              ]}>
-                Apple Health Connected
-              </Text>
-            </View>
-          </View>
-        )}
-        
-        {/* Show Bluetooth status for iOS */}
-        {Platform.OS === 'ios' && !isUsingConnectedDevice && dataSource !== "healthKit" && (
-          <View style={styles.bluetoothStatusRow}>
-            <View style={[
-              styles.bluetoothStatusBadge,
-              { backgroundColor: bluetoothState === "poweredOn" ? "rgba(76, 217, 100, 0.1)" : "rgba(255, 59, 48, 0.1)" }
-            ]}>
-              <Bluetooth size={12} color={bluetoothState === "poweredOn" ? "#4CD964" : "#FF3B30"} />
-              <Text style={[
-                styles.bluetoothStatusBadgeText, 
-                { color: bluetoothState === "poweredOn" ? "#4CD964" : "#FF3B30" }
-              ]}>
-                {bluetoothState === "poweredOn" ? "Bluetooth On" : "Bluetooth Off"}
-              </Text>
-            </View>
-            
-            {Platform.OS === 'ios' && (
-              <View style={[
-                styles.bluetoothStatusBadge,
-                { backgroundColor: permissionStatus === "granted" ? "rgba(76, 217, 100, 0.1)" : "rgba(255, 149, 0, 0.1)" }
-              ]}>
-                <AlertTriangle size={12} color={permissionStatus === "granted" ? "#4CD964" : "#FF9500"} />
-                <Text style={[
-                  styles.bluetoothStatusBadgeText, 
-                  { color: permissionStatus === "granted" ? "#4CD964" : "#FF9500" }
-                ]}>
-                  {permissionStatus === "granted" ? "Permissions OK" : "Permissions Needed"}
-                </Text>
-              </View>
-            )}
           </View>
         )}
         
@@ -643,38 +502,6 @@ const styles = StyleSheet.create({
   errorInfoText: {
     fontSize: 12,
     color: colors.warning,
-    marginLeft: 4,
-  },
-  bluetoothStatusContainer: {
-    marginBottom: 16,
-    padding: 12,
-    backgroundColor: "rgba(0, 0, 0, 0.05)",
-    borderRadius: 8,
-  },
-  bluetoothStatusContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  bluetoothStatusText: {
-    fontSize: 14,
-    marginLeft: 8,
-  },
-  bluetoothStatusRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginTop: 8,
-    gap: 8,
-  },
-  bluetoothStatusBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-  },
-  bluetoothStatusBadgeText: {
-    fontSize: 10,
     marginLeft: 4,
   },
   healthKitStatusContainer: {
