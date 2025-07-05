@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as FileSystem from 'expo-file-system';
+import RNFS from 'react-native-fs';
 import { Platform } from "react-native";
 import { 
   encryptAndSavePhoto, 
@@ -28,14 +28,14 @@ export type FoodPhoto = {
   isAnalyzed: boolean;
 };
 
-export interface ProgressPhoto {
+export type ProgressPhoto = {
   id: string;
   uri: string;
   date: string;
-  notes?: string;
+  weight: number;
+  notes: string;
   category: "front" | "side" | "back" | "other";
-  weight?: number;
-}
+};
 
 export type MediaType = {
   id: string;
@@ -89,29 +89,29 @@ interface PhotoState {
 const setupPhotoDirectories = async () => {
   if (Platform.OS === "web") return;
   
-  const photoDir = `${FileSystem.documentDirectory}photos/`;
+  const photoDir = `${RNFS.DocumentDirectoryPath}/photos/`;
   const foodPhotoDir = `${photoDir}food/`;
   const progressPhotoDir = `${photoDir}progress/`;
   const workoutMediaDir = `${photoDir}workout/`;
   
-  const photoDirInfo = await FileSystem.getInfoAsync(photoDir);
-  if (!photoDirInfo.exists) {
-    await FileSystem.makeDirectoryAsync(photoDir, { intermediates: true });
+  const photoDirExists = await RNFS.exists(photoDir);
+  if (!photoDirExists) {
+    await RNFS.mkdir(photoDir);
   }
   
-  const foodDirInfo = await FileSystem.getInfoAsync(foodPhotoDir);
-  if (!foodDirInfo.exists) {
-    await FileSystem.makeDirectoryAsync(foodPhotoDir, { intermediates: true });
+  const foodDirExists = await RNFS.exists(foodPhotoDir);
+  if (!foodDirExists) {
+    await RNFS.mkdir(foodPhotoDir);
   }
   
-  const progressDirInfo = await FileSystem.getInfoAsync(progressPhotoDir);
-  if (!progressDirInfo.exists) {
-    await FileSystem.makeDirectoryAsync(progressPhotoDir, { intermediates: true });
+  const progressDirExists = await RNFS.exists(progressPhotoDir);
+  if (!progressDirExists) {
+    await RNFS.mkdir(progressPhotoDir);
   }
   
-  const workoutDirInfo = await FileSystem.getInfoAsync(workoutMediaDir);
-  if (!workoutDirInfo.exists) {
-    await FileSystem.makeDirectoryAsync(workoutMediaDir, { intermediates: true });
+  const workoutDirExists = await RNFS.exists(workoutMediaDir);
+  if (!workoutDirExists) {
+    await RNFS.mkdir(workoutMediaDir);
   }
   
   // Also setup encrypted photos directory
@@ -137,7 +137,8 @@ export const usePhotoStore = create<PhotoState>()(
       },
       
       addFoodPhoto: async (photo) => {
-        if (Platform.OS !== "web") {
+        // Only save to filesystem if there's a valid URI (skip for nutrition label scans with empty URI)
+        if (Platform.OS !== "web" && photo.uri && photo.uri.trim() !== "") {
           try {
             const fileName = `food_${photo.id}.jpg`;
             let newUri;
@@ -147,11 +148,8 @@ export const usePhotoStore = create<PhotoState>()(
               newUri = await encryptAndSavePhoto(photo.uri, fileName);
             } else {
               // Save without encryption (original behavior)
-              newUri = `${FileSystem.documentDirectory}photos/food/${fileName}`;
-              await FileSystem.copyAsync({
-                from: photo.uri,
-                to: newUri
-              });
+              newUri = `${RNFS.DocumentDirectoryPath}/photos/food/${fileName}`;
+              await RNFS.copyFile(photo.uri, newUri);
             }
             
             // Update the URI to point to the saved file
@@ -196,7 +194,8 @@ export const usePhotoStore = create<PhotoState>()(
       },
       
       addProgressPhoto: async (photo) => {
-        if (Platform.OS !== "web") {
+        // Only save to filesystem if there's a valid URI
+        if (Platform.OS !== "web" && photo.uri && photo.uri.trim() !== "") {
           try {
             const fileName = `progress_${photo.id}.jpg`;
             let newUri;
@@ -206,11 +205,8 @@ export const usePhotoStore = create<PhotoState>()(
               newUri = await encryptAndSavePhoto(photo.uri, fileName);
             } else {
               // Save without encryption (original behavior)
-              newUri = `${FileSystem.documentDirectory}photos/progress/${fileName}`;
-              await FileSystem.copyAsync({
-                from: photo.uri,
-                to: newUri
-              });
+              newUri = `${RNFS.DocumentDirectoryPath}/photos/progress/${fileName}`;
+              await RNFS.copyFile(photo.uri, newUri);
             }
             
             // Update the URI to point to the saved file
@@ -256,8 +252,8 @@ export const usePhotoStore = create<PhotoState>()(
       
       // Media functions
       addWorkoutMedia: async (media) => {
-        // Only save to filesystem if it's a local file (not a URL) and not on web
-        if (Platform.OS !== "web" && !media.uri.startsWith("http")) {
+        // Only save to filesystem if it's a valid local file (not a URL or empty) and not on web
+        if (Platform.OS !== "web" && media.uri && media.uri.trim() !== "" && !media.uri.startsWith("http")) {
           try {
             const extension = get().isGifUrl(media.uri) ? "gif" : "jpg";
             const fileName = `workout_${media.id}.${extension}`;
@@ -268,11 +264,8 @@ export const usePhotoStore = create<PhotoState>()(
               newUri = await encryptAndSavePhoto(media.uri, fileName);
             } else {
               // Save without encryption (original behavior)
-              newUri = `${FileSystem.documentDirectory}photos/workout/${fileName}`;
-              await FileSystem.copyAsync({
-                from: media.uri,
-                to: newUri
-              });
+              newUri = `${RNFS.DocumentDirectoryPath}/photos/workout/${fileName}`;
+              await RNFS.copyFile(media.uri, newUri);
             }
             
             // Update the URI to point to the saved file
@@ -497,7 +490,7 @@ export const usePhotoStore = create<PhotoState>()(
             await cleanupTempDecryptedFiles();
             
             // Clean up photo directories
-            const photoDir = `${FileSystem.documentDirectory}photos/`;
+            const photoDir = `${RNFS.DocumentDirectoryPath}/photos/`;
             await secureDeleteDirectory(photoDir, 2);
             await setupPhotoDirectories();
             

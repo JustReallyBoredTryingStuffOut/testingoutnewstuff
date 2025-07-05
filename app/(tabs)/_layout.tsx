@@ -1,6 +1,6 @@
 import { Tabs } from "expo-router";
 import { useTheme } from "@/context/ThemeContext";
-import { Home, Dumbbell, Calendar, Apple, User, Award, ActivitySquare } from "lucide-react-native";
+import { Home, Dumbbell, Calendar, Apple, User, ActivitySquare } from "lucide-react-native";
 
 export default function TabLayout() {
   const { colors } = useTheme();
@@ -55,14 +55,6 @@ export default function TabLayout() {
         options={{
           title: "Health",
           tabBarIcon: ({ color }) => <ActivitySquare size={24} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="achievements"
-        options={{
-          title: "Achievements",
-          tabBarIcon: ({ color }) => <Award size={24} color={color} />,
-          href: "/achievements",
         }}
       />
       <Tabs.Screen

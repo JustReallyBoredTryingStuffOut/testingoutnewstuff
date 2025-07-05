@@ -1,16 +1,10 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { WeightLog, StepLog, HealthGoals, HealthDevice, ActivityLog, WaterIntake, DeviceSync, DeviceData } from "@/types";
+import { WeightLog, StepLog, HealthGoals, HealthDevice, ActivityLog, WaterIntake, DeviceSync, DeviceData, DailyNote } from "@/types";
 import { Platform } from "react-native";
-
-export interface HealthData {
-  date: string;
-  steps: number;
-  caloriesBurned: number;
-  distance: number;
-  activeMinutes: number;
-}
+import HealthKitService from "../src/services/HealthKitService";
+import BluetoothService from "../src/services/BluetoothService";
 
 interface HealthState {
   weightLogs: WeightLog[];
@@ -24,7 +18,7 @@ interface HealthState {
   stepCount: number;
   deviceSyncHistory: DeviceSync[];
   lastDeviceSync: string | null;
-  healthData: HealthData[];
+  dailyNotes: DailyNote[];
   
   // Actions
   addWeightLog: (log: WeightLog) => void;
@@ -95,16 +89,18 @@ interface HealthState {
   getWaterIntakeForWeek: () => { dates: string[], amounts: number[] };
   getWaterIntakeForMonth: () => { dates: string[], amounts: number[] };
   
+  // Daily notes methods
+  addDailyNote: (date: string, notes: string) => void;
+  updateDailyNote: (date: string, notes: string) => void;
+  getDailyNote: (date: string) => DailyNote | undefined;
+  removeDailyNote: (date: string) => void;
+  
   // Device-specific methods
   isAppleWatchConnected: () => boolean;
   getConnectedDeviceById: (deviceId: string) => HealthDevice | undefined;
   getConnectedDeviceByType: (type: string) => HealthDevice | undefined;
   getDevicesByType: (type: string) => HealthDevice[];
   importDataFromDevice: (deviceId: string, dataType: string, startDate: string, endDate: string) => Promise<boolean>;
-  
-  // Health data actions
-  addHealthData: (data: HealthData) => void;
-  clearHealthData: () => void;
 }
 
 const defaultHealthGoals: HealthGoals = {
@@ -128,7 +124,7 @@ export const useHealthStore = create<HealthState>()(
       stepCount: 0, // Initialize with 0
       deviceSyncHistory: [], // Track device sync history
       lastDeviceSync: null, // Last device sync timestamp
-      healthData: [],
+      dailyNotes: [], // Initialize with empty array
       
       addWeightLog: (log) => set((state) => ({
         weightLogs: [...state.weightLogs, log]
@@ -491,7 +487,7 @@ export const useHealthStore = create<HealthState>()(
           ? activityLogs.filter(log => log.type === type)
           : activityLogs;
         
-        return filteredLogs.reduce((total, log) => total + log.distance, 0);
+        return filteredLogs.reduce((total, log) => total + (log.distance || 0), 0);
       },
       
       calculateTotalCaloriesBurned: (type) => {
@@ -582,6 +578,57 @@ export const useHealthStore = create<HealthState>()(
         return { dates, amounts };
       },
       
+      // Daily notes methods
+      addDailyNote: (date, notes) => set((state) => {
+        const dateStr = new Date(date).toISOString().split('T')[0];
+        const existingNoteIndex = state.dailyNotes.findIndex(note => note.date === dateStr);
+        
+        if (existingNoteIndex >= 0) {
+          // Update existing note
+          const updatedNotes = [...state.dailyNotes];
+          updatedNotes[existingNoteIndex] = {
+            ...updatedNotes[existingNoteIndex],
+            notes,
+            updatedAt: new Date().toISOString()
+          };
+          return { dailyNotes: updatedNotes };
+        } else {
+          // Add new note
+          const newNote: DailyNote = {
+            id: Date.now().toString(),
+            date: dateStr,
+            notes,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+          return { dailyNotes: [...state.dailyNotes, newNote] };
+        }
+      }),
+      
+      updateDailyNote: (date, notes) => set((state) => {
+        const dateStr = new Date(date).toISOString().split('T')[0];
+        return {
+          dailyNotes: state.dailyNotes.map(note =>
+            note.date === dateStr
+              ? { ...note, notes, updatedAt: new Date().toISOString() }
+              : note
+          )
+        };
+      }),
+      
+      getDailyNote: (date) => {
+        const { dailyNotes } = get();
+        const dateStr = new Date(date).toISOString().split('T')[0];
+        return dailyNotes.find(note => note.date === dateStr);
+      },
+      
+      removeDailyNote: (date) => set((state) => {
+        const dateStr = new Date(date).toISOString().split('T')[0];
+        return {
+          dailyNotes: state.dailyNotes.filter(note => note.date !== dateStr)
+        };
+      }),
+      
       // Device-specific methods
       isAppleWatchConnected: () => {
         const { connectedDevices } = get();
@@ -608,8 +655,7 @@ export const useHealthStore = create<HealthState>()(
       },
       
       importDataFromDevice: async (deviceId, dataType, startDate, endDate) => {
-        // This would be implemented with actual HealthKit/Google Fit integration
-        // For now, we'll simulate a successful import with mock data
+        // Use REAL HealthKit data - no more mock data!
         
         const { connectedDevices } = get();
         const device = connectedDevices.find(d => d.id === deviceId);
@@ -620,72 +666,82 @@ export const useHealthStore = create<HealthState>()(
         }
         
         try {
-          // Simulate API delay
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          console.log(`[HealthStore] Importing REAL data from ${device.name} for ${dataType}`);
           
-          // Generate mock data based on device type and data type
-          const mockData: DeviceData = { 
+          // Initialize HealthKit if not already done
+          await HealthKitService.initialize();
+          
+          // Request authorization for all health data types
+          const healthPermissions = await HealthKitService.requestAllAuthorizations();
+          if (!healthPermissions) {
+            console.error("[HealthStore] HealthKit permissions not granted");
+            return false;
+          }
+          
+          // Prepare real data container
+          const realData: DeviceData = { 
             deviceId,
             deviceType: device.type
           };
           
           const start = new Date(startDate);
           const end = new Date(endDate);
-          const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
           
           if (dataType === "steps" || dataType === "all") {
-            mockData.steps = [];
+            console.log("[HealthStore] Fetching REAL step data from HealthKit...");
             
-            // Generate step data for each day in the range
-            for (let i = 0; i <= daysDiff; i++) {
-              const currentDate = new Date(start);
-              currentDate.setDate(currentDate.getDate() + i);
+            try {
+              // Get REAL step count data from HealthKit (returns single number for date range)
+              const stepCount = await HealthKitService.getStepCount(start, end);
               
-              const steps = Math.floor(5000 + Math.random() * 7000); // Random steps between 5000-12000
+              realData.steps = [{
+                date: end.toISOString(), // Use end date as the reference
+                steps: stepCount,
+                distance: calculateDistance(stepCount),
+                calories: calculateCaloriesBurned(stepCount)
+              }];
               
-              mockData.steps.push({
-                date: currentDate.toISOString(),
-                steps,
-                distance: calculateDistance(steps),
-                calories: calculateCaloriesBurned(steps)
-              });
+              console.log(`[HealthStore] Retrieved REAL step count: ${stepCount} steps`);
+              
+            } catch (error) {
+              console.error("[HealthStore] Error fetching step data:", error);
+              realData.steps = []; // Set empty array on error
             }
           }
           
           if (dataType === "activities" || dataType === "all") {
-            mockData.activities = [];
+            console.log("[HealthStore] Fetching REAL workout data from HealthKit...");
             
-            // Generate 1-3 random activities in the date range
-            const numActivities = Math.floor(1 + Math.random() * 3);
-            const activityTypes = ["walking", "running", "cycling", "swimming", "hiking"];
-            
-            for (let i = 0; i < numActivities; i++) {
-              const activityDate = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
-              const activityType = activityTypes[Math.floor(Math.random() * activityTypes.length)];
-              const duration = Math.floor(20 + Math.random() * 70); // 20-90 minutes
-              const distance = parseFloat((1 + Math.random() * 9).toFixed(2)); // 1-10 km
-              const calories = Math.floor(duration * (activityType === "running" ? 10 : activityType === "cycling" ? 8 : 5));
+            try {
+              // Get REAL workout data from HealthKit
+              const workouts = await HealthKitService.getWorkouts(start, end);
               
-              mockData.activities.push({
-                externalId: `${device.type}_${Date.now()}_${i}`,
-                type: activityType,
-                date: activityDate.toISOString(),
-                duration,
-                distance,
-                calories,
-                isOutdoor: Math.random() > 0.3, // 70% chance of outdoor
+              realData.activities = workouts.map((workout: any, index: number) => ({
+                externalId: `healthkit_${Date.now()}_${index}`,
+                type: workout.type || "other",
+                date: workout.startDate?.toISOString() || start.toISOString(),
+                duration: Math.round((new Date(workout.endDate).getTime() - new Date(workout.startDate).getTime()) / 60000), // minutes
+                distance: workout.distance || 0,
+                calories: workout.energyBurned || 0,
+                isOutdoor: true, // Assume outdoor for now
                 heartRate: {
-                  avg: Math.floor(120 + Math.random() * 40),
-                  max: Math.floor(160 + Math.random() * 30),
-                  min: Math.floor(80 + Math.random() * 20)
+                  avg: 0, // HealthKit doesn't provide this in basic workout data
+                  max: 0,
+                  min: 0
                 },
-                elevationGain: activityType === "hiking" ? Math.floor(50 + Math.random() * 200) : 0
-              });
+                elevationGain: 0
+              }));
+              
+              console.log(`[HealthStore] Retrieved ${realData.activities?.length || 0} REAL workouts`);
+              
+            } catch (error) {
+              console.error("[HealthStore] Error fetching workout data:", error);
+              realData.activities = []; // Set empty array on error
             }
           }
           
-          // Sync the mock data
-          get().syncDeviceData(deviceId, mockData);
+          // Sync the REAL data
+          get().syncDeviceData(deviceId, realData);
           
           // Record the sync
           get().recordDeviceSync(
@@ -694,16 +750,14 @@ export const useHealthStore = create<HealthState>()(
             dataType === "all" ? ["steps", "activities"] : [dataType]
           );
           
+          console.log(`[HealthStore] Successfully imported REAL data from ${device.name}`);
           return true;
+          
         } catch (error) {
-          console.error("Error importing data from device:", error);
+          console.error("Error importing REAL data from device:", error);
           return false;
         }
-      },
-      
-      // Health data actions
-      addHealthData: (data) => set((state) => ({ healthData: [...state.healthData, data] })),
-      clearHealthData: () => set({ healthData: [] }),
+      }
     }),
     {
       name: "health-storage",

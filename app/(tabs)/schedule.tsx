@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Alert, TextInput, Image } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Alert } from "react-native";
 import { Calendar, Clock, Dumbbell, Plus, Copy, Save, ArrowLeft, ArrowRight, ChevronDown, Edit, Edit3, Trash2, Repeat, Trophy, Target, Droplets, Footprints, CheckCircle, Camera } from "lucide-react-native";
 import { useRouter, Stack } from "expo-router";
 import { useWorkoutStore } from "@/store/workoutStore";
@@ -8,17 +8,11 @@ import { useHealthStore } from "@/store/healthStore";
 import { usePhotoStore } from "@/store/photoStore";
 import Button from "@/components/Button";
 import { useTheme } from "@/context/ThemeContext";
-import EncryptedImage from "@/components/EncryptedImage";
-import DailyNotesModal from "@/components/DailyNotesModal";
-import { useScheduleStore } from '@/store/scheduleStore';
-import { useWaterStore } from '@/store/waterStore';
-import { useNotesStore } from '@/store/notesStore';
-import { formatDate } from '@/utils/dateUtils';
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const screenWidth = Dimensions.get("window").width;
 
-const ScheduleScreen = () => {
+export default function ScheduleScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { 
@@ -45,14 +39,9 @@ const ScheduleScreen = () => {
     activityLogs,
     healthGoals,
     getWaterIntakeForDate,
-    getStepsForDate,
-    getCaloriesForDate,
-    getNoteByDate
+    getStepsForDate
   } = useHealthStore();
-  const { progressPhotos, getProgressPhotosByDate } = usePhotoStore();
-  const { schedule } = useScheduleStore();
-  const { getWaterIntakeByDate } = useWaterStore();
-  const { getNoteByDate: notesStoreNoteByDate } = useNotesStore();
+  const { progressPhotos } = usePhotoStore();
   
   const [viewMode, setViewMode] = useState<"week" | "month">("week");
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -63,18 +52,6 @@ const ScheduleScreen = () => {
   const [showScheduledWorkouts, setShowScheduledWorkouts] = useState(true);
   const [showCompletedWorkouts, setShowCompletedWorkouts] = useState(true);
   const [showProgressPhotos, setShowProgressPhotos] = useState(false);
-  const [showNotesModal, setShowNotesModal] = useState(false);
-  
-  const activities = useMemo(() => {
-    // Example: filter schedule for selectedDate
-    return schedule.filter(item => formatDate(item.date) === formatDate(selectedDate));
-  }, [schedule, selectedDate]);
-
-  const photos = getProgressPhotosByDate(formatDate(selectedDate));
-  const steps = getStepsForDate(formatDate(selectedDate));
-  const calories = getCaloriesForDate ? getCaloriesForDate(formatDate(selectedDate)) : 0;
-  const water = getWaterIntakeByDate(formatDate(selectedDate));
-  const note = notesStoreNoteByDate(formatDate(selectedDate));
   
   // Get dates for current view (week or month)
   const getDatesForView = () => {
@@ -513,7 +490,7 @@ const ScheduleScreen = () => {
   const dates = getDatesForView();
   
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Stack.Screen 
         options={{
           title: "Workout Schedule",
@@ -655,7 +632,10 @@ const ScheduleScreen = () => {
                     isSelected && [styles.selectedCell, { backgroundColor: colors.highlight }],
                     { borderColor: colors.border }
                   ]}
-                  onPress={() => setSelectedDate(date)}
+                  onPress={() => {
+                    const dateString = date.toISOString().split('T')[0];
+                    router.push(`/activity/${dateString}`);
+                  }}
                 >
                   <View style={styles.dateContainer}>
                     <Text style={[
@@ -763,66 +743,16 @@ const ScheduleScreen = () => {
           </View>
         </View>
         
-        {/* Summary Panel */}
-        <View style={[styles.summaryPanel, { backgroundColor: colors.card }]}>
-          <Text style={[styles.summaryTitle, { color: colors.text }]}>{formatDate(selectedDate)}</Text>
-          <View style={styles.healthRow}>
-            <View style={styles.healthItem}>
-              <Text style={[styles.healthLabel, { color: colors.textSecondary }]}>Water Intake</Text>
-              <Text style={[styles.healthValue, { color: colors.text }]}>{water} ml</Text>
-            </View>
-            <View style={styles.healthItem}>
-              <Text style={[styles.healthLabel, { color: colors.textSecondary }]}>Steps</Text>
-              <Text style={[styles.healthValue, { color: colors.text }]}>{steps}</Text>
-            </View>
-            <View style={styles.healthItem}>
-              <Text style={[styles.healthLabel, { color: colors.textSecondary }]}>Calories</Text>
-              <Text style={[styles.healthValue, { color: colors.text }]}>{calories}</Text>
-            </View>
-          </View>
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Progress Photos</Text>
-            {photos && photos.length > 0 ? (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {photos.map((photo, idx) => (
-                  <Image
-                    key={idx}
-                    source={{ uri: photo.uri }}
-                    style={styles.photo}
-                  />
-                ))}
-              </ScrollView>
-            ) : (
-              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No progress photos for this day.</Text>
-            )}
-          </View>
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Daily Notes & Reflections</Text>
-            <TouchableOpacity
-              style={styles.notesInput}
-              onPress={() => setShowNotesModal(true)}
-            >
-              <Text style={[styles.notesPlaceholder, { color: colors.textSecondary }]}> 
-                {note?.notes || 'Add your thoughts and reflections for today...'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-          <DailyNotesModal
-            visible={showNotesModal}
-            date={selectedDate}
-            onClose={() => setShowNotesModal(false)}
-          />
-        </View>
-        
         {/* Activity Summary for Selected Date */}
-        <View style={styles.activitySummaryContainer}>
-          <View style={[styles.activitySummary, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[styles.activitySummaryTitle, { color: colors.text }]}>
-              Daily Activities - {formatDate(selectedDate)}
-            </Text>
-            {activities.length > 0 ? (
+        {selectedDate && getActivitiesForDate(selectedDate).length > 0 && (
+          <View style={styles.activitySummaryContainer}>
+            <View style={[styles.activitySummary, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={[styles.activitySummaryTitle, { color: colors.text }]}>
+                Daily Activities - {formatDate(selectedDate)}
+              </Text>
+              
               <View style={styles.activityList}>
-                {activities.map((activity, index) => {
+                {getActivitiesForDate(selectedDate).map((activity, index) => {
                   const IconComponent = activity.icon;
                   return (
                     <View key={index} style={styles.activityItem}>
@@ -846,11 +776,9 @@ const ScheduleScreen = () => {
                   );
                 })}
               </View>
-            ) : (
-              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No activities recorded</Text>
-            )}
+            </View>
           </View>
-        </View>
+        )}
         
         {/* Scheduled Workout Details */}
         {selectedScheduledWorkout && showScheduledWorkouts && (
@@ -1118,7 +1046,7 @@ const ScheduleScreen = () => {
       </View>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -1480,50 +1408,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
   },
-  summaryPanel: {
-    marginBottom: 16,
-  },
-  summaryTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    marginBottom: 12,
-  },
-  healthRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-  healthItem: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  healthLabel: {
-    fontSize: 14,
-    fontWeight: "500",
-    marginRight: 8,
-  },
-  healthValue: {
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  notesInput: {
-    padding: 12,
-    borderWidth: 1,
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  notesPlaceholder: {
-    fontSize: 15,
-  },
-  section: {
-    marginBottom: 16,
-  },
-  photo: {
-    width: 64,
-    height: 64,
-    borderRadius: 8,
-    marginRight: 8,
-  },
 });
-
-export default ScheduleScreen;
