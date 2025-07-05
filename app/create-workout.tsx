@@ -28,6 +28,7 @@ import { useWorkoutStore } from "@/store/workoutStore";
 import { Exercise } from "@/types";
 import Button from "@/components/Button";
 import ExerciseCard from "@/components/ExerciseCard";
+import HorizontalScrollSelector from "@/components/HorizontalScrollSelector";
 
 export default function CreateWorkoutScreen() {
   const router = useRouter();
@@ -644,98 +645,49 @@ export default function CreateWorkoutScreen() {
                 </>
               )}
               
-              <ScrollView 
-                horizontal 
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.filtersContainer}
-              >
-                <TouchableOpacity 
-                  style={[
-                    styles.filterChip,
-                    { backgroundColor: colors.card, borderColor: colors.border },
-                    selectedEquipmentCategory === null && [styles.filterChipActive, { backgroundColor: colors.primary }]
-                  ]}
-                  onPress={() => {
-                    setSelectedEquipmentCategory(null);
-                    setSelectedEquipment(null);
-                  }}
-                >
-                  <Text style={[
-                    styles.filterChipText,
-                    { color: colors.text },
-                    selectedEquipmentCategory === null && styles.filterChipTextActive
-                  ]}>
-                    All Equipment
-                  </Text>
-                </TouchableOpacity>
-                
-                {Object.keys(EQUIPMENT_CATEGORIES).map(category => (
-                  <TouchableOpacity 
-                    key={category}
-                    style={[
-                      styles.filterChip,
-                      { backgroundColor: colors.card, borderColor: colors.border },
-                      selectedEquipmentCategory === category && [styles.filterChipActive, { backgroundColor: colors.primary }]
-                    ]}
-                    onPress={() => {
-                      setSelectedEquipmentCategory(category);
-                      setSelectedEquipment(null);
-                    }}
-                  >
-                    <Text style={[
-                      styles.filterChipText,
-                      { color: colors.text },
-                      selectedEquipmentCategory === category && styles.filterChipTextActive
-                    ]}>
-                      {category}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+              {/* Equipment Type with Horizontal Scroll */}
+              <HorizontalScrollSelector
+                title="Equipment Type"
+                items={[
+                  { id: 'all', name: 'All Equipment' },
+                  ...Object.keys(EQUIPMENT_CATEGORIES).map(category => ({
+                    id: category,
+                    name: category,
+                  }))
+                ]}
+                selectedItem={selectedEquipmentCategory}
+                onSelectItem={(category) => {
+                  setSelectedEquipmentCategory(category === 'all' ? null : category);
+                  setSelectedEquipment(null);
+                }}
+                maxVisibleItems={4}
+                showMoreButton={true}
+                itemWidth={130}
+                itemHeight={40}
+                showFadeIndicators={true}
+              />
               
+              {/* Equipment with Horizontal Scroll */}
               {selectedEquipmentCategory && equipmentTypes.length > 0 && (
-                <ScrollView 
-                  horizontal 
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.filtersContainer}
-                >
-                  <TouchableOpacity 
-                    style={[
-                      styles.filterChip,
-                      { backgroundColor: colors.card, borderColor: colors.border },
-                      selectedEquipment === null && [styles.filterChipActive, { backgroundColor: colors.primary }]
-                    ]}
-                    onPress={() => setSelectedEquipment(null)}
-                  >
-                    <Text style={[
-                      styles.filterChipText,
-                      { color: colors.text },
-                      selectedEquipment === null && styles.filterChipTextActive
-                    ]}>
-                      All {selectedEquipmentCategory}
-                    </Text>
-                  </TouchableOpacity>
-                  
-                  {equipmentTypes.map(equipment => (
-                    <TouchableOpacity 
-                      key={equipment}
-                      style={[
-                        styles.filterChip,
-                        { backgroundColor: colors.card, borderColor: colors.border },
-                        selectedEquipment === equipment && [styles.filterChipActive, { backgroundColor: colors.primary }]
-                      ]}
-                      onPress={() => setSelectedEquipment(equipment)}
-                    >
-                      <Text style={[
-                        styles.filterChipText,
-                        { color: colors.text },
-                        selectedEquipment === equipment && styles.filterChipTextActive
-                      ]}>
-                        {equipment}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
+                <HorizontalScrollSelector
+                  title="Equipment"
+                  items={[
+                    { id: 'all', name: `All ${selectedEquipmentCategory}` },
+                    ...equipmentTypes.map(equipment => ({
+                      id: equipment,
+                      name: equipment,
+                    }))
+                  ]}
+                  selectedItem={selectedEquipment}
+                  onSelectItem={(equipment) => {
+                    setSelectedEquipment(equipment === 'all' ? null : equipment);
+                  }}
+                  maxVisibleItems={3}
+                  showMoreButton={true}
+                  itemWidth={120}
+                  itemHeight={40}
+                  showFadeIndicators={true}
+                />
               )}
               
               {(selectedBodyRegion || selectedMuscleGroup || selectedEquipmentCategory || selectedEquipment) && (

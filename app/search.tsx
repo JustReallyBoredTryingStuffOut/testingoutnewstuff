@@ -7,6 +7,7 @@ import { useWorkoutStore } from "@/store/workoutStore";
 import WorkoutCard from "@/components/WorkoutCard";
 import { Exercise, Workout, BodyRegion, MuscleGroup, EquipmentType } from "@/types";
 import ExerciseCard from "@/components/ExerciseCard";
+import HorizontalScrollSelector from "@/components/HorizontalScrollSelector";
 
 export default function SearchScreen() {
   const router = useRouter();
@@ -419,94 +420,49 @@ export default function SearchScreen() {
                         </>
                       )}
                       
-                      <Text style={[styles.filterSectionTitle, { color: colors.text }]}>Equipment Type</Text>
-                      <View style={styles.filterCategoryContainer}>
-                        <TouchableOpacity 
-                          style={[
-                            styles.filterCategoryChip,
-                            { backgroundColor: colors.card, borderColor: colors.border },
-                            filterEquipmentCategory === null && [styles.filterCategoryChipActive, { backgroundColor: colors.primary }]
-                          ]}
-                          onPress={() => {
-                            setFilterEquipmentCategory(null);
-                            setFilterEquipment(null);
-                          }}
-                        >
-                          <Text style={[
-                            styles.filterCategoryText,
-                            { color: colors.text },
-                            filterEquipmentCategory === null && styles.filterCategoryTextActive
-                          ]}>
-                            All
-                          </Text>
-                        </TouchableOpacity>
-                        
-                        {Object.keys(EQUIPMENT_CATEGORIES).map(category => (
-                          <TouchableOpacity 
-                            key={category}
-                            style={[
-                              styles.filterCategoryChip,
-                              { backgroundColor: colors.card, borderColor: colors.border },
-                              filterEquipmentCategory === category && [styles.filterCategoryChipActive, { backgroundColor: colors.primary }]
-                            ]}
-                            onPress={() => {
-                              setFilterEquipmentCategory(category);
-                              setFilterEquipment(null);
-                            }}
-                          >
-                            <Text style={[
-                              styles.filterCategoryText,
-                              { color: colors.text },
-                              filterEquipmentCategory === category && styles.filterCategoryTextActive
-                            ]}>
-                              {category}
-                            </Text>
-                          </TouchableOpacity>
-                        ))}
-                      </View>
+                      {/* Equipment Type with Horizontal Scroll */}
+                      <HorizontalScrollSelector
+                        title="Equipment Type"
+                        items={[
+                          { id: 'all', name: 'All' },
+                          ...Object.keys(EQUIPMENT_CATEGORIES).map(category => ({
+                            id: category,
+                            name: category,
+                          }))
+                        ]}
+                        selectedItem={filterEquipmentCategory}
+                        onSelectItem={(category) => {
+                          setFilterEquipmentCategory(category === 'all' ? null : category);
+                          setFilterEquipment(null);
+                        }}
+                        maxVisibleItems={4}
+                        showMoreButton={true}
+                        itemWidth={120}
+                        itemHeight={40}
+                        showFadeIndicators={true}
+                      />
                       
+                      {/* Equipment with Horizontal Scroll */}
                       {filterEquipmentCategory && (
-                        <>
-                          <Text style={[styles.filterSectionTitle, { color: colors.text }]}>Equipment</Text>
-                          <View style={styles.filterCategoryContainer}>
-                            <TouchableOpacity 
-                              style={[
-                                styles.filterCategoryChip,
-                                { backgroundColor: colors.card, borderColor: colors.border },
-                                filterEquipment === null && [styles.filterCategoryChipActive, { backgroundColor: colors.primary }]
-                              ]}
-                              onPress={() => setFilterEquipment(null)}
-                            >
-                              <Text style={[
-                                styles.filterCategoryText,
-                                { color: colors.text },
-                                filterEquipment === null && styles.filterCategoryTextActive
-                              ]}>
-                                All
-                              </Text>
-                            </TouchableOpacity>
-                            
-                            {filteredEquipmentTypes.map(equipment => (
-                              <TouchableOpacity 
-                                key={equipment}
-                                style={[
-                                  styles.filterCategoryChip,
-                                  { backgroundColor: colors.card, borderColor: colors.border },
-                                  filterEquipment === equipment && [styles.filterCategoryChipActive, { backgroundColor: colors.primary }]
-                                ]}
-                                onPress={() => setFilterEquipment(equipment)}
-                              >
-                                <Text style={[
-                                  styles.filterCategoryText,
-                                  { color: colors.text },
-                                  filterEquipment === equipment && styles.filterCategoryTextActive
-                                ]}>
-                                  {equipment}
-                                </Text>
-                              </TouchableOpacity>
-                            ))}
-                          </View>
-                        </>
+                        <HorizontalScrollSelector
+                          title="Equipment"
+                          items={[
+                            { id: 'all', name: 'All' },
+                            ...filteredEquipmentTypes.map(equipment => ({
+                              id: equipment,
+                              name: equipment,
+                            }))
+                          ]}
+                          selectedItem={filterEquipment}
+                          onSelectItem={(equipment) => {
+                            setFilterEquipment(equipment === 'all' ? null : equipment);
+                          }}
+                          maxVisibleItems={3}
+                          showMoreButton={true}
+                          itemWidth={110}
+                          itemHeight={40}
+                          showFadeIndicators={true}
+                        />
                       )}
                     </>
                   )}

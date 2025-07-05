@@ -18,6 +18,7 @@ import LevelProgress from '@/components/LevelProgress';
 import { Award, Zap, Clock, Weight, Target, Star, ArrowLeft, Lock, Search, Filter } from 'lucide-react-native';
 import Button from '@/components/Button';
 import { APP_NAME } from '@/app/_layout';
+import HorizontalScrollSelector from '@/components/HorizontalScrollSelector';
 
 export default function AchievementsScreen() {
   const { colors } = useTheme();
@@ -229,45 +230,22 @@ export default function AchievementsScreen() {
           </View>
         </View>
         
-        <View style={styles.categoryTabs}>
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.categoryTabsContent}
-          >
-            {(['workout', 'nutrition', 'steps', 'weight', 'streak', 'special'] as AchievementCategory[]).map((category) => (
-              <TouchableOpacity
-                key={category}
-                style={[
-                  styles.categoryTab,
-                  { 
-                    backgroundColor: selectedCategory === category 
-                      ? `${colors.primary}20` 
-                      : colors.card,
-                    borderColor: selectedCategory === category 
-                      ? colors.primary 
-                      : colors.border
-                  }
-                ]}
-                onPress={() => setSelectedCategory(category)}
-              >
-                {getCategoryIcon(category)}
-                <Text 
-                  style={[
-                    styles.categoryText,
-                    { 
-                      color: selectedCategory === category 
-                        ? colors.primary 
-                        : colors.textSecondary
-                    }
-                  ]}
-                >
-                  {category.charAt(0).toUpperCase() + category.slice(1)}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
+        {/* Category Tabs with Horizontal Scroll */}
+        <HorizontalScrollSelector
+          title=""
+          items={(['workout', 'nutrition', 'steps', 'weight', 'streak', 'special'] as AchievementCategory[]).map((category) => ({
+            id: category,
+            name: category.charAt(0).toUpperCase() + category.slice(1),
+            icon: getCategoryIcon(category),
+          }))}
+          selectedItem={selectedCategory}
+          onSelectItem={(category) => setSelectedCategory(category as AchievementCategory)}
+          maxVisibleItems={4}
+          showMoreButton={false}
+          itemWidth={120}
+          itemHeight={48}
+          showFadeIndicators={true}
+        />
         
         <View style={styles.achievementsContainer}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
