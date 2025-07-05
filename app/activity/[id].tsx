@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
-import { ArrowLeft, Clock, Trophy, Target, Zap, Droplets, Footprints, Calendar, Dumbbell, CheckCircle, Star, Edit3, FileText, Save } from 'lucide-react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, SafeAreaView } from 'react-native';
+import { useLocalSearchParams, router, Stack } from 'expo-router';
+import { ArrowLeft, Clock, Trophy, Target, Zap, Droplets, Footprints, Calendar, Dumbbell, CheckCircle, Star, Edit3, FileText, Save, Plus } from 'lucide-react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { useWorkoutStore } from '@/store/workoutStore';
 import { useGamificationStore } from '@/store/gamificationStore';
@@ -455,44 +455,73 @@ export default function ActivityDetailScreen() {
                        questsForDate.length > 0;
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={24} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.text }]}>Activity Details</Text>
-      </View>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={[styles.dateHeader, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.dateTitle, { color: colors.text }]}>
-            {formatDate(selectedDate)}
-          </Text>
-          <Text style={[styles.dateSubtitle, { color: colors.textSecondary }]}>
-            {hasAnyActivity ? 'Activity Summary' : 'No activities recorded'}
-          </Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.header, { borderBottomColor: colors.border }]}>
+          <Text style={[styles.title, { color: colors.text }]}>Activity Details</Text>
         </View>
 
-        {renderHealthSection()}
-        {renderWorkoutSection()}
-        {renderNotesSection()}
-        {renderAchievementsSection()}
-        {renderChallengesSection()}
-        {renderQuestsSection()}
-
-        {!hasAnyActivity && (
-          <View style={styles.emptyState}>
-            <Calendar size={48} color={colors.textLight} />
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>No Activities</Text>
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-              No workouts, achievements, challenges, or quests were completed on this date.
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <View style={[styles.dateHeader, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.dateTitle, { color: colors.text }]}>
+              {formatDate(selectedDate)}
+            </Text>
+            <Text style={[styles.dateSubtitle, { color: colors.textSecondary }]}>
+              {hasAnyActivity ? 'Activity Summary' : 'No activities recorded'}
             </Text>
           </View>
-        )}
-      </ScrollView>
-    </View>
+
+          {renderHealthSection()}
+          {renderWorkoutSection()}
+          {renderNotesSection()}
+          {renderAchievementsSection()}
+          {renderChallengesSection()}
+          {renderQuestsSection()}
+
+          {!hasAnyActivity && (
+            <View style={styles.emptyState}>
+              <Calendar size={48} color={colors.textLight} />
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>No Activities</Text>
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                No workouts, achievements, challenges, or quests were completed on this date.
+              </Text>
+            </View>
+          )}
+        </ScrollView>
+      </View>
+      {/* Schedule Workout Button */}
+      <View style={[styles.bottomActionButtonContainer, { bottom: 80 }]}> 
+        <TouchableOpacity
+          style={styles.scheduleWorkoutButton}
+          onPress={() => router.push({ pathname: '/add-workout-schedule', params: { selectedDate: selectedDate.toISOString() } })}
+          accessibilityLabel="Schedule a Workout"
+        >
+          <Plus size={22} color="#fff" />
+          <Text style={styles.scheduleWorkoutButtonText}>Schedule Workout</Text>
+        </TouchableOpacity>
+      </View>
+      {/* Persistent Back Button */}
+      <View style={styles.bottomBackButtonContainer}>
+        <TouchableOpacity
+          style={styles.bottomBackButton}
+          onPress={() => router.back()}
+          accessibilityLabel="Go back"
+        >
+          <ArrowLeft size={24} color={colors.primary} />
+          <Text style={[styles.bottomBackButtonText, { color: colors.primary }]}>Back</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 }
+
+ActivityDetailScreen.options = {
+  headerLeft: () => (
+    <TouchableOpacity onPress={() => router.back()} style={{ paddingHorizontal: 16 }}>
+      <ArrowLeft size={24} color="#fff" />
+    </TouchableOpacity>
+  ),
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -832,5 +861,58 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 8,
+  },
+  bottomBackButtonContainer: {
+    position: 'absolute',
+    bottom: 24,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 100,
+  },
+  bottomBackButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#222',
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  bottomBackButtonText: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  bottomActionButtonContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 101,
+  },
+  scheduleWorkoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#007AFF',
+    paddingVertical: 14,
+    paddingHorizontal: 36,
+    borderRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+    marginBottom: 8,
+  },
+  scheduleWorkoutButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '700',
+    marginLeft: 10,
   },
 }); 
