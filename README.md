@@ -1,14 +1,192 @@
-# Fitness App with Core Bluetooth Integration
+# Fitness App - Health & Workout Tracking
 
-This fitness app includes integration with Core Bluetooth for iOS to connect with health devices like Apple Watch, Fitbit, and other fitness trackers.
+## 🚨 Important Update: Bluetooth Functionality Removal
 
-## Core Bluetooth Implementation
+### Why We Removed Core Bluetooth Integration
 
-The app uses a JavaScript interface to communicate with the native Core Bluetooth framework on iOS. In this implementation, we've created:
+We recently removed the Core Bluetooth functionality from this fitness app due to several critical issues that were causing runtime errors and preventing the app from functioning properly. Here's what happened and how we fixed it:
 
-1. A JavaScript interface in `src/NativeModules/CoreBluetooth.js`
-2. Integration with the health devices screen in `app/health-devices.tsx`
-3. Step counter integration in `hooks/useStepCounter.ts` and `components/StepCounter.tsx`
+#### Issues Encountered
+
+1. **Runtime ReferenceError**: The app was throwing `ReferenceError: Property 'bluetoothState' doesn't exist` errors that prevented the health screen from loading
+2. **Missing State Variables**: The health screen was trying to access `bluetoothState` and `permissionStatus` variables that weren't properly defined
+3. **Complex Native Module Dependencies**: The Core Bluetooth implementation required extensive native iOS development that wasn't fully implemented
+4. **Permission Management Issues**: Bluetooth permissions were causing conflicts with other health data access
+5. **Development Complexity**: The native module approach was adding unnecessary complexity for a fitness tracking app
+
+#### How We Fixed It
+
+1. **Removed Core Bluetooth Module**: Deleted `src/NativeModules/CoreBluetooth.js` to eliminate the problematic native module
+2. **Fixed State Management**: Added proper state variables in the health screen:
+   ```typescript
+   const [bluetoothState, setBluetoothState] = useState<string | null>(null);
+   const [permissionStatus, setPermissionStatus] = useState<string>("unknown");
+   ```
+3. **Simplified Health Integration**: Focused on HealthKit integration which is more reliable for iOS health data
+4. **Improved Error Handling**: Added proper initialization logic and error boundaries
+5. **Enhanced User Experience**: Streamlined the health device connection flow
+
+#### Current Implementation
+
+The app now uses a simplified approach:
+
+- **HealthKit Integration**: Primary health data source for iOS users
+- **Simulated Device Connections**: For development and testing purposes
+- **Local State Management**: Proper state handling for UI components
+- **Error-Free Operation**: No more runtime errors preventing app functionality
+
+#### Benefits of This Approach
+
+1. **Stability**: The app now runs without critical errors
+2. **Simplicity**: Easier to maintain and debug
+3. **Focus**: Concentrates on core fitness tracking features
+4. **Reliability**: Uses proven HealthKit APIs instead of complex Bluetooth implementations
+5. **User Experience**: Smoother, more predictable behavior
+
+### Future Considerations
+
+If Bluetooth device integration becomes necessary in the future, we recommend:
+
+1. **Using Expo's Bluetooth APIs**: If available, for cross-platform compatibility
+2. **Third-party Libraries**: Consider established libraries like `react-native-ble-plx`
+3. **Progressive Enhancement**: Add Bluetooth features as optional enhancements
+4. **Proper Testing**: Ensure comprehensive testing before deployment
+
+---
+
+# Fitness App with HealthKit Integration
+
+This fitness app focuses on health tracking through HealthKit integration and local fitness tracking features.
+
+## Current Features
+
+- **HealthKit Integration**: Seamless access to Apple Health data
+- **Workout Tracking**: Comprehensive workout logging and management
+- **Progress Photos**: Secure photo storage with encryption
+- **Nutrition Tracking**: Food logging and macro tracking
+- **Step Counting**: Real-time step tracking with HealthKit
+- **Weight & Water Tracking**: Daily health metrics
+- **Gamification**: Achievements, streaks, and challenges
+
+## HealthKit Implementation
+
+The app uses HealthKit for iOS health data access:
+
+### Available Health Data Types
+
+- Steps and distance
+- Active energy burned
+- Heart rate
+- Sleep analysis
+- Workout data
+- Weight and body measurements
+
+### Permission Management
+
+The app properly requests and manages HealthKit permissions:
+
+```typescript
+const authResult = await HealthKit.requestAuthorization([
+  'steps', 
+  'distance', 
+  'calories', 
+  'heartRate', 
+  'sleep', 
+  'workouts'
+]);
+```
+
+## Core Features
+
+### 1. Health Dashboard
+- Real-time health metrics
+- Connected device status
+- Activity tracking
+- Progress visualization
+
+### 2. Workout Management
+- Custom workout creation
+- Exercise library
+- Progress tracking
+- Personal records
+
+### 3. Nutrition Tracking
+- Food logging
+- Macro tracking
+- Meal planning
+- Photo-based food recognition
+
+### 4. Progress Tracking
+- Progress photos
+- Weight tracking
+- Body measurements
+- Goal setting
+
+## Technical Architecture
+
+### State Management
+- Zustand stores for different app domains
+- Persistent storage with AsyncStorage
+- Real-time updates and synchronization
+
+### Security
+- Encrypted photo storage
+- Secure data handling
+- Privacy-focused design
+
+### Performance
+- Optimized rendering
+- Efficient data management
+- Background processing support
+
+## Development Setup
+
+1. **Install Dependencies**:
+   ```bash
+   npm install
+   ```
+
+2. **Start Development Server**:
+   ```bash
+   npx expo start
+   ```
+
+3. **Run on iOS Simulator**:
+   ```bash
+   npx expo run:ios
+   ```
+
+## Environment Requirements
+
+- Node.js 18+
+- Expo CLI
+- Xcode (for iOS development)
+- iOS Simulator or physical device
+
+## Troubleshooting
+
+### Common Issues
+
+1. **HealthKit Permissions**: Ensure HealthKit is enabled in iOS Settings
+2. **Simulator Limitations**: Some features work better on physical devices
+3. **Metro Cache**: Clear cache with `npx expo start --clear`
+
+### Recent Fixes
+
+- ✅ Fixed bluetoothState ReferenceError
+- ✅ Added proper state initialization
+- ✅ Improved error handling
+- ✅ Enhanced HealthKit integration
+
+---
+
+## Legacy Core Bluetooth Documentation
+
+*The following documentation is kept for reference purposes but the implementation has been removed due to stability issues.*
+
+### Core Bluetooth Implementation
+
+The app previously included integration with Core Bluetooth for iOS to connect with health devices like Apple Watch, Fitbit, and other fitness trackers.
 
 ### Current Implementation
 
