@@ -527,6 +527,8 @@ export interface TimerSettings {
   workoutRestTime: number;
   soundEnabled: boolean;
   vibrationEnabled: boolean;
+  autoStartRest: boolean;
+  defaultSetCount: number;
 }
 
 export interface BodyRegion {

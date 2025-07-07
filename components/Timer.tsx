@@ -31,22 +31,24 @@ const speakWithDefaultVoice = (text: string) => {
 
 export default function Timer({ initialSeconds, onComplete, isRunning, onPause, onResume }: TimerProps) {
   const { colors } = useTheme();
-  const { 
-    activeTimer, 
-    startTimer, 
-    pauseTimer, 
-    resetTimer, 
-    skipRestTimer,
-    timerSettings
-  } = useWorkoutStore();
+  const { timerSettings } = useWorkoutStore();
   
   const [seconds, setSeconds] = useState(initialSeconds);
   const [paused, setPaused] = useState(!isRunning);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSpokenSecond = useRef<number | null>(null);
+  const hasAnnouncedComplete = useRef(false);
 
+  // Only set initial seconds when the timer is (re)started
   useEffect(() => {
     setSeconds(initialSeconds);
   }, [initialSeconds]);
+
+  // Reset lastSpokenSecond and hasAnnouncedComplete only on mount (or when Timer is re-mounted with a new key)
+  useEffect(() => {
+    lastSpokenSecond.current = null;
+    hasAnnouncedComplete.current = false;
+  }, []);
 
   useEffect(() => {
     if (isRunning && !paused) {
@@ -54,7 +56,6 @@ export default function Timer({ initialSeconds, onComplete, isRunning, onPause, 
         setSeconds((prev) => {
           if (prev <= 1) {
             clearInterval(intervalRef.current!);
-            onComplete && onComplete();
             return 0;
           }
           return prev - 1;
@@ -66,7 +67,25 @@ export default function Timer({ initialSeconds, onComplete, isRunning, onPause, 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [isRunning, paused, onComplete]);
+  }, [isRunning, paused]);
+
+  // Voice countdown and haptic feedback for last 10 seconds
+  useEffect(() => {
+    if (!timerSettings.voicePrompts) return;
+    if (Platform.OS === 'web') return;
+    if (seconds > 0 && seconds <= 10) {
+      if (lastSpokenSecond.current !== seconds) {
+        speakWithDefaultVoice(seconds.toString());
+        lastSpokenSecond.current = seconds;
+      }
+    }
+    if (seconds === 0 && !hasAnnouncedComplete.current) {
+      speakWithDefaultVoice('Rest complete. Ready for next set.');
+      Vibration.vibrate(500);
+      hasAnnouncedComplete.current = true;
+      if (onComplete) onComplete();
+    }
+  }, [seconds, timerSettings.voicePrompts, onComplete]);
 
   const handlePause = () => {
     setPaused(true);

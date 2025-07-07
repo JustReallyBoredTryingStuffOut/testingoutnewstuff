@@ -47,10 +47,10 @@ import * as Speech from 'expo-speech';
 import { Audio } from 'expo-av';
 import { colors } from "@/constants/colors";
 import { useWorkoutStore } from "@/store/workoutStore";
-import { useNotificationStore } from "@/store/notificationStore";
+import { useNotificationStoreState } from "@/store/notificationStore";
 import { usePhotoStore, MediaType } from "@/store/photoStore";
 import { useHealthStore } from "@/store/healthStore";
-import { WorkoutSet, WorkoutRating, PersonalRecord } from "@/types";
+import { WorkoutSet, WorkoutRating, PersonalRecord, WorkoutMedia } from "@/types";
 import Timer from "@/components/Timer";
 import Button from "@/components/Button";
 import RestTimerModal from "@/components/RestTimerModal";
@@ -59,6 +59,7 @@ import VideoEmbed from "@/components/VideoEmbed";
 import { useTheme } from "@/context/ThemeContext";
 import PRCelebrationModal from "@/components/PRCelebrationModal";
 import DraggableExerciseCard from "@/components/DraggableExerciseCard";
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Voice configuration for a more natural female voice
 const voiceConfig = {
@@ -75,8 +76,10 @@ const speakWithDefaultVoice = (text: string) => {
 };
 
 export default function ActiveWorkoutScreen() {
+  // Always call all hooks first, before any conditional returns
   const router = useRouter();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const { 
     activeWorkout, 
     workouts, 
@@ -100,22 +103,38 @@ export default function ActiveWorkoutScreen() {
     setTimerSettings,
     timerSettings,
     getWorkoutDuration,
-    isWorkoutRunningTooLong,
     longWorkoutThreshold,
-    getPersonalRecordMessage,
-    isMajorLift,
     // New functions for exercise reordering and completion
     reorderExercises,
     markExerciseCompleted,
     isExerciseCompleted,
     areAllSetsCompleted,
     startExerciseRestTimer,
-    getPreviousSetData
+    getPreviousSetData,
+    updateSetCompleted
   } = useWorkoutStore();
   
-  const { showLongWorkoutNotification } = useNotificationStore();
+  const { showLongWorkoutNotification } = useNotificationStoreState();
   const { addWorkoutMedia: addMediaToStore, isGifUrl } = usePhotoStore();
   const { isAppleWatchConnected, connectedDevices } = useHealthStore();
+  
+  // Move navigation out of render body
+  useEffect(() => {
+    if (!activeWorkout) {
+      router.replace("/");
+    }
+  }, [activeWorkout]);
+  
+  // Early return if activeWorkout is null to prevent errors
+  if (!activeWorkout) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+        <Text style={{ color: colors.text, fontSize: 18 }}>Loading workout...</Text>
+      </View>
+    );
+  }
+  
+  const workout = workouts.find(w => w.id === activeWorkout.workoutId);
   
   const [showRestModal, setShowRestModal] = useState(false);
   const [showRatingModal, setShowRatingModal] = useState(false);
@@ -169,9 +188,32 @@ export default function ActiveWorkoutScreen() {
   
   // Check if there are connected devices that can track workouts
   const hasConnectedDevices = connectedDevices.some(
-    device => device.connected && 
-    (device.type === "appleWatch" || device.type === "fitbit" || device.type === "garmin")
+    device => device.isConnected && 
+    (device.type === "fitness_tracker" || device.type === "smartwatch" || device.type === "heart_rate_monitor")
   );
+  
+  // Define handleGoBack before it's used in useEffect
+  const handleGoBack = () => {
+    if (activeWorkout) {
+      Alert.alert(
+        "Cancel Workout",
+        "Are you sure you want to cancel this workout? All progress will be lost.",
+        [
+          { text: "Continue Workout", style: "cancel" },
+          { 
+            text: "Cancel Workout", 
+            style: "destructive",
+            onPress: () => {
+              cancelWorkout();
+              router.navigate("/(tabs)");
+            }
+          }
+        ]
+      );
+    } else {
+      router.navigate("/(tabs)");
+    }
+  };
   
   // Load sound effect
   useEffect(() => {
@@ -213,29 +255,27 @@ export default function ActiveWorkoutScreen() {
       const duration = getWorkoutDuration();
       setWorkoutDuration(duration);
       
-      // Check if workout is running too long and notification hasn't been shown yet
-      if (isWorkoutRunningTooLong() && !longWorkoutNotificationShown.current) {
-        longWorkoutNotificationShown.current = true;
-        setShowLongWorkoutAlert(true);
-        
-        // Also send a system notification
-        const workout = workouts.find(w => w.id === activeWorkout.workoutId);
-        if (workout) {
-          showLongWorkoutNotification(workout.name, duration);
-        }
-      }
+      // Remove the isWorkoutRunningTooLong check for now
+      // if (isWorkoutRunningTooLong() && !longWorkoutNotificationShown.current) {
+      //   longWorkoutNotificationShown.current = true;
+      //   setShowLongWorkoutAlert(true);
+      //   
+      //   // Also send a system notification
+      //   const workout = workouts.find(w => w.id === activeWorkout.workoutId);
+      //   if (workout) {
+      //     showLongWorkoutNotification(workout.name, duration);
+      //   }
+      // }
     }, 60000); // Update every minute
     
     return () => clearInterval(durationInterval);
-  }, [activeWorkout, getWorkoutDuration, isWorkoutRunningTooLong]);
+  }, [activeWorkout, getWorkoutDuration]);
   
   // Voice prompts for timer
   useEffect(() => {
-    if (timerSettings.voicePrompts && Platform.OS !== 'web') {
       if (activeTimer.isResting && activeTimer.isRunning) {
         // Rest started
         speakWithDefaultVoice("Rest period started");
-      }
     }
   }, [activeTimer.isResting, activeTimer.isRunning]);
   
@@ -247,24 +287,6 @@ export default function ActiveWorkoutScreen() {
     });
     
     return () => backHandler.remove();
-  }, []);
-  
-  // Listen for PR events from the workout store
-  useEffect(() => {
-    const unsubscribe = useWorkoutStore.subscribe(
-      (state) => state.personalRecords,
-      (personalRecords, previousPersonalRecords) => {
-        // Check if a new PR was added
-        if (personalRecords.length > previousPersonalRecords.length) {
-          // Get the most recent PR
-          const newPR = personalRecords[personalRecords.length - 1];
-          setCurrentPR(newPR);
-          setShowPRModal(true);
-        }
-      }
-    );
-    
-    return () => unsubscribe();
   }, []);
   
   // Check for connected devices when starting workout
@@ -295,36 +317,17 @@ export default function ActiveWorkoutScreen() {
     }
   }, [activeWorkout]);
   
-  if (!activeWorkout) {
-    router.replace("/");
-    return null;
-  }
-  
-  const workout = workouts.find(w => w.id === activeWorkout.workoutId);
-  
-  if (!workout) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>Workout not found</Text>
-      </View>
-    );
-  }
-  
   const handleAddSet = (exerciseIndex: number) => {
     const newSet: WorkoutSet = {
       id: Date.now().toString(),
       weight: 0,
       reps: 0,
+      duration: 0,
+      restTime: timerSettings.restTime,
       completed: false,
-      notes: "",
     };
     
     logSet(exerciseIndex, newSet);
-    
-    // Auto-start rest timer if enabled
-    if (timerSettings.autoStartRest) {
-      startRestTimer(timerSettings.defaultRestTime);
-    }
     
     // Keep the exercise expanded after adding a set
     setExpandedExercises(prev => ({
@@ -336,6 +339,8 @@ export default function ActiveWorkoutScreen() {
   const handleStartWorkout = () => {
     setWorkoutStarted(true);
     startTimer();
+    // Show the rest timer modal when starting the workout
+    setShowRestModal(true);
   };
   
   const handleCompleteWorkout = () => {
@@ -345,25 +350,26 @@ export default function ActiveWorkoutScreen() {
   
   const handleSubmitRating = async () => {
     const workoutRating: WorkoutRating = {
+      id: Date.now().toString(),
+      workoutId: activeWorkout.workoutId,
       rating,
-      note: ratingNote,
-      media: ratingMedia,
-      date: new Date().toISOString()
+      difficulty: 3, // Default or get from state if available
+      enjoyment: 3,  // Default or get from state if available
+      notes: ratingNote
     };
     
     // If there's media and it's a local file (not a URL), save it to the photo store
     if (ratingMedia && !ratingMedia.startsWith('http')) {
       try {
-        const mediaType: MediaType = {
+        const workoutMedia: WorkoutMedia = {
           id: Date.now().toString(),
-          uri: ratingMedia,
-          type: isGif ? "gif" : "image",
-          date: new Date().toISOString(),
           workoutId: activeWorkout.workoutId,
-          notes: ratingNote
+          type: 'photo',
+          uri: ratingMedia,
+          timestamp: new Date().toISOString()
         };
         
-        await addMediaToStore(mediaType);
+        await addMediaToStore(workoutMedia);
       } catch (error) {
         console.error("Error saving workout media:", error);
       }
@@ -499,10 +505,11 @@ export default function ActiveWorkoutScreen() {
     }
     
     addWorkoutMedia({
-      type: "video",
-      url: videoUrl,
-      exerciseId: null, // For the whole workout
-      timestamp: new Date().toISOString()
+      id: Date.now().toString(),
+      uri: videoUrl,
+      type: "image", // Only 'image' or 'gif' are allowed by MediaType
+      date: new Date().toISOString(),
+      workoutId: activeWorkout.workoutId,
     });
     
     setVideoUrl("");
@@ -533,24 +540,6 @@ export default function ActiveWorkoutScreen() {
     }, 15 * 60 * 1000); // Reset after 15 minutes
   };
   
-  const handleGoBack = () => {
-    Alert.alert(
-      "Leave Workout",
-      "Are you sure you want to leave this workout? Your progress will be saved and you can continue later.",
-      [
-        {
-          text: "Stay",
-          style: "cancel",
-        },
-        {
-          text: "Leave",
-          onPress: () => router.navigate("/(tabs)"),
-          style: "destructive",
-        },
-      ]
-    );
-  };
-  
   const handleOpenSetNote = (exerciseIndex: number, setIndex: number, note: string) => {
     setCurrentExerciseIndex(exerciseIndex);
     setCurrentSetIndex(setIndex);
@@ -577,18 +566,29 @@ export default function ActiveWorkoutScreen() {
   
   const handleSaveSetData = () => {
     if (!editingSetData) return;
-    
     const { exerciseIndex, setIndex, weight, reps } = editingSetData;
-    
-    // Update weight and reps
+    // Update weight and reps using store functions
     updateSetWeight(exerciseIndex, setIndex, parseFloat(weight) || 0);
     updateSetReps(exerciseIndex, setIndex, parseInt(reps) || 0);
-    
-    // Clear editing state
+    // Mark set as completed using the new store function
+    updateSetCompleted(exerciseIndex, setIndex, true);
+
+    // Check if this was the last set for the exercise
+    const exerciseLog = activeWorkout.exercises[exerciseIndex];
+    const completedSets = exerciseLog.sets.filter(set => set.completed).length;
+    const expectedSets = timerSettings.defaultSetCount || 3;
+    if (completedSets >= expectedSets) {
+      setShowAddSetPrompt(true);
+      setPendingExerciseIndex(exerciseIndex);
     setEditingSetData(null);
-    
-    // Show confirmation
-    Alert.alert("Set Saved", "Your set data has been saved successfully.");
+      Alert.alert("Set Saved", "Your set data has been saved.");
+      return;
+    }
+
+    // Always start rest timer after saving set data (if not last set)
+    startRestTimer(typeof timerSettings.restTime === 'number' && !isNaN(timerSettings.restTime) ? timerSettings.restTime : 60);
+    setEditingSetData(null);
+    Alert.alert("Set Saved", "Your set data has been saved and rest started.");
   };
   
   const handleClosePRModal = () => {
@@ -635,16 +635,12 @@ export default function ActiveWorkoutScreen() {
       reorderExercises(fromIndex, toIndex);
       
       // Provide feedback
-      if (timerSettings.voicePrompts && Platform.OS !== 'web') {
         speakWithDefaultVoice("Exercise order updated");
-      }
     }
   };
   
   const handleMarkExerciseCompleted = (exerciseIndex: number) => {
     markExerciseCompleted(exerciseIndex, true);
-    
-    // Provide haptic feedback
     if (Platform.OS !== 'web') {
       const now = Date.now();
       if (now - lastVibrationTime.current > VIBRATION_COOLDOWN) {
@@ -652,38 +648,29 @@ export default function ActiveWorkoutScreen() {
         lastVibrationTime.current = now;
       }
     }
-    
-    // Voice feedback
-    if (timerSettings.voicePrompts && Platform.OS !== 'web') {
       const exercise = exercises.find(e => e.id === activeWorkout.exercises[exerciseIndex].exerciseId);
       if (exercise) {
         speakWithDefaultVoice(`${exercise.name} completed. Great job!`);
       }
-    }
-    
-    // Auto-expand the next exercise if available
+    setExpandedExercises(prev => ({
+      ...prev,
+      [exerciseIndex]: false
+    }));
     if (exerciseIndex < activeWorkout.exercises.length - 1) {
       setExpandedExercises(prev => ({
         ...prev,
-        [exerciseIndex]: false,
         [exerciseIndex + 1]: true
       }));
     }
   };
   
   const handleStartExerciseRest = (exerciseIndex: number) => {
-    // Start a rest timer between exercises
-    startExerciseRestTimer(timerSettings.defaultRestTime * 1.5); // Use a longer rest time between exercises
-    
-    // Voice feedback
-    if (timerSettings.voicePrompts && Platform.OS !== 'web') {
+    startExerciseRestTimer(timerSettings.restTime);
       speakWithDefaultVoice("Starting rest between exercises");
-    }
   };
   
   // New function to handle set completion
   const handleCompleteSet = (exerciseIndex: number, setIndex: number) => {
-    // Play sound effect
     if (sound && soundLoaded && !soundError) {
       try {
         sound.replayAsync().catch(err => console.log('Error playing sound', err));
@@ -691,8 +678,6 @@ export default function ActiveWorkoutScreen() {
         console.log('Error playing sound', error);
       }
     }
-    
-    // Provide haptic feedback
     if (Platform.OS !== 'web') {
       const now = Date.now();
       if (now - lastVibrationTime.current > VIBRATION_COOLDOWN) {
@@ -700,21 +685,12 @@ export default function ActiveWorkoutScreen() {
         lastVibrationTime.current = now;
       }
     }
-    
-    // Start rest timer
-    startRestTimer(timerSettings.defaultRestTime);
-    
-    // Mark set as completed
+    startRestTimer(timerSettings.restTime);
     if (activeWorkout && activeWorkout.exercises[exerciseIndex] && 
         activeWorkout.exercises[exerciseIndex].sets[setIndex]) {
-      
-      // Update the set to mark it as completed
       const updatedExercises = [...activeWorkout.exercises];
       updatedExercises[exerciseIndex].sets[setIndex].completed = true;
-      
-      // This would typically be handled by a function in the workout store
-      // For now, we'll just provide feedback
-      if (timerSettings.voicePrompts && Platform.OS !== 'web') {
+      if (Platform.OS !== 'web') {
         speakWithDefaultVoice("Set completed. Rest timer started.");
       }
     }
@@ -858,9 +834,9 @@ export default function ActiveWorkoutScreen() {
     const hasRepsValue = editingSetData.reps.trim() !== "";
     
     return (
-      <View style={styles.customKeyboard}>
+      <View style={[styles.customKeyboard, { paddingBottom: 28 + (insets?.bottom || 0) }]}>
         <View style={styles.keyboardHeader}>
-          <Text style={[styles.keyboardTitle, { color: colors.text }]}>
+          <Text style={[styles.keyboardTitle, { color: colors.text, opacity: 1 }]}>
             {editingSetData.field === 'weight' ? 'Enter Weight (kg)' : 'Enter Reps'}
           </Text>
           <TouchableOpacity 
@@ -882,7 +858,6 @@ export default function ActiveWorkoutScreen() {
             <Text style={styles.keyboardKeyText}>3</Text>
           </TouchableOpacity>
         </View>
-        
         <View style={styles.keyboardRow}>
           <TouchableOpacity style={styles.keyboardKey} onPress={() => handleKeyPress('4')}>
             <Text style={styles.keyboardKeyText}>4</Text>
@@ -894,7 +869,6 @@ export default function ActiveWorkoutScreen() {
             <Text style={styles.keyboardKeyText}>6</Text>
           </TouchableOpacity>
         </View>
-        
         <View style={styles.keyboardRow}>
           <TouchableOpacity style={styles.keyboardKey} onPress={() => handleKeyPress('7')}>
             <Text style={styles.keyboardKeyText}>7</Text>
@@ -906,7 +880,6 @@ export default function ActiveWorkoutScreen() {
             <Text style={styles.keyboardKeyText}>9</Text>
           </TouchableOpacity>
         </View>
-        
         <View style={styles.keyboardRow}>
           <TouchableOpacity style={styles.keyboardKey} onPress={() => handleKeyPress('.')}>
             <Text style={styles.keyboardKeyText}>.</Text>
@@ -918,19 +891,22 @@ export default function ActiveWorkoutScreen() {
             <Text style={styles.keyboardKeyText}>⌫</Text>
           </TouchableOpacity>
         </View>
-        
         <View style={styles.keyboardRow}>
-          <TouchableOpacity 
-            style={[styles.keyboardKey, styles.keyboardSpecialKey]} 
-            onPress={() => handleKeyPress('-')}
-          >
-            <Minus size={20} color="#000000" />
+          <TouchableOpacity style={styles.keyboardKey} onPress={() => handleKeyPress('-')}>
+            <Text style={styles.keyboardKeyText}>-</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.keyboardKey, styles.keyboardSpecialKey]} 
-            onPress={() => handleKeyPress('+')}
-          >
-            <Plus size={20} color="#000000" />
+          <TouchableOpacity style={styles.keyboardKey} onPress={() => {
+            // Clear the current field
+            if (editingSetData.field === 'weight') {
+              setEditingSetData({ ...editingSetData, weight: '' });
+            } else {
+              setEditingSetData({ ...editingSetData, reps: '' });
+            }
+          }}>
+            <Text style={styles.keyboardKeyText}>🗑️</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.keyboardKey} onPress={() => handleKeyPress('+')}>
+            <Text style={styles.keyboardKeyText}>+</Text>
           </TouchableOpacity>
         </View>
         
@@ -962,6 +938,90 @@ export default function ActiveWorkoutScreen() {
       </View>
     );
   };
+  
+  // Add this handler inside ActiveWorkoutScreen
+  const handleDeleteSet = (exerciseIndex: number, setIndex: number) => {
+    // Remove the set from the active workout
+    if (!activeWorkout) return;
+    const updatedExercises = [...activeWorkout.exercises];
+    if (
+      exerciseIndex >= 0 &&
+      exerciseIndex < updatedExercises.length &&
+      setIndex >= 0 &&
+      setIndex < updatedExercises[exerciseIndex].sets.length
+    ) {
+      updatedExercises[exerciseIndex] = {
+        ...updatedExercises[exerciseIndex],
+        sets: updatedExercises[exerciseIndex].sets.filter((_, i) => i !== setIndex),
+      };
+      useWorkoutStore.setState({
+        activeWorkout: {
+          ...activeWorkout,
+          exercises: updatedExercises,
+        },
+      });
+    }
+  };
+  
+  // Add state for the add set prompt
+  const [showAddSetPrompt, setShowAddSetPrompt] = useState(false);
+  const [pendingExerciseIndex, setPendingExerciseIndex] = useState<number | null>(null);
+  
+  // Handler for rest timer completion
+  const handleRestTimerComplete = () => {
+    // Find the currently expanded exercise
+    const expandedIndex = Object.keys(expandedExercises).find(
+      (key) => expandedExercises[parseInt(key)])
+    const exerciseIndex = expandedIndex ? parseInt(expandedIndex) : 0;
+    const exerciseLog = activeWorkout.exercises[exerciseIndex];
+    if (!exerciseLog) return;
+    
+    const completedSets = exerciseLog.sets.filter(set => set.completed).length;
+    const expectedSets = timerSettings.defaultSetCount || 3;
+    
+    if (completedSets >= expectedSets) {
+      setShowAddSetPrompt(true);
+      setPendingExerciseIndex(exerciseIndex);
+    } else {
+      // If the number of sets is less than expected, add a new set and open it for input
+      if (exerciseLog.sets.length < expectedSets) {
+        const newSetIndex = exerciseLog.sets.length; // index before add
+        handleAddSet(exerciseIndex);
+        // Open the new set for input (last set in the array after add)
+        setTimeout(() => {
+          setEditingSetData({
+            exerciseIndex,
+            setIndex: newSetIndex, // this is the correct index for the new set
+            weight: '',
+            reps: '',
+            field: 'weight',
+          });
+        }, 0);
+      } else {
+        // Otherwise, open the next incomplete set for input
+        const nextSetIndex = exerciseLog.sets.findIndex((set) => !set.completed);
+        if (nextSetIndex !== -1) {
+          setEditingSetData({
+            exerciseIndex,
+            setIndex: nextSetIndex,
+            weight: exerciseLog.sets[nextSetIndex].weight?.toString() || '',
+            reps: exerciseLog.sets[nextSetIndex].reps?.toString() || '',
+            field: 'weight',
+          });
+        }
+      }
+    }
+    // Now reset the timer state so the modal hides
+    skipRestTimer();
+  };
+  
+  if (!workout) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>Workout not found</Text>
+      </View>
+    );
+  }
   
   return (
     <View style={styles.container}>
@@ -1020,7 +1080,6 @@ export default function ActiveWorkoutScreen() {
             <Button
               title="Start Workout"
               onPress={handleStartWorkout}
-              size="large"
               icon={<Play size={20} color="#FFFFFF" />}
               style={styles.startWorkoutButton}
             />
@@ -1033,8 +1092,8 @@ export default function ActiveWorkoutScreen() {
                   <Watch size={20} color={colors.primary} />
                   <Text style={styles.deviceBannerText}>
                     Tracking with {
-                      connectedDevices.find(d => d.connected && 
-                        (d.type === "appleWatch" || d.type === "fitbit" || d.type === "garmin"))?.name || 
+                      connectedDevices.find(d => d.isConnected && 
+                        (d.type === "fitness_tracker" || d.type === "smartwatch" || d.type === "heart_rate_monitor"))?.name || 
                       "connected device"
                     }
                   </Text>
@@ -1054,35 +1113,24 @@ export default function ActiveWorkoutScreen() {
               </View>
             )}
             
-            <View style={styles.workoutTimerContainer}>
-              <View style={styles.workoutDurationCard}>
+            <View style={[styles.workoutTimerContainer, { marginTop: 48 }]}> 
+              <View className="workoutDurationCard" style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <View>
                 <Text style={styles.workoutDurationLabel}>WORKOUT DURATION</Text>
                 <Text style={styles.workoutDurationValue}>
                   {Math.floor(workoutDuration / 60)}h {workoutDuration % 60}m
                 </Text>
-                <View style={styles.workoutTimerControls}>
-                  {activeTimer.isRunning && !activeTimer.isResting ? (
-                    <TouchableOpacity 
-                      style={styles.timerControlButton}
-                      onPress={pauseTimer}
-                    >
-                      <Pause size={20} color={colors.text} />
-                    </TouchableOpacity>
-                  ) : !activeTimer.isResting ? (
-                    <TouchableOpacity 
-                      style={styles.timerControlButton}
-                      onPress={startTimer}
-                    >
-                      <Play size={20} color={colors.text} />
-                    </TouchableOpacity>
-                  ) : null}
                 </View>
-              </View>
-              
-              <Timer 
-                onSettingsPress={() => setShowTimerSettingsModal(true)}
-                showSettings
-              />
+                {/* Inline, small Timers button */}
+                    <TouchableOpacity 
+                  style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8, borderWidth: 1, borderColor: colors.primary, marginLeft: 8 }}
+                  onPress={() => setShowRestModal(true)}
+                  activeOpacity={0.8}
+                    >
+                  <Clock size={16} color={colors.primary} style={{ marginRight: 4 }} />
+                  <Text style={{ color: colors.primary, fontSize: 15, fontWeight: '600' }}>Timers</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
             
             <View style={styles.notesContainer}>
@@ -1153,10 +1201,17 @@ export default function ActiveWorkoutScreen() {
                     onStartRest={() => handleStartExerciseRest(exerciseIndex)}
                     totalExercises={activeWorkout.exercises.length}
                   >
+                    {/* Card header with exercise name and rest timer settings icon */}
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <Text style={styles.exerciseTitle}>{exercise.name}</Text>
+                      <TouchableOpacity onPress={() => setShowRestModal(true)} style={{ padding: 6, borderRadius: 8 }}>
+                        <Clock size={22} color="#FF9500" />
+                      </TouchableOpacity>
+                    </View>
                     <View style={styles.exerciseNotesContainer}>
                       <NoteInput
                         initialValue={exerciseLog.notes}
-                        onSave={(note) => updateExerciseNote(exerciseIndex, note)}
+                        onSave={updateExerciseNote.bind(null, exerciseIndex)}
                         placeholder="Add notes for this exercise..."
                       />
                     </View>
@@ -1227,6 +1282,12 @@ export default function ActiveWorkoutScreen() {
                                   >
                                     <Save size={16} color={colors.secondary} />
                                   </TouchableOpacity>
+                                  <TouchableOpacity 
+                                    style={[styles.saveButton, styles.checkColumn, { marginLeft: 6, backgroundColor: 'rgba(200, 80, 80, 0.15)' }]}
+                                    onPress={() => handleDeleteSet(exerciseIndex, setIndex)}
+                                  >
+                                    <X size={16} color={colors.error} />
+                                  </TouchableOpacity>
                                 </>
                               ) : (
                                 // Display mode
@@ -1262,26 +1323,6 @@ export default function ActiveWorkoutScreen() {
                         })}
                       </View>
                     )}
-                    
-                    <View style={styles.exerciseActions}>
-                      <Button
-                        title="Add Set"
-                        onPress={() => handleAddSet(exerciseIndex)}
-                        variant="outline"
-                        size="small"
-                        icon={<Plus size={16} color={colors.primary} />}
-                        style={styles.addSetButton}
-                      />
-                      
-                      <Button
-                        title="Rest Timer"
-                        onPress={() => setShowRestModal(true)}
-                        variant="outline"
-                        size="small"
-                        icon={<Clock size={16} color="#FF9500" />}
-                        style={styles.restButton}
-                      />
-                    </View>
                   </DraggableExerciseCard>
                 );
               })}
@@ -1310,7 +1351,6 @@ export default function ActiveWorkoutScreen() {
               title="Cancel Workout"
               onPress={handleCancelWorkout}
               variant="outline"
-              size="large"
               style={styles.cancelButton}
               textStyle={styles.cancelButtonText}
               icon={<X size={18} color={colors.error} />}
@@ -1318,7 +1358,6 @@ export default function ActiveWorkoutScreen() {
             <Button
               title="Complete Workout"
               onPress={handleCompleteWorkout}
-              size="large"
               style={styles.completeButton}
             />
           </View>
@@ -1328,11 +1367,75 @@ export default function ActiveWorkoutScreen() {
       {/* Custom Numeric Keyboard */}
       {editingSetData && renderCustomNumericKeyboard()}
       
+      {/* Rest Timer Modal Overlay */}
+      {activeTimer.isResting && activeTimer.isRunning && (
+        <Modal
+          visible
+          transparent
+          animationType="fade"
+          statusBarTranslucent
+        >
+          <View style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'rgba(0,0,0,0.7)'
+          }}>
+            <View style={{
+              backgroundColor: colors.card,
+              borderRadius: 16,
+              padding: 24,
+              alignItems: 'center',
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 10 },
+              shadowOpacity: 0.15,
+              shadowRadius: 20,
+              elevation: 10,
+            }}>
+              <Text style={{
+                fontSize: 18,
+                fontWeight: '600',
+                color: colors.text,
+                marginBottom: 16,
+                textAlign: 'center'
+              }}>
+                Rest Timer
+              </Text>
+              <Timer
+                initialSeconds={activeTimer.restDuration || 60}
+                isRunning={activeTimer.isRunning}
+                onComplete={handleRestTimerComplete}
+              />
+              <TouchableOpacity
+                style={{
+                  marginTop: 16,
+                  paddingVertical: 8,
+                  paddingHorizontal: 16,
+                  borderRadius: 8,
+                  backgroundColor: colors.background,
+                  borderWidth: 1,
+                  borderColor: colors.border
+                }}
+                onPress={() => skipRestTimer()}
+              >
+                <Text style={{
+                  color: colors.text,
+                  fontSize: 14,
+                  fontWeight: '500'
+                }}>
+                  Skip Rest
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      )}
+      
       {/* Rest Timer Modal */}
       <RestTimerModal
         visible={showRestModal}
         onClose={() => setShowRestModal(false)}
-        defaultTime={timerSettings.defaultRestTime}
+        defaultTime={timerSettings.restTime}
       />
       
       {/* Rating Modal */}
@@ -1562,13 +1665,13 @@ export default function ActiveWorkoutScreen() {
                     key={time}
                     style={[
                       styles.timeOption,
-                      timerSettings.defaultRestTime === time && styles.timeOptionActive
+                      timerSettings.restTime === time && styles.timeOptionActive
                     ]}
-                    onPress={() => handleUpdateTimerSettings({ defaultRestTime: time })}
+                    onPress={() => handleUpdateTimerSettings({ restTime: time })}
                   >
                     <Text style={[
                       styles.timeOptionText,
-                      timerSettings.defaultRestTime === time && styles.timeOptionTextActive
+                      timerSettings.restTime === time && styles.timeOptionTextActive
                     ]}>
                       {time >= 60 ? `${time / 60}m` : `${time}s`}
                     </Text>
@@ -1726,6 +1829,55 @@ export default function ActiveWorkoutScreen() {
           isMajorLift={isMajorLift(currentPR.exerciseId)}
         />
       )}
+      
+      {/* Exercise Completion Modal */}
+      <Modal
+        visible={showAddSetPrompt}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setShowAddSetPrompt(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.alertModal}>
+            <Text style={styles.alertTitle}>Exercise Complete!</Text>
+            <Text style={styles.alertMessage}>
+              You've completed {timerSettings.defaultSetCount || 3} sets for this exercise.
+            </Text>
+            <View style={styles.alertButtons}>
+              <Button
+                title="Continue"
+                onPress={() => {
+                  setShowAddSetPrompt(false);
+                  // Move to next exercise or complete workout
+                  if (pendingExerciseIndex !== null) {
+                    const nextExerciseIndex = pendingExerciseIndex + 1;
+                    if (nextExerciseIndex < activeWorkout.exercises.length) {
+                      // Move to next exercise
+                      setExpandedExercises({ [nextExerciseIndex]: true });
+                    } else {
+                      // All exercises completed, show workout completion
+                      handleCompleteWorkout();
+                    }
+                  }
+                }}
+                style={[styles.alertButton, { minWidth: 120, paddingVertical: 10, fontSize: 15 }]} // smaller button
+              />
+              <Button
+                title="Add Another Set"
+                onPress={() => {
+                  if (pendingExerciseIndex !== null) {
+                    handleAddSet(pendingExerciseIndex);
+                    setShowAddSetPrompt(false);
+                  }
+                }}
+                variant="outline"
+                style={[styles.alertButton, { minWidth: 120, paddingVertical: 10, fontSize: 15 }]} // smaller button
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -1893,27 +2045,35 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
     marginBottom: 8,
     alignItems: "center",
-    backgroundColor: colors.primary,
-    padding: 8,
-    borderRadius: 8,
+    backgroundColor: "rgba(30, 30, 30, 0.85)", // modern dark overlay
+    padding: 12,
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
   },
   setsHeaderText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#FAFAFA",
     textAlign: "center",
+    letterSpacing: 0.5,
   },
   setRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+    borderRadius: 8,
+    marginBottom: 2,
+    backgroundColor: "rgba(40, 40, 40, 0.7)",
   },
   setText: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: colors.text,
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#FAFAFA",
     textAlign: "center",
   },
   previousText: {
@@ -1946,23 +2106,30 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     justifyContent: "center",
-    height: 40,
-    backgroundColor: colors.primary,
-    borderRadius: 8,
+    height: 32,
+    backgroundColor: "rgba(40, 40, 40, 0.95)",
+    borderRadius: 7,
     borderWidth: 1,
     borderColor: colors.border,
+    marginHorizontal: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 1,
   },
   input: {
-    paddingHorizontal: 8,
-    fontSize: 16,
+    paddingHorizontal: 6,
+    fontSize: 14,
     textAlign: "center",
-    height: 40,
-    color: "#FFFFFF",
+    height: 32,
+    color: "#FAFAFA",
+    backgroundColor: "transparent",
+    borderRadius: 7,
   },
   setValueText: {
-    fontSize: 16,
+    fontSize: 14,
     textAlign: "center",
-    color: "#FFFFFF",
+    color: "#FAFAFA",
   },
   checkButton: {
     alignItems: "center",
@@ -2037,26 +2204,37 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderTopWidth: 1,
     borderTopColor: colors.border,
-    paddingVertical: 12,
-    paddingHorizontal: 8,
+    paddingVertical: 12, // more vertical padding
+    paddingBottom: 28, // extra space for home indicator
+    paddingHorizontal: 4,
     zIndex: 1000,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 8,
+    elevation: 8,
   },
   keyboardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    marginBottom: 12,
+    paddingHorizontal: 8,
+    marginBottom: 6,
+    backgroundColor: colors.card,
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
   },
   keyboardTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.text, // match keypad key text color
+    letterSpacing: 0.2,
   },
   keyboardMinimizeButton: {
-    padding: 8,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    padding: 6,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
@@ -2064,66 +2242,68 @@ const styles = StyleSheet.create({
   keyboardRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   keyboardKey: {
-    width: '30%',
-    height: 50,
+    width: '28%',
+    height: 36,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.background,
-    borderRadius: 8,
+    backgroundColor: colors.card, // match exercise card background
+    borderRadius: 6,
     borderWidth: 1,
     borderColor: colors.border,
+    marginHorizontal: 1,
   },
   keyboardSpecialKey: {
-    width: '48%',
-    backgroundColor: colors.highlight,
+    width: '44%',
+    backgroundColor: colors.card, // match keypad and card background
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    height: 36,
   },
   keyboardKeyText: {
-    fontSize: 20,
-    color: "#000000",
-    fontWeight: '500',
+    fontSize: 16,
+    color: colors.text, // match card text color
+    fontWeight: '600',
   },
   keyboardFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 8,
+    marginTop: 4,
   },
   keyboardNextButton: {
     flex: 1,
     backgroundColor: colors.primary,
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: 7,
+    padding: 8,
     alignItems: 'center',
-    marginRight: 8,
+    marginRight: 4,
     flexDirection: 'row',
     justifyContent: 'center',
   },
   keyboardNextButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
-    marginRight: 8,
+    marginRight: 6,
   },
   keyboardMinimizeFullButton: {
     flex: 1,
     backgroundColor: colors.secondary,
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: 7,
+    padding: 8,
     alignItems: 'center',
-    marginLeft: 8,
+    marginLeft: 4,
     flexDirection: 'row',
     justifyContent: 'center',
   },
   keyboardMinimizeButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
-    marginRight: 8,
+    marginRight: 6,
   },
   
   // Rating Modal Styles
@@ -2488,5 +2668,10 @@ const styles = StyleSheet.create({
   },
   cancelConfirmButtonText: {
     color: "#FFFFFF",
+  },
+  exerciseTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: colors.text,
   },
 });

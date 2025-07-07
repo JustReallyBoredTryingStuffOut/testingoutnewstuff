@@ -1,8 +1,17 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import RNFS from 'react-native-fs';
 import { Platform } from "react-native";
+
+// Conditionally import RNFS only for native platforms
+let RNFS: any = null;
+if (Platform.OS !== "web") {
+  try {
+    RNFS = require('react-native-fs');
+  } catch (error) {
+    console.warn('react-native-fs not available:', error);
+  }
+}
 import { 
   encryptAndSavePhoto, 
   deleteEncryptedPhoto, 
@@ -87,8 +96,9 @@ interface PhotoState {
 
 // Create photo directory if it doesn't exist
 const setupPhotoDirectories = async () => {
-  if (Platform.OS === "web") return;
+  if (Platform.OS === "web" || !RNFS) return;
   
+  try {
   const photoDir = `${RNFS.DocumentDirectoryPath}/photos/`;
   const foodPhotoDir = `${photoDir}food/`;
   const progressPhotoDir = `${photoDir}progress/`;
@@ -116,10 +126,13 @@ const setupPhotoDirectories = async () => {
   
   // Also setup encrypted photos directory
   await setupEncryptedPhotoDirectory();
+  } catch (error) {
+    console.warn('Error setting up photo directories:', error);
+  }
 };
 
 // Initialize directories
-if (Platform.OS !== "web") {
+if (Platform.OS !== "web" && RNFS) {
   setupPhotoDirectories();
 }
 
@@ -138,7 +151,7 @@ export const usePhotoStore = create<PhotoState>()(
       
       addFoodPhoto: async (photo) => {
         // Only save to filesystem if there's a valid URI (skip for nutrition label scans with empty URI)
-        if (Platform.OS !== "web" && photo.uri && photo.uri.trim() !== "") {
+        if (Platform.OS !== "web" && RNFS && photo.uri && photo.uri.trim() !== "") {
           try {
             const fileName = `food_${photo.id}.jpg`;
             let newUri;
@@ -174,7 +187,7 @@ export const usePhotoStore = create<PhotoState>()(
         const { foodPhotos } = get();
         const photoToDelete = foodPhotos.find(p => p.id === id);
         
-        if (photoToDelete && Platform.OS !== "web") {
+        if (photoToDelete && Platform.OS !== "web" && RNFS) {
           try {
             if (photoToDelete.uri.startsWith(ENCRYPTED_PHOTOS_DIR)) {
               // Use secure deletion for encrypted files
@@ -195,7 +208,7 @@ export const usePhotoStore = create<PhotoState>()(
       
       addProgressPhoto: async (photo) => {
         // Only save to filesystem if there's a valid URI
-        if (Platform.OS !== "web" && photo.uri && photo.uri.trim() !== "") {
+        if (Platform.OS !== "web" && RNFS && photo.uri && photo.uri.trim() !== "") {
           try {
             const fileName = `progress_${photo.id}.jpg`;
             let newUri;
@@ -231,7 +244,7 @@ export const usePhotoStore = create<PhotoState>()(
         const { progressPhotos } = get();
         const photoToDelete = progressPhotos.find(p => p.id === id);
         
-        if (photoToDelete && Platform.OS !== "web") {
+        if (photoToDelete && Platform.OS !== "web" && RNFS) {
           try {
             if (photoToDelete.uri.startsWith(ENCRYPTED_PHOTOS_DIR)) {
               // Use secure deletion for encrypted files
@@ -253,7 +266,7 @@ export const usePhotoStore = create<PhotoState>()(
       // Media functions
       addWorkoutMedia: async (media) => {
         // Only save to filesystem if it's a valid local file (not a URL or empty) and not on web
-        if (Platform.OS !== "web" && media.uri && media.uri.trim() !== "" && !media.uri.startsWith("http")) {
+        if (Platform.OS !== "web" && RNFS && media.uri && media.uri.trim() !== "" && !media.uri.startsWith("http")) {
           try {
             const extension = get().isGifUrl(media.uri) ? "gif" : "jpg";
             const fileName = `workout_${media.id}.${extension}`;
@@ -290,7 +303,7 @@ export const usePhotoStore = create<PhotoState>()(
         const { workoutMedia } = get();
         const mediaToDelete = workoutMedia.find(m => m.id === id);
         
-        if (mediaToDelete && Platform.OS !== "web" && !mediaToDelete.uri.startsWith("http")) {
+        if (mediaToDelete && Platform.OS !== "web" && RNFS && !mediaToDelete.uri.startsWith("http")) {
           try {
             if (mediaToDelete.uri.startsWith(ENCRYPTED_PHOTOS_DIR)) {
               // Use secure deletion for encrypted files
@@ -465,7 +478,7 @@ export const usePhotoStore = create<PhotoState>()(
       
       // Data management functions
       deleteAllPhotos: async () => {
-        if (Platform.OS !== "web") {
+        if (Platform.OS !== "web" && RNFS) {
           try {
             // Get all photos to delete
             const { foodPhotos, progressPhotos, workoutMedia } = get();
@@ -509,7 +522,7 @@ export const usePhotoStore = create<PhotoState>()(
       },
       
       cleanupTempFiles: async () => {
-        if (Platform.OS !== "web") {
+        if (Platform.OS !== "web" && RNFS) {
           try {
             await cleanupTempDecryptedFiles();
           } catch (error) {

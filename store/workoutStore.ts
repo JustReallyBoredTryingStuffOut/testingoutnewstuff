@@ -47,6 +47,7 @@ interface WorkoutState {
   updateSetNote: (exerciseIndex: number, setIndex: number, note: string) => void;
   updateSetWeight: (exerciseIndex: number, setIndex: number, weight: number) => void;
   updateSetReps: (exerciseIndex: number, setIndex: number, reps: number) => void;
+  updateSetCompleted: (exerciseIndex: number, setIndex: number, completed: boolean) => void;
   updateExerciseNote: (exerciseIndex: number, note: string) => void;
   updateWorkoutNote: (note: string) => void;
   
@@ -88,48 +89,7 @@ interface WorkoutState {
   setLongWorkoutThreshold: (minutes: number) => void;
   getWorkoutDuration: () => number; // Returns current workout duration in minutes
   getAverageWorkoutDuration: (workoutId: string) => number; // Returns average duration for a specific workout
-  getRecommendedWorkouts: (count?: number, moodPreference?: string) => Workout[]; // Returns recommended workouts based on history and mood
-  isWorkoutRunningTooLong: () => boolean; // Checks if current workout is running longer than threshold
-  
-  // New actions for filtering exercises
-  getBodyRegions: () => BodyRegion[];
-  getMuscleGroups: (bodyRegion?: BodyRegion) => MuscleGroup[];
-  getEquipmentTypes: () => EquipmentType[];
-  getExercisesByMuscleGroup: (muscleGroup: MuscleGroup) => Exercise[];
-  getExercisesByBodyRegion: (bodyRegion: BodyRegion) => Exercise[];
-  getExercisesByEquipment: (equipment: EquipmentType) => Exercise[];
-  getFilteredExercises: (filters: {
-    bodyRegion?: BodyRegion;
-    muscleGroup?: MuscleGroup;
-    equipment?: EquipmentType;
-    difficulty?: 'beginner' | 'intermediate' | 'advanced';
-    searchQuery?: string;
-  }) => Exercise[];
-  
-  // New actions for mood-based workout recommendations
-  getMoodBasedWorkouts: (mood: string, preference: string, count?: number) => Workout[];
-  getRestDayActivities: () => string[];
-  
-  // New actions for PR tracking
-  checkForPersonalRecord: (exerciseId: string, weight: number, reps: number) => PersonalRecord | null;
-  getPersonalRecordMessage: (pr: PersonalRecord) => string;
-  isMajorLift: (exerciseId: string) => boolean;
-  getExercisePR: (exerciseId: string) => PersonalRecord | null;
-  getAllPersonalRecords: () => PersonalRecord[];
-  getRecentPersonalRecords: (count?: number) => PersonalRecord[];
-  
-  // New actions for workout history and calendar view
-  getWorkoutsForDate: (date: Date) => WorkoutLog[];
-  getWorkoutsForDateRange: (startDate: Date, endDate: Date) => WorkoutLog[];
-  getMuscleGroupsForDate: (date: Date) => string[];
-  copyWorkoutToCustom: (workoutLogId: string) => string; // Returns new workout ID
-  getWorkoutsByMuscleGroup: (muscleGroup: string) => Workout[];
-  
-  // New action for deleting workout logs
-  deleteWorkoutLog: (id: string) => void;
-  
-  // Development/testing function to clear all workout logs
-  clearAllWorkoutLogs: () => void;
+  getRecommendedWorkouts: (count?: number, moodPreference?: string) => Workout[];
   
   // New actions for one-time vs recurring workouts
   getScheduledWorkoutsForDate: (date: Date) => ScheduledWorkout[];
@@ -176,10 +136,13 @@ export const useWorkoutStore = create<WorkoutState>()(
         isResting: false,
       },
       timerSettings: {
-        defaultRestTime: 60,
+        restTime: 60,
+        setRestTime: 60,
+        workoutRestTime: 60,
+        soundEnabled: true,
+        vibrationEnabled: true,
         autoStartRest: false,
-        voicePrompts: true,
-        countdownBeep: true,
+        defaultSetCount: 3,
       },
       workoutRecommendationsEnabled: false, // Disabled by default
       aiRecommendationsExplained: false, // Track if we've explained AI recommendations
@@ -242,7 +205,16 @@ export const useWorkoutStore = create<WorkoutState>()(
           media: [],
         };
         
-        set({ activeWorkout: newWorkoutLog });
+        set({ 
+          activeWorkout: newWorkoutLog,
+          activeTimer: {
+            isRunning: false,
+            startTime: 0,
+            elapsedTime: 0,
+            restDuration: 60,
+            isResting: false,
+          }
+        });
       },
       
       completeWorkout: () => {
@@ -455,6 +427,36 @@ export const useWorkoutStore = create<WorkoutState>()(
               const exerciseId = exercise.exerciseId;
               get().checkForPersonalRecord(exerciseId, weight, reps);
             }
+          }
+        }
+        
+        return {
+          activeWorkout: {
+            ...state.activeWorkout,
+            exercises: updatedExercises,
+          }
+        };
+      }),
+      
+      updateSetCompleted: (exerciseIndex, setIndex, completed) => set((state) => {
+        if (!state.activeWorkout) return state;
+        
+        const updatedExercises = [...state.activeWorkout.exercises];
+        
+        if (exerciseIndex >= 0 && exerciseIndex < updatedExercises.length) {
+          const exercise = updatedExercises[exerciseIndex];
+          
+          if (setIndex >= 0 && setIndex < exercise.sets.length) {
+            const updatedSets = [...exercise.sets];
+            updatedSets[setIndex] = {
+              ...updatedSets[setIndex],
+              completed,
+            };
+            
+            updatedExercises[exerciseIndex] = {
+              ...exercise,
+              sets: updatedSets,
+            };
           }
         }
         
@@ -1260,30 +1262,29 @@ export const useWorkoutStore = create<WorkoutState>()(
       
       // New functions for PR tracking
       checkForPersonalRecord: (exerciseId, weight, reps) => {
-        const { personalRecords, exercises } = get();
+        const { personalRecords, exercises, workoutLogs } = get();
         const exercise = exercises.find(e => e.id === exerciseId);
-        
         if (!exercise) return null;
+
+        // Count previous completed attempts for this exercise
+        const previousAttempts = workoutLogs.filter(log => log.completed && log.exercises.some(ex => ex.exerciseId === exerciseId && ex.sets.length > 0));
+        if (previousAttempts.length < 4) {
+          // Require at least 4 previous attempts before setting a PR
+          return null;
+        }
         
         // Find previous PR for this exercise
         const previousPR = personalRecords.find(pr => pr.exerciseId === exerciseId);
-        
         // Calculate estimated 1RM using Epley formula: 1RM = weight * (1 + reps/30)
         const estimatedOneRepMax = weight * (1 + reps/30);
-        
         // Check if this is a new PR
         let isNewPR = false;
-        
         if (!previousPR) {
-          // First time logging this exercise, so it's automatically a PR
           isNewPR = true;
         } else if (estimatedOneRepMax > previousPR.estimatedOneRepMax) {
-          // New estimated 1RM is higher than previous PR
           isNewPR = true;
         }
-        
         if (isNewPR) {
-          // Create new PR record
           const newPR: PersonalRecord = {
             id: Date.now().toString(),
             exerciseId,
@@ -1295,39 +1296,28 @@ export const useWorkoutStore = create<WorkoutState>()(
             previousBest: previousPR ? previousPR.weight : 0,
             improvement: previousPR ? weight - previousPR.weight : weight,
           };
-          
-          // Update state with new PR
           set(state => ({
             personalRecords: [
               ...state.personalRecords.filter(pr => pr.exerciseId !== exerciseId),
               newPR
             ]
           }));
-          
           // Update gamification if enabled
           const gamificationStore = useGamificationStore.getState();
           if (gamificationStore.gamificationEnabled) {
-            // Check for special PR achievement
-            const prAchievement = gamificationStore.achievements.find(a => 
-              a.id === "special-first-pr" && !a.completed
-            );
-            
+            const prAchievement = gamificationStore.achievements.find(a => a.id === "special-first-pr" && !a.completed);
             if (prAchievement) {
               gamificationStore.updateAchievementProgress(prAchievement.id, 1);
               gamificationStore.unlockAchievement(prAchievement.id);
             }
-            
-            // Add bonus points for major lifts
             if (get().isMajorLift(exerciseId)) {
-              gamificationStore.addPoints(25); // Bonus points for major lift PR
+              gamificationStore.addPoints(25);
             } else {
-              gamificationStore.addPoints(10); // Standard points for PR
+              gamificationStore.addPoints(10);
             }
           }
-          
           return newPR;
         }
-        
         return null;
       },
       

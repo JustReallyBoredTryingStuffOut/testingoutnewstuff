@@ -369,7 +369,6 @@ export default function DraggableExerciseCard({
                   History
                 </Text>
               </TouchableOpacity>
-              
               <TouchableOpacity 
                 style={[
                   styles.tabButton, 
@@ -385,24 +384,6 @@ export default function DraggableExerciseCard({
                   ]}
                 >
                   Records
-                </Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[
-                  styles.tabButton, 
-                  activeTab === 'about' && [styles.activeTabButton, { borderBottomColor: colors.primary }]
-                ]}
-                onPress={() => setActiveTab('about')}
-              >
-                <Info size={16} color={activeTab === 'about' ? colors.primary : colors.textSecondary} />
-                <Text 
-                  style={[
-                    styles.tabText, 
-                    { color: activeTab === 'about' ? colors.primary : colors.textSecondary }
-                  ]}
-                >
-                  About
                 </Text>
               </TouchableOpacity>
             </View>
@@ -457,69 +438,38 @@ export default function DraggableExerciseCard({
                     </View>
                   )}
                 </View>
-              ) : activeTab === 'records' ? (
+              ) : (
                 <View style={styles.recordsTab}>
                   {personalRecord ? (
                     <>
-                      <View style={[styles.recordCard, { backgroundColor: colors.background }]}>
-                        <Text style={[styles.recordCardTitle, { color: colors.textSecondary }]}>
-                          Estimated 1RM
-                        </Text>
-                        <Text style={[styles.recordCardValue, { color: colors.text }]}>
-                          {Math.round(personalRecord.estimatedOneRepMax)} kg
-                        </Text>
-                        <Text style={[styles.recordCardDate, { color: colors.textSecondary }]}>
-                          Achieved on {new Date(personalRecord.date).toLocaleDateString()}
-                        </Text>
+                      <View style={[styles.recordCard, { backgroundColor: colors.background, marginBottom: 16 }]}>
+                        <Text style={[styles.recordCardTitle, { color: colors.textSecondary }]}>Estimated 1RM</Text>
+                        <Text style={[styles.recordCardValue, { color: colors.text }]}>{Math.round(personalRecord.estimatedOneRepMax)} kg</Text>
+                        <Text style={[styles.recordCardDate, { color: colors.textSecondary }]}>Achieved on {new Date(personalRecord.date).toLocaleDateString()}</Text>
                       </View>
-                      
-                      <View style={styles.recordsGrid}>
+                      <View style={[styles.recordsGrid, { flexDirection: 'row', gap: 12, marginBottom: 16 }]}>
                         <View style={[styles.recordGridItem, { backgroundColor: colors.background }]}>
-                          <Text style={[styles.recordGridItemTitle, { color: colors.textSecondary }]}>
-                            Max Weight
-                          </Text>
-                          <Text style={[styles.recordGridItemValue, { color: colors.text }]}>
-                            {personalRecord.weight} kg
-                          </Text>
+                          <Text style={[styles.recordGridItemTitle, { color: colors.textSecondary }]}>Max Weight</Text>
+                          <Text style={[styles.recordGridItemValue, { color: colors.text }]}>{personalRecord.weight} kg</Text>
                         </View>
-                        
                         <View style={[styles.recordGridItem, { backgroundColor: colors.background }]}>
-                          <Text style={[styles.recordGridItemTitle, { color: colors.textSecondary }]}>
-                            Max Reps
-                          </Text>
-                          <Text style={[styles.recordGridItemValue, { color: colors.text }]}>
-                            {personalRecord.reps}
-                          </Text>
+                          <Text style={[styles.recordGridItemTitle, { color: colors.textSecondary }]}>Max Reps</Text>
+                          <Text style={[styles.recordGridItemValue, { color: colors.text }]}>{personalRecord.reps}</Text>
                         </View>
                       </View>
-                      
-                      <View style={[styles.bestPerformanceCard, { backgroundColor: colors.background }]}>
+                      <View style={[styles.bestPerformanceCard, { backgroundColor: colors.background, marginTop: 8 }]}>
                         <View style={styles.bestPerformanceHeader}>
-                          <Text style={[styles.bestPerformanceTitle, { color: colors.textSecondary }]}>
-                            Best Performance
-                          </Text>
-                          <Text style={[styles.bestPerformanceDate, { color: colors.textSecondary }]}>
-                            {new Date(personalRecord.date).toLocaleDateString()}
-                          </Text>
+                          <Text style={[styles.bestPerformanceTitle, { color: colors.textSecondary }]}>Best Performance</Text>
+                          <Text style={[styles.bestPerformanceDate, { color: colors.textSecondary }]}>{new Date(personalRecord.date).toLocaleDateString()}</Text>
                         </View>
-                        
-                        <View style={styles.bestPerformanceDetails}>
+                        <View style={[styles.bestPerformanceDetails, { flexDirection: 'row', gap: 12 }]}>
                           <View style={styles.bestPerformanceDetail}>
-                            <Text style={[styles.bestPerformanceDetailValue, { color: colors.text }]}>
-                              {personalRecord.weight} × {personalRecord.reps}
-                            </Text>
-                            <Text style={[styles.bestPerformanceDetailLabel, { color: colors.textSecondary }]}>
-                              Weight × Reps
-                            </Text>
+                            <Text style={[styles.bestPerformanceDetailValue, { color: colors.text }]}>{personalRecord.weight} × {personalRecord.reps}</Text>
+                            <Text style={[styles.bestPerformanceDetailLabel, { color: colors.textSecondary }]}>Weight × Reps</Text>
                           </View>
-                          
                           <View style={styles.bestPerformanceDetail}>
-                            <Text style={[styles.bestPerformanceDetailValue, { color: colors.text }]}>
-                              {Math.round(personalRecord.estimatedOneRepMax)} kg
-                            </Text>
-                            <Text style={[styles.bestPerformanceDetailLabel, { color: colors.textSecondary }]}>
-                              Predicted
-                            </Text>
+                            <Text style={[styles.bestPerformanceDetailValue, { color: colors.text }]}>{Math.round(personalRecord.estimatedOneRepMax)} kg</Text>
+                            <Text style={[styles.bestPerformanceDetailLabel, { color: colors.textSecondary }]}>Predicted</Text>
                           </View>
                         </View>
                       </View>
@@ -532,60 +482,6 @@ export default function DraggableExerciseCard({
                       <Text style={[styles.emptyStateSubtext, { color: colors.textSecondary }]}>
                         Complete a workout with this exercise to set your first record
                       </Text>
-                    </View>
-                  )}
-                </View>
-              ) : (
-                <View style={styles.aboutTab}>
-                  <Text style={[styles.aboutTitle, { color: colors.text }]}>
-                    How to perform
-                  </Text>
-                  
-                  <Text style={[styles.aboutDescription, { color: colors.textSecondary }]}>
-                    {exercise.description}
-                  </Text>
-                  
-                  <View style={styles.aboutDetails}>
-                    <View style={styles.aboutDetailItem}>
-                      <Text style={[styles.aboutDetailTitle, { color: colors.text }]}>
-                        Muscle Groups
-                      </Text>
-                      <Text style={styles.aboutDetailText}>
-                        {(exercise.muscleGroups || []).map(group => typeof group === 'string' ? group : group.name).join(', ')}
-                      </Text>
-                    </View>
-                    
-                    <View style={styles.aboutDetailItem}>
-                      <Text style={[styles.aboutDetailTitle, { color: colors.text }]}>
-                        Equipment
-                      </Text>
-                      <Text style={styles.aboutDetailText}>
-                        {(exercise.equipment || []).map(item => typeof item === 'string' ? item : item.name).join(', ')}
-                      </Text>
-                    </View>
-                    
-                    <View style={styles.aboutDetailItem}>
-                      <Text style={[styles.aboutDetailTitle, { color: colors.text }]}>
-                        Difficulty
-                      </Text>
-                      <View style={[styles.aboutDifficultyBadge, { backgroundColor: getDifficultyColor(exercise.difficulty) }]}>
-                        <Text style={styles.aboutDifficultyText}>
-                          {exercise.difficulty}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                  
-                  {exercise.imageUrl && (
-                    <View style={styles.aboutImageContainer}>
-                      <Text style={[styles.aboutImageTitle, { color: colors.text }]}>Reference Image</Text>
-                      <View style={styles.aboutImage}>
-                        <Image 
-                          source={{ uri: exercise.imageUrl }} 
-                          style={styles.aboutImageContent}
-                          resizeMode="contain"
-                        />
-                      </View>
                     </View>
                   )}
                 </View>
@@ -904,66 +800,6 @@ const styles = StyleSheet.create({
   },
   bestPerformanceDetailLabel: {
     fontSize: 12,
-  },
-  
-  // About tab styles
-  aboutTab: {
-    flex: 1,
-  },
-  aboutTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 12,
-  },
-  aboutDescription: {
-    fontSize: 16,
-    lineHeight: 24,
-    marginBottom: 20,
-  },
-  aboutDetails: {
-    marginBottom: 20,
-  },
-  aboutDetailItem: {
-    marginBottom: 16,
-  },
-  aboutDetailTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 8,
-  },
-  aboutDetailText: {
-    fontSize: 14,
-  },
-  aboutDifficultyBadge: {
-    alignSelf: 'flex-start',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-  },
-  aboutDifficultyText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#FFFFFF',
-    textTransform: 'capitalize',
-  },
-  aboutImageContainer: {
-    marginTop: 8,
-  },
-  aboutImageTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 8,
-  },
-  aboutImage: {
-    width: '100%',
-    height: 200,
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
-  },
-  aboutImageContent: {
-    width: '100%',
-    height: '100%',
   },
   
   // Empty state styles

@@ -8,12 +8,15 @@ import {
   TouchableWithoutFeedback,
   Switch,
   Platform,
-  Vibration
+  Vibration,
+  TextInput,
+  ScrollView
 } from "react-native";
-import { X, Clock, Volume2, VolumeX } from "lucide-react-native";
+import { X, Clock, Volume2, VolumeX, Dumbbell } from "lucide-react-native";
 import { colors } from "@/constants/colors";
 import { useWorkoutStore } from "@/store/workoutStore";
 import Button from "./Button";
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type RestTimerModalProps = {
   visible: boolean;
@@ -22,6 +25,8 @@ type RestTimerModalProps = {
 };
 
 const presetTimes = [30, 60, 90, 120, 180, 300];
+const presetSetCounts = [3, 4, 6];
+const presetExerciseTimes = [30, 60, 120, 300, 600];
 
 export default function RestTimerModal({ 
   visible, 
@@ -36,9 +41,15 @@ export default function RestTimerModal({
   } = useWorkoutStore();
   
   const [selectedTime, setSelectedTime] = useState(defaultTime);
+  const [selectedExerciseTime, setSelectedExerciseTime] = useState(timerSettings.exerciseTime || 0);
   const [voiceEnabled, setVoiceEnabled] = useState(timerSettings.voicePrompts);
   const [autoStart, setAutoStart] = useState(timerSettings.autoStartRest);
   const [countdownBeep, setCountdownBeep] = useState(timerSettings.countdownBeep);
+  const [selectedSetCount, setSelectedSetCount] = useState(timerSettings.defaultSetCount || 3);
+  const [customSetCount, setCustomSetCount] = useState("");
+  const [customExerciseTime, setCustomExerciseTime] = useState("");
+  
+  const insets = useSafeAreaInsets ? useSafeAreaInsets() : { top: 44 };
   
   // Update selected time when defaultTime changes
   useEffect(() => {
@@ -50,30 +61,23 @@ export default function RestTimerModal({
     setVoiceEnabled(timerSettings.voicePrompts);
     setAutoStart(timerSettings.autoStartRest);
     setCountdownBeep(timerSettings.countdownBeep);
+    setSelectedSetCount(timerSettings.defaultSetCount || 3);
+    setSelectedExerciseTime(timerSettings.exerciseTime || 0);
   }, [timerSettings]);
   
-  const handleStartRest = () => {
-    startRestTimer(selectedTime);
-    
-    // Update timer settings if they've changed
-    if (voiceEnabled !== timerSettings.voicePrompts || 
-        autoStart !== timerSettings.autoStartRest ||
-        countdownBeep !== timerSettings.countdownBeep ||
-        selectedTime !== timerSettings.defaultRestTime) {
+  const handleApplySettings = () => {
       setTimerSettings({
         ...timerSettings,
         voicePrompts: voiceEnabled,
         autoStartRest: autoStart,
         countdownBeep: countdownBeep,
-        defaultRestTime: selectedTime
+      restTime: selectedTime,
+      defaultSetCount: selectedSetCount,
+      exerciseTime: selectedExerciseTime,
       });
-    }
-    
-    // Provide haptic feedback when starting timer
     if (Platform.OS !== 'web') {
       Vibration.vibrate(100);
     }
-    
     onClose();
   };
   
@@ -87,24 +91,126 @@ export default function RestTimerModal({
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.overlay}>
           <TouchableWithoutFeedback>
-            <View style={styles.container}>
-              <View style={styles.header}>
-                <Text style={styles.title}>Set Rest Timer</Text>
-                <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                  <X size={20} color={colors.text} />
+            <SafeAreaView style={[styles.container, { paddingTop: insets.top + 16, paddingHorizontal: 18, width: '92%', alignSelf: 'center' }]}> 
+              <View style={[styles.header, { marginTop: 8, marginBottom: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}> 
+                <Text style={[styles.title, { flex: 1, textAlign: 'left', fontSize: 20, fontWeight: '700', marginLeft: 8 }]}>Workout Timer Settings</Text>
+                <TouchableOpacity onPress={onClose} style={[styles.closeButton, { position: 'absolute', right: 8, top: 0, padding: 8 }]}> 
+                  <X size={22} color={colors.text} />
                 </TouchableOpacity>
               </View>
-              
-              <View style={styles.content}>
-                <View style={styles.iconContainer}>
-                  <Clock size={40} color={colors.primary} />
+              <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+                <View style={{ height: 8 }} />
+                <Text style={[styles.sectionTitle, { textAlign: 'left', fontSize: 15, marginBottom: 10, marginLeft: 4 }]}>Number of sets per exercise</Text>
+                <View style={[styles.timeOptions, { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'flex-start', marginLeft: 4, marginBottom: 8 }]}>
+                  {presetSetCounts.map((count) => (
+                    <TouchableOpacity
+                      key={count}
+                      style={[
+                        styles.timeOption,
+                        selectedSetCount === count && styles.selectedTimeOption,
+                      ]}
+                      onPress={() => {
+                        setSelectedSetCount(count);
+                        setCustomSetCount("");
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.timeText,
+                          selectedSetCount === count && styles.selectedTimeText,
+                        ]}
+                      >
+                        {count}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                  <TouchableOpacity
+                    style={[
+                      styles.timeOption,
+                      typeof selectedSetCount === 'number' && !presetSetCounts.includes(selectedSetCount) && styles.selectedTimeOption,
+                      { paddingHorizontal: 0, justifyContent: 'center', alignItems: 'center' }
+                    ]}
+                    onPress={() => {
+                      // Focus input if possible (not needed for now)
+                    }}
+                    activeOpacity={1}
+                  >
+                    <TextInput
+                      style={[
+                        styles.timeText,
+                        { width: 28, textAlign: 'center', borderBottomWidth: 0, backgroundColor: 'transparent', paddingVertical: 0 },
+                        typeof selectedSetCount === 'number' && !presetSetCounts.includes(selectedSetCount) && styles.selectedTimeText
+                      ]}
+                      keyboardType="numeric"
+                      value={customSetCount}
+                      onChangeText={text => {
+                        setCustomSetCount(text);
+                        const num = parseInt(text);
+                        if (!isNaN(num) && num > 0) setSelectedSetCount(num);
+                      }}
+                      placeholder="#"
+                      maxLength={2}
+                      placeholderTextColor={colors.textSecondary}
+                    />
+                  </TouchableOpacity>
                 </View>
                 
-                <Text style={styles.description}>
-                  Set a timer for your rest period between sets
+                <Text style={[styles.sectionTitle, { textAlign: 'left', fontSize: 15, marginTop: 24, marginBottom: 10, marginLeft: 4 }]}>Rest timer between exercises</Text>
+                <View style={[styles.timeOptions, { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'flex-start', marginLeft: 4, marginBottom: 8 }]}>
+                  {presetExerciseTimes.map((time) => (
+                    <TouchableOpacity
+                      key={time}
+                      style={[
+                        styles.timeOption,
+                        selectedExerciseTime === time && styles.selectedTimeOption,
+                      ]}
+                      onPress={() => {
+                        setSelectedExerciseTime(time);
+                        setCustomExerciseTime("");
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.timeText,
+                          selectedExerciseTime === time && styles.selectedTimeText,
+                        ]}
+                      >
+                        {time >= 60 ? `${time / 60}m` : `${time}s`}
                 </Text>
+                    </TouchableOpacity>
+                  ))}
+                  {/* Custom input as a button */}
+                  <TouchableOpacity
+                    style={[
+                      styles.timeOption,
+                      typeof selectedExerciseTime === 'number' && !presetExerciseTimes.includes(selectedExerciseTime) && styles.selectedTimeOption,
+                      { paddingHorizontal: 0, justifyContent: 'center', alignItems: 'center' }
+                    ]}
+                    onPress={() => {}}
+                    activeOpacity={1}
+                  >
+                    <TextInput
+                      style={[
+                        styles.timeText,
+                        { width: 28, textAlign: 'center', borderBottomWidth: 0, backgroundColor: 'transparent', paddingVertical: 0 },
+                        typeof selectedExerciseTime === 'number' && !presetExerciseTimes.includes(selectedExerciseTime) && styles.selectedTimeText
+                      ]}
+                      keyboardType="numeric"
+                      value={customExerciseTime}
+                      onChangeText={text => {
+                        setCustomExerciseTime(text);
+                        const num = parseInt(text);
+                        if (!isNaN(num) && num > 0) setSelectedExerciseTime(num);
+                      }}
+                      placeholder="#"
+                      maxLength={3}
+                      placeholderTextColor={colors.textSecondary}
+                    />
+                  </TouchableOpacity>
+                </View>
                 
-                <View style={styles.timeOptions}>
+                <Text style={[styles.sectionTitle, { textAlign: 'left', fontSize: 15, marginTop: 24, marginBottom: 10, marginLeft: 4 }]}>Rest timer between sets</Text>
+                <View style={[styles.timeOptions, { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'flex-start', marginLeft: 4, marginBottom: 8 }]}>
                   {presetTimes.map((time) => (
                     <TouchableOpacity
                       key={time}
@@ -217,8 +323,8 @@ export default function RestTimerModal({
                 
                 <View style={styles.buttonContainer}>
                   <Button
-                    title="Start Rest Timer"
-                    onPress={handleStartRest}
+                    title="Apply Settings"
+                    onPress={handleApplySettings}
                     style={styles.startButton}
                   />
                   
@@ -229,8 +335,9 @@ export default function RestTimerModal({
                     style={styles.closeButton}
                   />
                 </View>
-              </View>
-            </View>
+                <View style={{ height: 8 }} />
+              </ScrollView>
+            </SafeAreaView>
           </TouchableWithoutFeedback>
         </View>
       </TouchableWithoutFeedback>
@@ -248,13 +355,15 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: colors.card,
     borderRadius: 16,
-    width: "85%",
-    maxWidth: 400,
+    width: "92%",
+    maxWidth: 370,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 5,
+    alignSelf: 'center',
+    paddingHorizontal: 0,
   },
   header: {
     flexDirection: "row",
@@ -272,6 +381,10 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     padding: 4,
+  },
+  scrollContent: {
+    paddingBottom: 32,
+    paddingHorizontal: 0,
   },
   content: {
     padding: 20,
@@ -296,30 +409,32 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "center",
-    marginBottom: 24,
-    gap: 12,
+    marginVertical: 4,
   },
   timeOption: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    backgroundColor: colors.background,
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    margin: 5,
+    minWidth: 38,
+    alignItems: "center",
+    justifyContent: "center",
     borderWidth: 1,
     borderColor: colors.border,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: colors.background,
   },
   selectedTimeOption: {
     backgroundColor: colors.primary,
     borderColor: colors.primary,
   },
   timeText: {
-    fontSize: 16,
-    fontWeight: "500",
+    fontSize: 13,
     color: colors.text,
+    fontWeight: "500",
   },
   selectedTimeText: {
-    color: "#FFFFFF",
+    color: colors.white,
+    fontWeight: "700",
   },
   settingsContainer: {
     width: "100%",
@@ -370,5 +485,11 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     width: "100%",
+  },
+  sectionTitle: {
+    fontWeight: '600',
+    color: colors.text,
+    fontSize: 15,
+    marginBottom: 0,
   },
 });
