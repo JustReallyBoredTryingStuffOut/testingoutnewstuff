@@ -1,18 +1,3 @@
-# Recent Changes (July 2025)
-
-## Personal Record (PR) Logic Update
-- PRs are now only set if you have at least 4 previous completed attempts for an exercise (i.e., on your 5th or later attempt, if the new value exceeds all previous ones).
-- Attempts are counted as completed workouts that include at least one set for the exercise.
-- If you have fewer than 4 previous attempts, no PR will be set, even if it's your first time.
-
-## UI/UX and Modal Improvements
-- The records tab in the exercise modal now only displays a PR if one exists under the new logic.
-- The rest of the workout flow, timer modals, and exercise records/history features were improved for clarity, modern design, and better user experience.
-- The action area below each exercise was cleaned up for a more professional look.
-- The 'About' tab was removed from the exercise modal, leaving only 'History' and 'Records'.
-
----
-
 # Fitness App - Health & Workout Tracking
 
 ## 🚨 Important Update: Bluetooth Functionality Removal

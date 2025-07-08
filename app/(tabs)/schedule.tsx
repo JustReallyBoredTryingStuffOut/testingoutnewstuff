@@ -637,18 +637,21 @@ export default function ScheduleScreen() {
                     router.push(`/activity/${dateString}`);
                   }}
                 >
-                  <View style={styles.dateContainer}>
-                    <Text style={[
-                      styles.dateText,
-                      !isCurrentMonth && viewMode === "month" && { color: colors.textLight },
-                      isToday && { fontWeight: "700", color: colors.primary },
-                      isSelected && { color: colors.primary },
-                      { color: colors.text }
-                    ]}>
-                      {date.getDate()}
-                    </Text>
-                    
-                    {/* Indicators for scheduled and completed workouts and progress photos */}
+                  {/* Date number always at the top */}
+                  <Text style={[
+                    styles.dateText,
+                    !isCurrentMonth && viewMode === "month" && { color: colors.textLight },
+                    isToday && { fontWeight: "700", color: colors.primary },
+                    isSelected
+                      ? { color: colors.white, fontWeight: "700" }
+                      : { color: colors.text },
+                    { marginBottom: 2 }
+                  ]}>
+                    {date.getDate()}
+                  </Text>
+
+                  {/* Indicators and text below the date number */}
+                  <View style={{ alignItems: 'center', width: '100%' }}>
                     <View style={styles.workoutIndicators}>
                       {hasScheduledWorkout && showScheduledWorkouts && (
                         <View style={[styles.indicatorDot, { backgroundColor: colors.secondary }]} />
@@ -660,41 +663,40 @@ export default function ScheduleScreen() {
                         <View style={[styles.indicatorDot, { backgroundColor: '#FF9500' }]} />
                       )}
                     </View>
+                    {/* Show workout count if there are any */}
+                    {hasContent && (
+                      <View style={styles.workoutCountContainer}>
+                        {showCompletedWorkouts && hasCompletedWorkout && (
+                          <Text 
+                            style={[styles.workoutCount, { color: colors.primary, fontSize: 10 }]} 
+                            numberOfLines={1} 
+                            ellipsizeMode="tail"
+                          >
+                            {completedWorkouts.length} done
+                          </Text>
+                        )}
+                        {showScheduledWorkouts && hasScheduledWorkout && (
+                          <Text 
+                            style={[styles.workoutCount, { color: colors.secondary, fontSize: 10 }]} 
+                            numberOfLines={1} 
+                            ellipsizeMode="tail"
+                          >
+                            {scheduledWorkoutsForDate.length} planned
+                          </Text>
+                        )}
+                        {showProgressPhotos && hasProgressPhotos && (
+                          <Text 
+                            style={[styles.workoutCount, { color: '#FF9500', fontSize: 10 }]} 
+                            numberOfLines={1} 
+                            ellipsizeMode="tail"
+                          >
+                            {progressPhotosForDate.length} photo{progressPhotosForDate.length > 1 ? 's' : ''}
+                          </Text>
+                        )}
+                      </View>
+                    )}
                   </View>
-                  
-                  {/* Show workout count if there are any */}
-                  {hasContent && (
-                    <View style={styles.workoutCountContainer}>
-                      {showCompletedWorkouts && hasCompletedWorkout && (
-                        <Text 
-                          style={[styles.workoutCount, { color: colors.primary }]} 
-                          numberOfLines={1} 
-                          ellipsizeMode="tail"
-                        >
-                          {completedWorkouts.length} done
-                        </Text>
-                      )}
-                      {showScheduledWorkouts && hasScheduledWorkout && (
-                        <Text 
-                          style={[styles.workoutCount, { color: colors.secondary }]} 
-                          numberOfLines={1} 
-                          ellipsizeMode="tail"
-                        >
-                          {scheduledWorkoutsForDate.length} planned
-                        </Text>
-                      )}
-                      {showProgressPhotos && hasProgressPhotos && (
-                        <Text 
-                          style={[styles.workoutCount, { color: '#FF9500' }]} 
-                          numberOfLines={1} 
-                          ellipsizeMode="tail"
-                        >
-                          {progressPhotosForDate.length} photo{progressPhotosForDate.length > 1 ? 's' : ''}
-                        </Text>
-                      )}
-                    </View>
-                  )}
-                  
+
                   {/* Show muscle groups for completed workouts */}
                   {showCompletedWorkouts && muscleGroups.length > 0 && (
                     <View style={styles.muscleGroupContainer}>
@@ -718,20 +720,20 @@ export default function ScheduleScreen() {
                       )}
                     </View>
                   )}
-                  
+
                   {/* Show activity indicators */}
                   {activities.length > 0 && (
                     <View style={styles.activityIndicators}>
                       {activities.slice(0, 3).map((activity, idx) => {
                         const IconComponent = activity.icon;
                         return (
-                          <View key={idx} style={[styles.activityIndicator, { backgroundColor: activity.color }]}>
+                          <View key={idx} style={[styles.activityIndicator, { backgroundColor: activity.color }]}> 
                             <IconComponent size={8} color="#FFFFFF" />
                           </View>
                         );
                       })}
                       {activities.length > 3 && (
-                        <View style={[styles.activityIndicator, { backgroundColor: colors.textSecondary }]}>
+                        <View style={[styles.activityIndicator, { backgroundColor: colors.textSecondary }]}> 
                           <Text style={styles.activityCountText}>+{activities.length - 3}</Text>
                         </View>
                       )}

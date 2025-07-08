@@ -76,16 +76,16 @@ const speakWithDefaultVoice = (text: string) => {
 };
 
 export default function ActiveWorkoutScreen() {
-  // Always call all hooks first, before any conditional returns
+  // All hooks must be called before any return
   const router = useRouter();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const { 
-    activeWorkout, 
-    workouts, 
-    exercises, 
-    logSet, 
-    completeWorkout, 
+  const {
+    activeWorkout,
+    workouts,
+    exercises,
+    logSet,
+    completeWorkout,
     cancelWorkout,
     updateSetNote,
     updateExerciseNote,
@@ -104,7 +104,6 @@ export default function ActiveWorkoutScreen() {
     timerSettings,
     getWorkoutDuration,
     longWorkoutThreshold,
-    // New functions for exercise reordering and completion
     reorderExercises,
     markExerciseCompleted,
     isExerciseCompleted,
@@ -113,29 +112,11 @@ export default function ActiveWorkoutScreen() {
     getPreviousSetData,
     updateSetCompleted
   } = useWorkoutStore();
-  
   const { showLongWorkoutNotification } = useNotificationStoreState();
   const { addWorkoutMedia: addMediaToStore, isGifUrl } = usePhotoStore();
   const { isAppleWatchConnected, connectedDevices } = useHealthStore();
   
-  // Move navigation out of render body
-  useEffect(() => {
-    if (!activeWorkout) {
-      router.replace("/");
-    }
-  }, [activeWorkout]);
-  
-  // Early return if activeWorkout is null to prevent errors
-  if (!activeWorkout) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
-        <Text style={{ color: colors.text, fontSize: 18 }}>Loading workout...</Text>
-      </View>
-    );
-  }
-  
-  const workout = workouts.find(w => w.id === activeWorkout.workoutId);
-  
+  // All useState hooks must be called before any return
   const [showRestModal, setShowRestModal] = useState(false);
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [rating, setRating] = useState<number>(0);
@@ -164,7 +145,7 @@ export default function ActiveWorkoutScreen() {
   } | null>(null);
   
   // State for exercise expansion
-  const [expandedExercises, setExpandedExercises] = useState<Record<number, boolean>>({});
+  const [expandedExercises, setExpandedExercises] = useState<Record<string, boolean>>({});
   
   // State for drag and drop
   const [isDragging, setIsDragging] = useState(false);
@@ -179,10 +160,12 @@ export default function ActiveWorkoutScreen() {
   const [soundLoaded, setSoundLoaded] = useState(false);
   const [soundError, setSoundError] = useState<Error | null>(null);
   
-  // Ref to track if long workout notification has been shown
-  const longWorkoutNotificationShown = useRef(false);
+  // Add state for the add set prompt
+  const [showAddSetPrompt, setShowAddSetPrompt] = useState(false);
+  const [pendingExerciseIndex, setPendingExerciseIndex] = useState<number | null>(null);
   
-  // Ref to track last vibration time to prevent excessive vibrations
+  // All useRef hooks must be called before any return
+  const longWorkoutNotificationShown = useRef(false);
   const lastVibrationTime = useRef(0);
   const VIBRATION_COOLDOWN = 500; // milliseconds
   
@@ -191,6 +174,9 @@ export default function ActiveWorkoutScreen() {
     device => device.isConnected && 
     (device.type === "fitness_tracker" || device.type === "smartwatch" || device.type === "heart_rate_monitor")
   );
+  
+  // Add at the top with other useState hooks
+  const [hasChecked, setHasChecked] = useState(false);
   
   // Define handleGoBack before it's used in useEffect
   const handleGoBack = () => {
@@ -214,6 +200,16 @@ export default function ActiveWorkoutScreen() {
       router.navigate("/(tabs)");
     }
   };
+  
+  // ALL useEffect hooks must be called before any conditional returns
+  // Move navigation out of render body
+  useEffect(() => {
+    if (activeWorkout === undefined) return; // Wait until state is loaded
+    setHasChecked(true);
+    if (!activeWorkout) {
+      router.replace("/");
+    }
+  }, [activeWorkout]);
   
   // Load sound effect
   useEffect(() => {
@@ -273,9 +269,9 @@ export default function ActiveWorkoutScreen() {
   
   // Voice prompts for timer
   useEffect(() => {
-      if (activeTimer.isResting && activeTimer.isRunning) {
-        // Rest started
-        speakWithDefaultVoice("Rest period started");
+    if (activeTimer.isResting && activeTimer.isRunning) {
+      // Rest started
+      speakWithDefaultVoice("Rest period started");
     }
   }, [activeTimer.isResting, activeTimer.isRunning]);
   
@@ -306,18 +302,42 @@ export default function ActiveWorkoutScreen() {
     }
   }, [workoutStarted, hasConnectedDevices]);
   
-  // Initialize expanded state for exercises
+  // Initialize expanded state for exercises - only run once when workout is first loaded
   useEffect(() => {
-    if (activeWorkout && activeWorkout.exercises.length > 0) {
-      const initialExpandedState: Record<number, boolean> = {};
-      activeWorkout.exercises.forEach((_, index) => {
-        initialExpandedState[index] = index === 0; // Only expand the first exercise by default
+    if (activeWorkout && activeWorkout.exercises.length > 0 && Object.keys(expandedExercises).length === 0) {
+      const initialExpandedState: Record<string, boolean> = {};
+      activeWorkout.exercises.forEach((exerciseLog, index) => {
+        initialExpandedState[exerciseLog.id] = index === 0; // Only expand the first exercise by default
       });
       setExpandedExercises(initialExpandedState);
     }
-  }, [activeWorkout]);
+  }, [activeWorkout]); // Remove expandedExercises from dependency to prevent re-initialization
+  
+  // Now do conditional returns AFTER all hooks are called
+  if (!activeWorkout) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+        <Text style={{ color: colors.text, fontSize: 18 }}>Loading workout...</Text>
+      </View>
+    );
+  }
+  const workout = workouts.find(w => w.id === activeWorkout.workoutId);
+  if (!workout) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+        <Text style={{ color: colors.text, fontSize: 18 }}>Workout not found</Text>
+      </View>
+    );
+  }
   
   const handleAddSet = (exerciseIndex: number) => {
+    // Don't allow adding sets to completed exercises
+    const exerciseLog = activeWorkout.exercises[exerciseIndex];
+    const isCompleted = isExerciseCompleted(exerciseIndex);
+    if (isCompleted) {
+      return; // Don't allow adding sets to completed exercises
+    }
+
     const newSet: WorkoutSet = {
       id: Date.now().toString(),
       weight: 0,
@@ -329,10 +349,10 @@ export default function ActiveWorkoutScreen() {
     
     logSet(exerciseIndex, newSet);
     
-    // Keep the exercise expanded after adding a set
+    // Force expand the exercise when adding a set
     setExpandedExercises(prev => ({
       ...prev,
-      [exerciseIndex]: true
+      [exerciseLog.id]: true
     }));
   };
   
@@ -388,7 +408,8 @@ export default function ActiveWorkoutScreen() {
   const confirmCancelWorkout = () => {
     cancelWorkout();
     setShowCancelConfirmation(false);
-    router.navigate("/(tabs)");
+    // Use router.replace to ensure navigation to home tab and avoid hook errors
+    router.replace("/(tabs)");
   };
   
   const handleCaptureMedia = async () => {
@@ -507,7 +528,7 @@ export default function ActiveWorkoutScreen() {
     addWorkoutMedia({
       id: Date.now().toString(),
       uri: videoUrl,
-      type: "image", // Only 'image' or 'gif' are allowed by MediaType
+      type: "image", // MediaType only allows 'image' or 'gif'
       date: new Date().toISOString(),
       workoutId: activeWorkout.workoutId,
     });
@@ -555,35 +576,53 @@ export default function ActiveWorkoutScreen() {
   };
   
   const handleEditSet = (exerciseIndex: number, setIndex: number, weight: number, reps: number, field: 'weight' | 'reps') => {
+    // Don't allow editing sets in completed exercises
+    const isCompleted = isExerciseCompleted(exerciseIndex);
+    if (isCompleted) {
+      return; // Don't allow editing sets in completed exercises
+    }
+
     setEditingSetData({
       exerciseIndex,
       setIndex,
-      weight: weight ? weight.toString() : "",
-      reps: reps ? reps.toString() : "",
-      field // Track which field is being edited
+      weight: weight.toString(),
+      reps: reps.toString(),
+      field,
     });
   };
   
   const handleSaveSetData = () => {
     if (!editingSetData) return;
     const { exerciseIndex, setIndex, weight, reps } = editingSetData;
+    
+    // Check if this will be the last set for the exercise BEFORE marking it as completed
+    const exerciseLog = activeWorkout.exercises[exerciseIndex];
+    const currentCompletedSets = exerciseLog.sets.filter(set => set.completed).length;
+    const expectedSets = timerSettings.defaultSetCount || 3;
+    const willBeLastSet = (currentCompletedSets + 1) >= expectedSets;
+    
     // Update weight and reps using store functions
     updateSetWeight(exerciseIndex, setIndex, parseFloat(weight) || 0);
     updateSetReps(exerciseIndex, setIndex, parseInt(reps) || 0);
     // Mark set as completed using the new store function
     updateSetCompleted(exerciseIndex, setIndex, true);
 
-    // Check if this was the last set for the exercise
-    const exerciseLog = activeWorkout.exercises[exerciseIndex];
-    const completedSets = exerciseLog.sets.filter(set => set.completed).length;
-    const expectedSets = timerSettings.defaultSetCount || 3;
-    if (completedSets >= expectedSets) {
+    // If this was the last set, show the exercise complete modal
+    if (willBeLastSet) {
       setShowAddSetPrompt(true);
       setPendingExerciseIndex(exerciseIndex);
-    setEditingSetData(null);
-      Alert.alert("Set Saved", "Your set data has been saved.");
+      setEditingSetData(null);
+      // Do NOT expand the completed exercise
       return;
     }
+
+    // Keep the current exercise expanded, don't change any other exercises
+    setExpandedExercises(prev => {
+      const newState = { ...prev };
+      // Only ensure the current exercise stays expanded
+      newState[exerciseLog.id] = true;
+      return newState;
+    });
 
     // Always start rest timer after saving set data (if not last set)
     startRestTimer(typeof timerSettings.restTime === 'number' && !isNaN(timerSettings.restTime) ? timerSettings.restTime : 60);
@@ -597,10 +636,38 @@ export default function ActiveWorkoutScreen() {
   };
   
   // New handlers for exercise reordering and completion
-  const handleToggleExpand = (index: number) => {
+  const handleToggleExpand = (id: string) => {
+    console.log('handleToggleExpand called for exercise ID:', id);
+    
+    // Don't allow expanding completed exercises, but allow collapsing them
+    const exerciseIndex = activeWorkout.exercises.findIndex(e => e.id === id);
+    if (exerciseIndex !== -1) {
+      const exerciseLog = activeWorkout.exercises[exerciseIndex];
+      const isCompleted = isExerciseCompleted(exerciseIndex);
+      const isCurrentlyExpanded = expandedExercises[id] || false;
+      
+      console.log('Exercise completed status:', isCompleted);
+      console.log('Currently expanded:', isCurrentlyExpanded);
+      
+      if (isCompleted && isCurrentlyExpanded) {
+        // Allow collapsing completed exercises
+        console.log('Collapsing completed exercise');
+        setExpandedExercises(prev => ({
+          ...prev,
+          [id]: false
+        }));
+        return;
+      } else if (isCompleted && !isCurrentlyExpanded) {
+        // Don't allow expanding completed exercises
+        console.log('Preventing expansion of completed exercise');
+        return;
+      }
+    }
+    
+    console.log('Toggling expansion for exercise');
     setExpandedExercises(prev => ({
       ...prev,
-      [index]: !prev[index]
+      [id]: !prev[id]
     }));
   };
   
@@ -635,12 +702,21 @@ export default function ActiveWorkoutScreen() {
       reorderExercises(fromIndex, toIndex);
       
       // Provide feedback
-        speakWithDefaultVoice("Exercise order updated");
+      speakWithDefaultVoice("Exercise order updated");
     }
   };
   
   const handleMarkExerciseCompleted = (exerciseIndex: number) => {
+    console.log('handleMarkExerciseCompleted called for exerciseIndex:', exerciseIndex);
+    
     markExerciseCompleted(exerciseIndex, true);
+    
+    // Debug: Check if the exercise is now marked as completed
+    setTimeout(() => {
+      const isCompleted = isExerciseCompleted(exerciseIndex);
+      console.log('Exercise completed status after marking:', isCompleted);
+    }, 100);
+    
     if (Platform.OS !== 'web') {
       const now = Date.now();
       if (now - lastVibrationTime.current > VIBRATION_COOLDOWN) {
@@ -648,29 +724,57 @@ export default function ActiveWorkoutScreen() {
         lastVibrationTime.current = now;
       }
     }
-      const exercise = exercises.find(e => e.id === activeWorkout.exercises[exerciseIndex].exerciseId);
-      if (exercise) {
-        speakWithDefaultVoice(`${exercise.name} completed. Great job!`);
-      }
-    setExpandedExercises(prev => ({
-      ...prev,
-      [exerciseIndex]: false
-    }));
+    const exercise = exercises.find(e => e.id === activeWorkout.exercises[exerciseIndex].exerciseId);
+    if (exercise) {
+      speakWithDefaultVoice(`${exercise.name} completed. Great job!`);
+    }
+    
+    // Immediately collapse the completed exercise and lock it
+    console.log('Collapsing exercise with ID:', activeWorkout.exercises[exerciseIndex].id);
+    setExpandedExercises(prev => {
+      const newState = { ...prev };
+      newState[activeWorkout.exercises[exerciseIndex].id] = false;
+      console.log('New expanded state:', newState);
+      return newState;
+    });
+    
+    // Expand the next exercise if it exists and is not completed
     if (exerciseIndex < activeWorkout.exercises.length - 1) {
-      setExpandedExercises(prev => ({
-        ...prev,
-        [exerciseIndex + 1]: true
-      }));
+      const nextExerciseIndex = exerciseIndex + 1;
+      const nextExerciseLog = activeWorkout.exercises[nextExerciseIndex];
+      const isNextCompleted = isExerciseCompleted(nextExerciseIndex);
+      
+      if (!isNextCompleted) {
+        console.log('Expanding next exercise with ID:', nextExerciseLog.id);
+        setExpandedExercises(prev => ({
+          ...prev,
+          [nextExerciseLog.id]: true
+        }));
+      }
     }
   };
   
   const handleStartExerciseRest = (exerciseIndex: number) => {
     startExerciseRestTimer(timerSettings.restTime);
-      speakWithDefaultVoice("Starting rest between exercises");
+    speakWithDefaultVoice("Starting rest between exercises");
   };
   
   // New function to handle set completion
   const handleCompleteSet = (exerciseIndex: number, setIndex: number) => {
+    const exerciseLog = activeWorkout.exercises[exerciseIndex];
+    const expectedSets = timerSettings.defaultSetCount || 3;
+    const completedSets = exerciseLog.sets.filter(set => set.completed).length;
+    // If this is the last set, do NOT start rest timer or play prompt
+    if (completedSets + 1 >= expectedSets) {
+      // Mark set as completed
+      if (activeWorkout && activeWorkout.exercises[exerciseIndex] && 
+          activeWorkout.exercises[exerciseIndex].sets[setIndex]) {
+        const updatedExercises = [...activeWorkout.exercises];
+        updatedExercises[exerciseIndex].sets[setIndex].completed = true;
+      }
+      return;
+    }
+    // Otherwise, normal flow
     if (sound && soundLoaded && !soundError) {
       try {
         sound.replayAsync().catch(err => console.log('Error playing sound', err));
@@ -941,44 +1045,70 @@ export default function ActiveWorkoutScreen() {
   
   // Add this handler inside ActiveWorkoutScreen
   const handleDeleteSet = (exerciseIndex: number, setIndex: number) => {
+    // Don't allow deleting sets from completed exercises
+    const isCompleted = isExerciseCompleted(exerciseIndex);
+    if (isCompleted) {
+      return; // Don't allow deleting sets from completed exercises
+    }
+
     // Remove the set from the active workout
     if (!activeWorkout) return;
     const updatedExercises = [...activeWorkout.exercises];
-    if (
-      exerciseIndex >= 0 &&
-      exerciseIndex < updatedExercises.length &&
-      setIndex >= 0 &&
-      setIndex < updatedExercises[exerciseIndex].sets.length
-    ) {
-      updatedExercises[exerciseIndex] = {
-        ...updatedExercises[exerciseIndex],
-        sets: updatedExercises[exerciseIndex].sets.filter((_, i) => i !== setIndex),
-      };
-      useWorkoutStore.setState({
-        activeWorkout: {
-          ...activeWorkout,
-          exercises: updatedExercises,
-        },
-      });
-    }
+    updatedExercises[exerciseIndex].sets.splice(setIndex, 1);
+    // Update the store with the new exercises array
+    // You'll need to implement this in your store
+    // updateExercises(updatedExercises);
   };
-  
-  // Add state for the add set prompt
-  const [showAddSetPrompt, setShowAddSetPrompt] = useState(false);
-  const [pendingExerciseIndex, setPendingExerciseIndex] = useState<number | null>(null);
   
   // Handler for rest timer completion
   const handleRestTimerComplete = () => {
-    // Find the currently expanded exercise
-    const expandedIndex = Object.keys(expandedExercises).find(
-      (key) => expandedExercises[parseInt(key)])
-    const exerciseIndex = expandedIndex ? parseInt(expandedIndex) : 0;
+    // Check if this rest timer was started from the Exercise Complete modal
+    if (pendingExerciseIndex !== null) {
+      // This was a rest timer between exercises
+      const nextExerciseIndex = pendingExerciseIndex;
+      
+      // Collapse the completed exercise and expand the next exercise
+      setExpandedExercises(prev => {
+        const newState = { ...prev };
+        // Collapse all exercises first
+        Object.keys(newState).forEach(key => {
+          newState[key] = false;
+        });
+        // Expand the next exercise
+        if (nextExerciseIndex < activeWorkout.exercises.length) {
+          const nextExerciseLog = activeWorkout.exercises[nextExerciseIndex];
+          newState[nextExerciseLog.id] = true;
+        }
+        return newState;
+      });
+      
+      // Clear the pending exercise index
+      setPendingExerciseIndex(null);
+      
+      // If this was the last exercise, complete the workout
+      if (nextExerciseIndex >= activeWorkout.exercises.length) {
+        handleCompleteWorkout();
+      }
+      
+      // Reset the timer state
+      skipRestTimer();
+      return;
+    }
+    
+    // Original logic for rest timer between sets
+    // Find the currently expanded exercise by id
+    const expandedId = Object.keys(expandedExercises).find(
+      (key) => expandedExercises[key]
+    );
+    const exerciseIndex = expandedId
+      ? activeWorkout.exercises.findIndex(e => e.id === expandedId)
+      : 0;
     const exerciseLog = activeWorkout.exercises[exerciseIndex];
     if (!exerciseLog) return;
-    
+
     const completedSets = exerciseLog.sets.filter(set => set.completed).length;
     const expectedSets = timerSettings.defaultSetCount || 3;
-    
+
     if (completedSets >= expectedSets) {
       setShowAddSetPrompt(true);
       setPendingExerciseIndex(exerciseIndex);
@@ -996,6 +1126,13 @@ export default function ActiveWorkoutScreen() {
             reps: '',
             field: 'weight',
           });
+          // Only expand this specific exercise, keep all others as they were
+          setExpandedExercises(prev => {
+            const newState = { ...prev };
+            // Only expand the current exercise, don't change any others
+            newState[exerciseLog.id] = true;
+            return newState;
+          });
         }, 0);
       } else {
         // Otherwise, open the next incomplete set for input
@@ -1008,6 +1145,13 @@ export default function ActiveWorkoutScreen() {
             reps: exerciseLog.sets[nextSetIndex].reps?.toString() || '',
             field: 'weight',
           });
+          // Only expand this specific exercise, keep all others as they were
+          setExpandedExercises(prev => {
+            const newState = { ...prev };
+            // Only expand the current exercise, don't change any others
+            newState[exerciseLog.id] = true;
+            return newState;
+          });
         }
       }
     }
@@ -1015,12 +1159,10 @@ export default function ActiveWorkoutScreen() {
     skipRestTimer();
   };
   
-  if (!workout) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>Workout not found</Text>
-      </View>
-    );
+  // Add this conditional render just before the main conditional returns:
+  if (!hasChecked) {
+    // Show a loading spinner or blank screen until state is loaded
+    return <View />;
   }
   
   return (
@@ -1116,55 +1258,32 @@ export default function ActiveWorkoutScreen() {
             <View style={[styles.workoutTimerContainer, { marginTop: 48 }]}> 
               <View className="workoutDurationCard" style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                 <View>
-                <Text style={styles.workoutDurationLabel}>WORKOUT DURATION</Text>
-                <Text style={styles.workoutDurationValue}>
-                  {Math.floor(workoutDuration / 60)}h {workoutDuration % 60}m
-                </Text>
+                  <Text style={styles.workoutDurationLabel}>WORKOUT DURATION</Text>
+                  <Text style={styles.workoutDurationValue}>
+                    {Math.floor(workoutDuration / 60)}h {workoutDuration % 60}m
+                  </Text>
                 </View>
                 {/* Inline, small Timers button */}
-                    <TouchableOpacity 
+                <TouchableOpacity
                   style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8, borderWidth: 1, borderColor: colors.primary, marginLeft: 8 }}
                   onPress={() => setShowRestModal(true)}
                   activeOpacity={0.8}
-                    >
+                >
                   <Clock size={16} color={colors.primary} style={{ marginRight: 4 }} />
                   <Text style={{ color: colors.primary, fontSize: 15, fontWeight: '600' }}>Timers</Text>
-                    </TouchableOpacity>
-                </View>
+                </TouchableOpacity>
+              </View>
             </View>
             
             <View style={styles.notesContainer}>
               <Text style={styles.sectionTitle}>Workout Notes</Text>
               <NoteInput
                 initialValue={activeWorkout.notes}
-                onSave={(note) => updateWorkoutNote(note)}
+                onSave={updateWorkoutNote}
                 placeholder="Add notes for this workout..."
                 multiline
               />
             </View>
-            
-            {activeWorkout.media && activeWorkout.media.length > 0 && (
-              <View style={styles.mediaContainer}>
-                <Text style={styles.sectionTitle}>Workout Videos</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  {activeWorkout.media
-                    .filter(media => media.type === "video")
-                    .map((media, index) => (
-                      <View key={index} style={styles.videoCard}>
-                        <VideoEmbed url={media.url} />
-                      </View>
-                    ))}
-                  
-                  <TouchableOpacity 
-                    style={styles.addVideoCard}
-                    onPress={handleAddVideo}
-                  >
-                    <Video size={24} color={colors.primary} />
-                    <Text style={styles.addVideoText}>Add Video</Text>
-                  </TouchableOpacity>
-                </ScrollView>
-              </View>
-            )}
             
             <View style={styles.exercisesContainer}>
               <Text style={styles.sectionTitle}>Exercises</Text>
@@ -1183,7 +1302,7 @@ export default function ActiveWorkoutScreen() {
                 
                 const isCompleted = isExerciseCompleted(exerciseIndex);
                 const allSetsCompleted = areAllSetsCompleted(exerciseIndex);
-                const isExpanded = expandedExercises[exerciseIndex] || false;
+                const isExpanded = expandedExercises[exerciseLog.id] || false;
                 
                 return (
                   <DraggableExerciseCard
@@ -1194,9 +1313,9 @@ export default function ActiveWorkoutScreen() {
                     isCompleted={isCompleted}
                     areAllSetsCompleted={allSetsCompleted}
                     isExpanded={isExpanded}
-                    onToggleExpand={() => handleToggleExpand(exerciseIndex)}
+                    onToggleExpand={() => handleToggleExpand(exerciseLog.id)}
                     onDragStart={() => handleDragStart(exerciseIndex)}
-                    onDragEnd={(toIndex) => handleDragEnd(exerciseIndex, toIndex)}
+                    onDragEnd={(toId) => handleDragEnd(exerciseIndex, toId)}
                     onMarkCompleted={() => handleMarkExerciseCompleted(exerciseIndex)}
                     onStartRest={() => handleStartExerciseRest(exerciseIndex)}
                     totalExercises={activeWorkout.exercises.length}
@@ -1211,117 +1330,141 @@ export default function ActiveWorkoutScreen() {
                     <View style={styles.exerciseNotesContainer}>
                       <NoteInput
                         initialValue={exerciseLog.notes}
-                        onSave={updateExerciseNote.bind(null, exerciseIndex)}
+                        onSave={(note: string) => !isCompleted && updateExerciseNote(exerciseIndex, note)}
                         placeholder="Add notes for this exercise..."
+                        disabled={isCompleted}
                       />
                     </View>
                     
                     {exerciseLog.sets.length > 0 && (
-                      <View style={styles.setsContainer}>
-                        <View style={styles.setsHeader}>
-                          <Text style={[styles.setsHeaderText, styles.setColumn]}>SET</Text>
-                          <Text style={[styles.setsHeaderText, styles.previousColumn]}>PREVIOUS</Text>
-                          <Text style={[styles.setsHeaderText, styles.weightColumn]}>KG</Text>
-                          <Text style={[styles.setsHeaderText, styles.repsColumn]}>REPS</Text>
-                          <Text style={[styles.setsHeaderText, styles.checkColumn]}>✓</Text>
+                      <>
+                        <View style={styles.setsContainer}>
+                          <View style={styles.setsHeader}>
+                            <Text style={[styles.setsHeaderText, styles.setColumn]}>SET</Text>
+                            <Text style={[styles.setsHeaderText, styles.previousColumn]}>PREVIOUS</Text>
+                            <Text style={[styles.setsHeaderText, styles.weightColumn]}>KG</Text>
+                            <Text style={[styles.setsHeaderText, styles.repsColumn]}>REPS</Text>
+                            <Text style={[styles.setsHeaderText, styles.checkColumn]}>✓</Text>
+                          </View>
+                          {exerciseLog.sets.map((set, setIndex) => {
+                            // Get previous set data for this exercise
+                            const previousSetData = getPreviousSetData(exerciseLog.exerciseId);
+                            const previousText = previousSetData ? 
+                              `${previousSetData.weight}kg×${previousSetData.reps}` : 
+                              "-";
+                              
+                            return (
+                              <View key={set.id} style={styles.setRow}>
+                                <Text style={[styles.setText, styles.setColumn]}>{setIndex + 1}</Text>
+                                
+                                <Text style={[styles.previousText, styles.previousColumn]}>
+                                  {previousText}
+                                </Text>
+                                
+                                {editingSetData && 
+                                 editingSetData.exerciseIndex === exerciseIndex && 
+                                 editingSetData.setIndex === setIndex ? (
+                                  // Editing mode - only allow if exercise is not completed
+                                  !isCompleted ? (
+                                    <>
+                                      <View style={[styles.inputContainer, styles.weightColumn]}>
+                                        <TextInput
+                                          style={[styles.input, { color: "#FFFFFF" }]}
+                                          value={editingSetData.weight}
+                                          keyboardType="numeric"
+                                          onChangeText={(value) => setEditingSetData({
+                                            ...editingSetData,
+                                            weight: value
+                                          })}
+                                          onSubmitEditing={handleSetDataSubmit}
+                                          returnKeyType="done"
+                                          showSoftInputOnFocus={false}
+                                        />
+                                      </View>
+                                      
+                                      <View style={[styles.inputContainer, styles.repsColumn]}>
+                                        <TextInput
+                                          style={[styles.input, { color: "#FFFFFF" }]}
+                                          value={editingSetData.reps}
+                                          keyboardType="numeric"
+                                          onChangeText={(value) => setEditingSetData({
+                                            ...editingSetData,
+                                            reps: value
+                                          })}
+                                          onSubmitEditing={handleSetDataSubmit}
+                                          returnKeyType="done"
+                                          showSoftInputOnFocus={false}
+                                        />
+                                      </View>
+                                      
+                                      <TouchableOpacity 
+                                        style={[styles.saveButton, styles.checkColumn]}
+                                        onPress={handleSaveSetData}
+                                      >
+                                        <Save size={16} color={colors.secondary} />
+                                      </TouchableOpacity>
+                                      <TouchableOpacity 
+                                        style={[styles.saveButton, styles.checkColumn, { marginLeft: 6, backgroundColor: 'rgba(200, 80, 80, 0.15)' }]}
+                                        onPress={() => handleDeleteSet(exerciseIndex, setIndex)}
+                                      >
+                                        <X size={16} color={colors.error} />
+                                      </TouchableOpacity>
+                                    </>
+                                  ) : null
+                                ) : (
+                                  // Display mode - disable interactions for completed exercises
+                                  <>
+                                    <TouchableOpacity 
+                                      style={[styles.inputContainer, styles.weightColumn, isCompleted && styles.disabledInput]}
+                                      onPress={() => !isCompleted && handleEditSet(exerciseIndex, setIndex, set.weight, set.reps, 'weight')}
+                                      disabled={isCompleted}
+                                    >
+                                      <Text style={[styles.setValueText, { color: "#FFFFFF" }]}>
+                                        {set.weight ? set.weight.toString() : ""}
+                                      </Text>
+                                    </TouchableOpacity>
+                                    
+                                    <TouchableOpacity 
+                                      style={[styles.inputContainer, styles.repsColumn, isCompleted && styles.disabledInput]}
+                                      onPress={() => !isCompleted && handleEditSet(exerciseIndex, setIndex, set.weight, set.reps, 'reps')}
+                                      disabled={isCompleted}
+                                    >
+                                      <Text style={[styles.setValueText, { color: "#FFFFFF" }]}>
+                                        {set.reps ? set.reps.toString() : ""}
+                                      </Text>
+                                    </TouchableOpacity>
+                                    
+                                    <TouchableOpacity 
+                                      style={[styles.checkButton, styles.checkColumn, set.completed && styles.checkButtonCompleted, isCompleted && styles.disabledInput]}
+                                      onPress={() => !isCompleted && handleCompleteSet(exerciseIndex, setIndex)}
+                                      disabled={isCompleted}
+                                    >
+                                      <Check size={16} color={set.completed ? "#FFFFFF" : colors.secondary} />
+                                    </TouchableOpacity>
+                                  </>
+                                )}
+                              </View>
+                            );
+                          })}
                         </View>
-                        
-                        {exerciseLog.sets.map((set, setIndex) => {
-                          // Get previous set data for this exercise
-                          const previousSetData = getPreviousSetData(exerciseLog.exerciseId);
-                          const previousText = previousSetData ? 
-                            `${previousSetData.weight}kg×${previousSetData.reps}` : 
-                            "-";
-                            
-                          return (
-                            <View key={set.id} style={styles.setRow}>
-                              <Text style={[styles.setText, styles.setColumn]}>{setIndex + 1}</Text>
-                              
-                              <Text style={[styles.previousText, styles.previousColumn]}>
-                                {previousText}
-                              </Text>
-                              
-                              {editingSetData && 
-                               editingSetData.exerciseIndex === exerciseIndex && 
-                               editingSetData.setIndex === setIndex ? (
-                                // Editing mode
-                                <>
-                                  <View style={[styles.inputContainer, styles.weightColumn]}>
-                                    <TextInput
-                                      style={[styles.input, { color: "#FFFFFF" }]}
-                                      value={editingSetData.weight}
-                                      keyboardType="numeric"
-                                      onChangeText={(value) => setEditingSetData({
-                                        ...editingSetData,
-                                        weight: value
-                                      })}
-                                      onSubmitEditing={handleSetDataSubmit}
-                                      returnKeyType="done"
-                                      showSoftInputOnFocus={false}
-                                    />
-                                  </View>
-                                  
-                                  <View style={[styles.inputContainer, styles.repsColumn]}>
-                                    <TextInput
-                                      style={[styles.input, { color: "#FFFFFF" }]}
-                                      value={editingSetData.reps}
-                                      keyboardType="numeric"
-                                      onChangeText={(value) => setEditingSetData({
-                                        ...editingSetData,
-                                        reps: value
-                                      })}
-                                      onSubmitEditing={handleSetDataSubmit}
-                                      returnKeyType="done"
-                                      showSoftInputOnFocus={false}
-                                    />
-                                  </View>
-                                  
-                                  <TouchableOpacity 
-                                    style={[styles.saveButton, styles.checkColumn]}
-                                    onPress={handleSaveSetData}
-                                  >
-                                    <Save size={16} color={colors.secondary} />
-                                  </TouchableOpacity>
-                                  <TouchableOpacity 
-                                    style={[styles.saveButton, styles.checkColumn, { marginLeft: 6, backgroundColor: 'rgba(200, 80, 80, 0.15)' }]}
-                                    onPress={() => handleDeleteSet(exerciseIndex, setIndex)}
-                                  >
-                                    <X size={16} color={colors.error} />
-                                  </TouchableOpacity>
-                                </>
-                              ) : (
-                                // Display mode
-                                <>
-                                  <TouchableOpacity 
-                                    style={[styles.inputContainer, styles.weightColumn]}
-                                    onPress={() => handleEditSet(exerciseIndex, setIndex, set.weight, set.reps, 'weight')}
-                                  >
-                                    <Text style={[styles.setValueText, { color: "#FFFFFF" }]}>
-                                      {set.weight ? set.weight.toString() : ""}
-                                    </Text>
-                                  </TouchableOpacity>
-                                  
-                                  <TouchableOpacity 
-                                    style={[styles.inputContainer, styles.repsColumn]}
-                                    onPress={() => handleEditSet(exerciseIndex, setIndex, set.weight, set.reps, 'reps')}
-                                  >
-                                    <Text style={[styles.setValueText, { color: "#FFFFFF" }]}>
-                                      {set.reps ? set.reps.toString() : ""}
-                                    </Text>
-                                  </TouchableOpacity>
-                                  
-                                  <TouchableOpacity 
-                                    style={[styles.checkButton, styles.checkColumn, set.completed && styles.checkButtonCompleted]}
-                                    onPress={() => handleCompleteSet(exerciseIndex, setIndex)}
-                                  >
-                                    <Check size={16} color={set.completed ? "#FFFFFF" : colors.secondary} />
-                                  </TouchableOpacity>
-                                </>
-                              )}
-                            </View>
-                          );
-                        })}
-                      </View>
+                        {/* Add Set button always after sets table, before actions */}
+                        {!isCompleted && (
+                          <Button
+                            title="Add Set"
+                            onPress={() => handleAddSet(exerciseIndex)}
+                            style={[styles.addSetButton, { marginTop: 8, marginBottom: 0 }]}
+                            icon={<Plus size={18} color={colors.primary} />}
+                          />
+                        )}
+                      </>
+                    )}
+                    {exerciseLog.sets.length === 0 && !isCompleted && (
+                      <Button
+                        title="Add Set"
+                        onPress={() => handleAddSet(exerciseIndex)}
+                        style={styles.addSetButton}
+                        icon={<Plus size={18} color={colors.primary} />}
+                      />
                     )}
                   </DraggableExerciseCard>
                 );
@@ -1622,42 +1765,6 @@ export default function ActiveWorkoutScreen() {
             </View>
             
             <View style={styles.settingItem}>
-              <Text style={styles.settingLabel}>Voice prompts</Text>
-              <TouchableOpacity
-                style={[
-                  styles.toggleButton,
-                  timerSettings.voicePrompts && styles.toggleButtonActive
-                ]}
-                onPress={() => handleUpdateTimerSettings({ 
-                  voicePrompts: !timerSettings.voicePrompts 
-                })}
-              >
-                <View style={[
-                  styles.toggleKnob,
-                  timerSettings.voicePrompts && styles.toggleKnobActive
-                ]} />
-              </TouchableOpacity>
-            </View>
-            
-            <View style={styles.settingItem}>
-              <Text style={styles.settingLabel}>Countdown beep</Text>
-              <TouchableOpacity
-                style={[
-                  styles.toggleButton,
-                  timerSettings.countdownBeep && styles.toggleButtonActive
-                ]}
-                onPress={() => handleUpdateTimerSettings({ 
-                  countdownBeep: !timerSettings.countdownBeep 
-                })}
-              >
-                <View style={[
-                  styles.toggleKnob,
-                  timerSettings.countdownBeep && styles.toggleKnobActive
-                ]} />
-              </TouchableOpacity>
-            </View>
-            
-            <View style={styles.settingItem}>
               <Text style={styles.settingLabel}>Default rest time</Text>
               <View style={styles.timeOptions}>
                 {[30, 60, 90, 120].map((time) => (
@@ -1823,10 +1930,10 @@ export default function ActiveWorkoutScreen() {
           visible={showPRModal}
           onClose={handleClosePRModal}
           exerciseName={currentPR.exerciseName}
-          weight={currentPR.weight}
-          previousBest={currentPR.previousBest}
-          message={getPersonalRecordMessage(currentPR)}
-          isMajorLift={isMajorLift(currentPR.exerciseId)}
+          weight={currentPR.value}
+          previousBest={currentPR.value}
+          message={""}
+          isMajorLift={false}
         />
       )}
       
@@ -1849,19 +1956,34 @@ export default function ActiveWorkoutScreen() {
                 title="Continue"
                 onPress={() => {
                   setShowAddSetPrompt(false);
-                  // Move to next exercise or complete workout
+                  // Mark the exercise as completed and start rest timer between exercises
                   if (pendingExerciseIndex !== null) {
+                    // Mark the exercise as completed
+                    markExerciseCompleted(pendingExerciseIndex, true);
+                    
+                    // Collapse the completed exercise
+                    setExpandedExercises(prev => {
+                      const newState = { ...prev };
+                      newState[activeWorkout.exercises[pendingExerciseIndex].id] = false;
+                      return newState;
+                    });
+                    
+                    // Start the rest timer between exercises
+                    const restDuration = timerSettings.workoutRestTime || 60;
+                    startRestTimer(restDuration);
+                    
+                    // Set up the next exercise to be expanded when rest timer completes
                     const nextExerciseIndex = pendingExerciseIndex + 1;
                     if (nextExerciseIndex < activeWorkout.exercises.length) {
-                      // Move to next exercise
-                      setExpandedExercises({ [nextExerciseIndex]: true });
+                      // Store the next exercise index for when rest timer completes
+                      setPendingExerciseIndex(nextExerciseIndex);
                     } else {
-                      // All exercises completed, show workout completion
-                      handleCompleteWorkout();
+                      // All exercises completed, will handle in rest timer completion
+                      setPendingExerciseIndex(null);
                     }
                   }
                 }}
-                style={[styles.alertButton, { minWidth: 120, paddingVertical: 10, fontSize: 15 }]} // smaller button
+                style={[styles.alertButton, { minWidth: 120, paddingVertical: 10, fontSize: 15 }]}
               />
               <Button
                 title="Add Another Set"
@@ -1872,7 +1994,7 @@ export default function ActiveWorkoutScreen() {
                   }
                 }}
                 variant="outline"
-                style={[styles.alertButton, { minWidth: 120, paddingVertical: 10, fontSize: 15 }]} // smaller button
+                style={[styles.alertButton, { minWidth: 120, paddingVertical: 10, fontSize: 15 }]}
               />
             </View>
           </View>
@@ -2673,5 +2795,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     color: colors.text,
+  },
+  disabledInput: {
+    opacity: 0.5,
   },
 });

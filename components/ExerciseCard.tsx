@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image, Modal } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Image, Modal, Platform, Dimensions } from "react-native";
 import { useRouter } from "expo-router";
 import { Dumbbell, ChevronRight, Clock, X, BarChart2, History, Info } from "lucide-react-native";
 import { useTheme } from "@/context/ThemeContext";
@@ -62,6 +62,8 @@ export default function ExerciseCard({ exercise, onPress, compact = false }: Exe
     return Math.round(weight * (1 + reps/30));
   };
   
+  const windowWidth = Dimensions.get('window').width;
+  
   if (compact) {
     return (
       <View 
@@ -106,9 +108,13 @@ export default function ExerciseCard({ exercise, onPress, compact = false }: Exe
 
   return (
     <View 
-      style={[styles.container, { backgroundColor: colors.card }]} 
+      style={[
+        styles.container, 
+        { backgroundColor: colors.card },
+        styles.containerWeb
+      ]} 
     >
-      <View style={styles.content}>
+      <View style={[styles.content, styles.contentWeb]}>
         <View style={styles.header}>
           <TouchableOpacity onPress={handleNamePress} style={styles.titleContainer}>
             <Text style={[styles.title, { color: colors.text }]}>{exercise.name}</Text>
@@ -137,7 +143,7 @@ export default function ExerciseCard({ exercise, onPress, compact = false }: Exe
         </View>
       </View>
       {exercise.imageUrl && (
-        <View style={styles.imageContainer}>
+        <View style={[styles.imageContainer, styles.imageContainerWeb]}>
           <Image 
             source={{ uri: exercise.imageUrl }} 
             style={styles.image}
@@ -397,8 +403,22 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
+  containerMobile: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  containerWeb: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
   content: {
     flex: 1,
+  },
+  contentMobile: {
+    // No mobile-specific overrides; use row layout for all
+  },
+  contentWeb: {
+    marginRight: 12,
   },
   header: {
     flexDirection: "row",
@@ -462,12 +482,24 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   imageContainer: {
-    width: 80,
-    height: 80,
     borderRadius: 8,
     overflow: "hidden",
+    backgroundColor: '#222',
+  },
+  imageContainerMobile: {
+    width: '100%',
+    height: 180,
+    marginLeft: 0,
+    marginRight: 0,
+    marginBottom: 12,
+    alignSelf: 'center',
+  },
+  imageContainerWeb: {
+    width: 80,
+    height: 80,
     marginLeft: 12,
     marginRight: 12,
+    alignSelf: 'flex-start',
   },
   image: {
     width: "100%",

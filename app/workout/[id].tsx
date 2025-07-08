@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from "react-native";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
-import { Clock, Dumbbell, Award, Zap, Calendar, BarChart, ArrowLeft } from "lucide-react-native";
+import { Clock, Dumbbell, Award, Zap, BarChart, ArrowLeft } from "lucide-react-native";
 import { useWorkoutStore } from "@/store/workoutStore";
 import { useAiStore } from "@/store/aiStore";
 import { useTheme } from "@/context/ThemeContext";
@@ -14,9 +14,8 @@ export default function WorkoutDetailScreen() {
   const { colors } = useTheme();
   const { 
     workouts, 
-    exercises,
-    startWorkout, 
     workoutLogs,
+    startWorkout, 
     getAverageWorkoutDuration,
     getRecommendedWorkouts
   } = useWorkoutStore();
@@ -61,27 +60,10 @@ export default function WorkoutDetailScreen() {
   };
   
   const handleScheduleWorkout = () => {
-    // Pass the workout ID to the scheduling screen
     router.push({
       pathname: "/add-workout-schedule",
       params: { workoutId: workout.id }
     });
-  };
-  
-  const handleAnalyzeWorkouts = () => {
-    // Analyze workout logs for this specific workout
-    const relevantLogs = workoutLogs.filter(log => log.workoutId === workout.id);
-    
-    if (relevantLogs.length < 2) {
-      Alert.alert(
-        "Not Enough Data",
-        "Complete this workout at least twice to see analysis and recommendations."
-      );
-      return;
-    }
-    
-    analyzeWorkoutDurations(relevantLogs);
-    router.push("/goals"); // Navigate to goals page where analysis can be viewed
   };
 
   const handleGoBack = () => {
@@ -89,7 +71,7 @@ export default function WorkoutDetailScreen() {
   };
   
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}> 
       <Stack.Screen 
         options={{
           title: workout.name,
@@ -106,7 +88,6 @@ export default function WorkoutDetailScreen() {
           ),
         }}
       />
-      
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
           {isRecommended && (
@@ -115,28 +96,22 @@ export default function WorkoutDetailScreen() {
               <Text style={styles.recommendedText}>Recommended for you</Text>
             </View>
           )}
-          
           <Text style={[styles.title, { color: colors.text }]}>{workout.name}</Text>
-          
           <View style={styles.stats}>
             <View style={styles.stat}>
               <Clock size={16} color={colors.textSecondary} />
               <Text style={[styles.statText, { color: colors.textSecondary }]}>{workout.duration} min</Text>
             </View>
-            
             <View style={styles.stat}>
               <Dumbbell size={16} color={colors.textSecondary} />
               <Text style={[styles.statText, { color: colors.textSecondary }]}>{workout.exercises.length} exercises</Text>
             </View>
-            
             <View style={styles.stat}>
               <Award size={16} color={colors.textSecondary} />
               <Text style={[styles.statText, { color: colors.textSecondary }]}>{workout.difficulty}</Text>
             </View>
           </View>
-          
           <Text style={[styles.description, { color: colors.textSecondary }]}>{workout.description}</Text>
-          
           {totalCompletions > 0 && (
             <TouchableOpacity 
               style={[styles.statsCard, { backgroundColor: colors.card }]}
@@ -151,43 +126,27 @@ export default function WorkoutDetailScreen() {
                   {showStats ? "Hide" : "Show"}
                 </Text>
               </View>
-              
               {showStats && (
                 <View style={styles.statsContent}>
                   <View style={[styles.statRow, { borderBottomColor: colors.border }]}>
                     <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Average Duration</Text>
                     <Text style={[styles.statValue, { color: colors.text }]}>{averageDuration} min</Text>
                   </View>
-                  
                   <View style={[styles.statRow, { borderBottomColor: colors.border }]}>
                     <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Completed</Text>
                     <Text style={[styles.statValue, { color: colors.text }]}>{totalCompletions} times</Text>
                   </View>
-                  
                   <View style={[styles.statRow, { borderBottomColor: colors.border }]}>
                     <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Last Completed</Text>
                     <Text style={[styles.statValue, { color: colors.text }]}>{lastCompletedDate}</Text>
                   </View>
-                  
-                  {totalCompletions >= 2 && (
-                    <TouchableOpacity 
-                      style={styles.analyzeButton}
-                      onPress={handleAnalyzeWorkouts}
-                    >
-                      <Text style={[styles.analyzeButtonText, { color: colors.primary }]}>
-                        Analyze My Performance
-                      </Text>
-                    </TouchableOpacity>
-                  )}
                 </View>
               )}
             </TouchableOpacity>
           )}
         </View>
-        
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Exercises</Text>
-          
           {workout.exercises.map((exercise, index) => (
             <View key={exercise.id} style={styles.exerciseContainer}>
               <View style={[styles.exerciseNumber, { backgroundColor: colors.primary }]}> 
@@ -197,32 +156,24 @@ export default function WorkoutDetailScreen() {
             </View>
           ))}
         </View>
-      </ScrollView>
-      
-      <View style={[styles.footer, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
-        <Button
-          title="Start Workout"
+        <Button 
+          title="Start Workout" 
           onPress={handleStartWorkout}
-          size="large"
-          style={styles.startButton}
+          style={{ marginTop: 24 }}
         />
-        <Button
-          title="Add to Schedule"
+        <Button 
+          title="Add to Schedule" 
           onPress={handleScheduleWorkout}
+          style={{ marginTop: 12 }}
           variant="outline"
-          style={styles.scheduleButton}
         />
-        <TouchableOpacity 
-          style={styles.backToWorkoutsButton}
+        <Button 
+          title="Back to Workouts" 
           onPress={handleGoBack}
-          accessibilityLabel="Back to workouts"
-          accessibilityHint="Returns to the workouts list"
-        >
-          <Text style={[styles.backToWorkoutsText, { color: colors.textSecondary }]}>
-            Back to Workouts
-          </Text>
-        </TouchableOpacity>
-      </View>
+          style={{ marginTop: 12, marginBottom: 24 }}
+          variant="text"
+        />
+      </ScrollView>
     </View>
   );
 }
@@ -232,8 +183,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: 16,
-    paddingBottom: 100, // Increased to accommodate the back button
+    padding: 20,
+    paddingBottom: 40,
   },
   header: {
     marginBottom: 24,
@@ -241,26 +192,27 @@ const styles = StyleSheet.create({
   recommendedBanner: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
     alignSelf: "flex-start",
-    marginBottom: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginBottom: 8,
   },
   recommendedText: {
-    fontSize: 12,
-    fontWeight: "600",
     color: "#FFFFFF",
+    fontWeight: "600",
     marginLeft: 6,
+    fontSize: 12,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: "700",
-    marginBottom: 12,
+    marginBottom: 8,
   },
   stats: {
     flexDirection: "row",
-    marginBottom: 16,
+    alignItems: "center",
+    marginBottom: 8,
   },
   stat: {
     flexDirection: "row",
@@ -273,17 +225,53 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 16,
-    lineHeight: 22,
+    color: "#888",
+    marginBottom: 16,
+  },
+  section: {
+    marginBottom: 32,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "600",
+    marginBottom: 12,
+  },
+  exerciseContainer: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginBottom: 16,
+  },
+  exerciseNumber: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#3498db",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  exerciseNumberText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 16,
+  },
+  errorText: {
+    fontSize: 18,
+    fontWeight: "600",
+    textAlign: "center",
+    marginTop: 40,
   },
   statsCard: {
     borderRadius: 12,
     padding: 16,
     marginTop: 16,
+    marginBottom: 8,
   },
   statsHeader: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 8,
   },
   statsHeaderLeft: {
     flexDirection: "row",
@@ -292,92 +280,40 @@ const styles = StyleSheet.create({
   statsTitle: {
     fontSize: 16,
     fontWeight: "600",
-    marginLeft: 8,
+    marginLeft: 6,
   },
   statsToggle: {
     fontSize: 14,
+    fontWeight: "600",
   },
   statsContent: {
-    marginTop: 16,
+    marginTop: 8,
   },
   statRow: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: 8,
     borderBottomWidth: 1,
   },
   statLabel: {
     fontSize: 14,
+    color: "#888",
   },
   statValue: {
     fontSize: 14,
-    fontWeight: "500",
+    fontWeight: "600",
   },
   analyzeButton: {
-    marginTop: 16,
-    alignItems: "center",
+    marginTop: 12,
+    alignSelf: "flex-end",
   },
   analyzeButtonText: {
     fontSize: 14,
-    fontWeight: "500",
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
     fontWeight: "600",
-    marginBottom: 12,
-  },
-  exerciseContainer: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: 12,
-  },
-  exerciseNumber: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-    marginTop: 16,
-  },
-  exerciseNumberText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
-  footer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    borderTopWidth: 1,
-    padding: 16,
-  },
-  startButton: {
-    width: "100%",
-    marginBottom: 8,
-  },
-  scheduleButton: {
-    width: "100%",
-    marginBottom: 8,
-  },
-  backToWorkoutsButton: {
-    alignItems: "center",
-    paddingVertical: 8,
-  },
-  backToWorkoutsText: {
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  errorText: {
-    fontSize: 16,
-    textAlign: "center",
-    marginTop: 24,
   },
   backButton: {
-    padding: 8,
+    marginLeft: 8,
+    padding: 4,
   },
 });
