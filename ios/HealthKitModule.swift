@@ -3,7 +3,7 @@ import HealthKit
 import React
 
 @objc(HealthKitModule)
-class HealthKitModule: RCTEventEmitter, RCTBridgeModule {
+class HealthKitModule: NSObject, RCTBridgeModule {
     private let healthStore = HKHealthStore()
 
     static func moduleName() -> String! {
@@ -50,8 +50,9 @@ class HealthKitModule: RCTEventEmitter, RCTBridgeModule {
                         typesToRead.insert(sleepType)
                     }
                 case "workouts":
-                    let workoutType = HKObjectType.workoutType()
-                    typesToRead.insert(workoutType)
+                    if let workoutType = HKObjectType.workoutType() {
+                        typesToRead.insert(workoutType)
+                    }
                 case "weight":
                     if let weightType = HKObjectType.quantityType(forIdentifier: .bodyMass) {
                         typesToRead.insert(weightType)

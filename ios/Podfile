@@ -13,6 +13,16 @@ install! 'cocoapods',
 
 prepare_react_native_project!
 
+pre_install do |installer|
+  # Workaround for RCTDeprecation module map issue
+  deprecation_modulemap = '../node_modules/react-native/ReactApple/Libraries/RCTFoundation/RCTDeprecation/module.modulemap'
+  deprecation_headers = '../node_modules/react-native/ReactApple/Libraries/RCTFoundation/RCTDeprecation'
+  if File.exist?(deprecation_modulemap)
+    FileUtils.mkdir_p("#{installer.sandbox.root}/Headers/Public/RCTDeprecation")
+    FileUtils.cp(deprecation_modulemap, "#{installer.sandbox.root}/Headers/Public/RCTDeprecation/module.modulemap")
+  end
+end
+
 target 'FitJourneyTracker' do
   use_expo_modules!
 
