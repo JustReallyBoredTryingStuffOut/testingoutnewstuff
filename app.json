@@ -15,7 +15,11 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "app.rork.fitjourney-tracker"
+      "bundleIdentifier": "app.rork.fitjourney-tracker",
+      "infoPlist": {
+        "NSHealthShareUsageDescription": "We use your Health data to track steps and workouts.",
+        "NSHealthUpdateUsageDescription": "We update your Health data with workout sessions."
+      }
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
@@ -35,6 +39,14 @@
     },
     "android": {
       "package": "app.rork.fitjourneytracker"
+    },
+    "extra": {
+      "router": {
+        "origin": "https://rork.com/"
+      },
+      "eas": {
+        "projectId": "e8c3207a-2d9c-438a-a2b8-30a2fc1076da"
+      }
     }
   }
 }

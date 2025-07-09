@@ -53,6 +53,10 @@
     </dict>
     <key>NSCameraUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your camera</string>
+    <key>NSHealthShareUsageDescription</key>
+    <string>We use your Health data to track steps and workouts.</string>
+    <key>NSHealthUpdateUsageDescription</key>
+    <string>We update your Health data with workout sessions.</string>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your location</string>
     <key>NSLocationAlwaysUsageDescription</key>

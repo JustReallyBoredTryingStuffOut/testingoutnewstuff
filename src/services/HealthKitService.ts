@@ -340,6 +340,60 @@ class HealthKitService {
   }
 
   /**
+   * Get body mass (weight) samples for a date range
+   */
+  async getBodyMass(startDate: Date, endDate: Date): Promise<Array<{value: number, startDate: Date, endDate: Date, source: string}>> {
+    this.ensureInitialized();
+    this.ensureAuthorized(HEALTH_DATA_TYPES.BODY_MASS);
+
+    try {
+      const result = await this.healthKit.getBodyMass(
+        startDate.toISOString(),
+        endDate.toISOString()
+      );
+
+      if (result.success) {
+        return result.samples.map(sample => ({
+          ...sample,
+          startDate: new Date(sample.startDate),
+          endDate: new Date(sample.endDate)
+        }));
+      } else {
+        throw new Error('Failed to retrieve body mass data');
+      }
+    } catch (error) {
+      console.error('[HealthKitService] Failed to get body mass:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get today's body mass (weight)
+   */
+  async getTodayBodyMass(): Promise<Array<{value: number, startDate: Date, endDate: Date, source: string}>> {
+    const today = new Date();
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    
+    return this.getBodyMass(startOfDay, today);
+  }
+
+  /**
+   * Write body mass (weight) to HealthKit
+   */
+  async writeBodyMass(weight: number, date: Date): Promise<boolean> {
+    this.ensureInitialized();
+    this.ensureAuthorized(HEALTH_DATA_TYPES.BODY_MASS);
+
+    try {
+      const result = await this.healthKit.writeBodyMass(weight, date.toISOString());
+      return result.success;
+    } catch (error) {
+      console.error('[HealthKitService] Failed to write body mass:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Get user's date of birth
    */
   async getDateOfBirth(): Promise<Date> {

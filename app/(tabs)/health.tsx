@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform, NativeModules } from "react-native";
 import { useRouter } from "expo-router";
 import { 
   Activity, 
@@ -249,21 +249,44 @@ export default function HealthScreen() {
   // DEBUG: Manual HealthKit Authorization Test
   const testHealthKitAuth = async () => {
     try {
-      Alert.alert('DEBUG', 'Testing HealthKit authorization...');
+      console.log('[DEBUG] ===== HEALTHKIT TEST START =====');
+      console.log('[DEBUG] Platform:', Platform.OS);
+      console.log('[DEBUG] Available NativeModules:', Object.keys(NativeModules));
+      console.log('[DEBUG] HealthKitModule exists:', !!NativeModules.HealthKitModule);
+      
+      if (NativeModules.HealthKitModule) {
+        console.log('[DEBUG] HealthKitModule methods:', Object.keys(NativeModules.HealthKitModule));
+        console.log('[DEBUG] isHealthDataAvailable method exists:', !!NativeModules.HealthKitModule.isHealthDataAvailable);
+        console.log('[DEBUG] requestAuthorization method exists:', !!NativeModules.HealthKitModule.requestAuthorization);
+        
+        // Test direct native module call
+        try {
+          console.log('[DEBUG] Testing direct native module call...');
+          const directResult = await NativeModules.HealthKitModule.isHealthDataAvailable();
+          console.log('[DEBUG] Direct native call result:', directResult);
+        } catch (directError) {
+          console.error('[DEBUG] Direct native call failed:', directError);
+        }
+      } else {
+        console.error('[DEBUG] HealthKitModule is UNDEFINED!');
+        console.error('[DEBUG] This means the native module is not properly registered.');
+        console.error('[DEBUG] You need to rebuild the app with the native code.');
+        Alert.alert('ERROR', 'HealthKit native module is not available. Please rebuild the app.');
+        return;
+      }
       
       const HealthKit = require('@/src/NativeModules/HealthKit');
       
-      // Check availability
+      console.log('[DEBUG] Testing HealthKit.isHealthDataAvailable...');
       const isAvailable = await HealthKit.isHealthDataAvailable();
-      Alert.alert('DEBUG', `HealthKit available: ${isAvailable}`);
+      console.log('[DEBUG] HealthKit is available:', isAvailable);
       
       if (!isAvailable) {
         Alert.alert('ERROR', 'HealthKit not available on this device');
         return;
       }
       
-      // Request authorization
-      Alert.alert('DEBUG', 'Requesting authorization - watch for system popup!');
+      console.log('[DEBUG] Testing HealthKit.requestAuthorization...');
       const authResult = await HealthKit.requestAuthorization([
         'steps', 
         'distance', 
@@ -271,10 +294,20 @@ export default function HealthScreen() {
         'activity'
       ]);
       
+      console.log('[DEBUG] Authorization result:', authResult);
+      console.log('[DEBUG] ===== HEALTHKIT TEST END =====');
+      
       Alert.alert('RESULT', `Success: ${authResult.authorized}\n\nIf true, check Settings → Privacy & Security → Health → Data Access & Devices for FitJourneyTracker`);
       
     } catch (error: any) {
-      Alert.alert('ERROR', `Failed: ${error.message}`);
+      console.error('[DEBUG] ===== HEALTHKIT TEST ERROR =====');
+      console.error('[DEBUG] HealthKit error:', error);
+      console.error('[DEBUG] Error message:', error.message);
+      console.error('[DEBUG] Error stack:', error.stack);
+      console.error('[DEBUG] Error constructor:', error.constructor.name);
+      console.error('[DEBUG] ===== END ERROR =====');
+      
+      Alert.alert('ERROR', `Failed: ${error.message}\n\nType: ${error.constructor.name}\n\nCheck console for details.`);
     }
   };
 
@@ -321,6 +354,7 @@ export default function HealthScreen() {
             style={[styles.healthKitButton, { backgroundColor: colors.primary }]}
             onPress={async () => {
               try {
+                console.log('[DEBUG] Apple Health banner: Requesting authorization...');
                 const authResult = await HealthKit.requestAuthorization([
                   'steps', 
                   'distance', 
@@ -330,6 +364,7 @@ export default function HealthScreen() {
                   'workouts'
                 ]);
                 
+                console.log('[DEBUG] Apple Health banner: Authorization result:', authResult);
                 setHealthKitAuthorized(authResult.authorized);
                 
                 if (authResult.authorized) {
@@ -345,11 +380,13 @@ export default function HealthScreen() {
                     [{ text: "OK" }]
                   );
                 }
-              } catch (error) {
-                console.error("Error requesting HealthKit authorization:", error);
+              } catch (error: any) {
+                console.error('[DEBUG] Apple Health banner error:', error);
+                console.error('[DEBUG] Error message:', error.message);
+                console.error('[DEBUG] Error stack:', error.stack);
                 Alert.alert(
                   "Error",
-                  "There was an error connecting to Apple Health. Please try again.",
+                  `There was an error connecting to Apple Health: ${error.message}\n\nCheck console for details.`,
                   [{ text: "OK" }]
                 );
               }

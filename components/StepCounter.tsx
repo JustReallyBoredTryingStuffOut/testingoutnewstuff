@@ -14,7 +14,7 @@ export default function StepCounter({ compact = false }: StepCounterProps) {
   const { 
     currentStepCount, 
     isPedometerAvailable, 
-    isTracking, 
+    isTrackingSteps, 
     error, 
     errorType,
     startTracking, 
@@ -22,7 +22,6 @@ export default function StepCounter({ compact = false }: StepCounterProps) {
     manualSync,
     isUsingConnectedDevice,
     deviceName,
-    useMockData,
     retryPedometerConnection,
     dataSource,
     healthKitAvailable,
@@ -46,22 +45,12 @@ export default function StepCounter({ compact = false }: StepCounterProps) {
   }
   
   const handleSync = async () => {
-    if (!isUsingConnectedDevice && dataSource !== "healthKit" && !useMockData) {
+    if (!isUsingConnectedDevice && dataSource !== "healthKit") {
       Alert.alert("No Data Source", "No connected device or health data source to sync with");
       return;
     }
     
-    const success = await manualSync();
-    
-    if (success) {
-      // Success is already handled in the hook
-    } else {
-      Alert.alert(
-        "Sync Failed", 
-        "Could not sync with your health data source. Please try again later.",
-        [{ text: "OK" }]
-      );
-    }
+    await manualSync();
   };
   
   const handleRetry = async () => {
@@ -75,10 +64,8 @@ export default function StepCounter({ compact = false }: StepCounterProps) {
     } else {
       Alert.alert(
         "Step Counter Unavailable", 
-        "Could not connect to the step counter. This may be due to device restrictions or privacy settings. The app will use sample data instead.",
-        [
-          { text: "Use Sample Data", onPress: startTracking }
-        ]
+        "Could not connect to the step counter. This may be due to device restrictions or privacy settings.",
+        [{ text: "OK" }]
       );
     }
   };
@@ -88,7 +75,6 @@ export default function StepCounter({ compact = false }: StepCounterProps) {
     if (isUsingConnectedDevice && deviceName) return deviceName;
     if (dataSource === "healthKit") return "Apple Health";
     if (dataSource === "pedometer") return "Device Pedometer";
-    if (useMockData) return "Sample Data";
     return "Unknown";
   };
   
@@ -136,7 +122,7 @@ export default function StepCounter({ compact = false }: StepCounterProps) {
       <View style={styles.header}>
         <Text style={styles.title}>Daily Steps</Text>
         <View style={styles.headerButtons}>
-          {(isUsingConnectedDevice || dataSource === "healthKit" || useMockData) && (
+          {(isUsingConnectedDevice || dataSource === "healthKit") && (
             <TouchableOpacity
               style={styles.syncButton}
               onPress={handleSync}
@@ -175,11 +161,7 @@ export default function StepCounter({ compact = false }: StepCounterProps) {
         </Text>
         <Text style={styles.stepsLabel}>steps today</Text>
         
-        {useMockData && (
-          <View style={styles.mockDataBadge}>
-            <Text style={styles.mockDataLabel}>Using sample data</Text>
-          </View>
-        )}
+
         
         {dataSource === "healthKit" && (
           <View style={styles.dataSourceContainer}>
@@ -199,7 +181,7 @@ export default function StepCounter({ compact = false }: StepCounterProps) {
           </View>
         )}
         
-        {error && useMockData && (
+        {error && (
           <TouchableOpacity 
             style={styles.errorInfoContainer}
             onPress={handleRetry}
@@ -330,18 +312,7 @@ const styles = StyleSheet.create({
     color: colors.primary,
     marginLeft: 4,
   },
-  mockDataBadge: {
-    marginTop: 8,
-    backgroundColor: "rgba(255, 149, 0, 0.1)",
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-  },
-  mockDataLabel: {
-    fontSize: 12,
-    color: "#FF9500",
-    fontStyle: "italic",
-  },
+
   progressContainer: {
     marginBottom: 8,
   },
@@ -400,16 +371,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     marginLeft: 4,
   },
-  mockDataButton: {
-    backgroundColor: colors.secondary,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-  },
-  mockDataButtonText: {
-    color: "#FFFFFF",
-    fontWeight: "500",
-  },
+
   notAvailableText: {
     fontSize: 14,
     color: colors.textSecondary,
@@ -458,17 +420,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginLeft: 2,
   },
-  compactMockContainer: {
-    marginLeft: 8,
-    backgroundColor: "rgba(255, 149, 0, 0.1)",
-    paddingVertical: 2,
-    paddingHorizontal: 6,
-    borderRadius: 10,
-  },
-  compactMockText: {
-    fontSize: 10,
-    color: "#FF9500",
-  },
+
   compactProgressContainer: {
     flexDirection: "row",
     alignItems: "center",
