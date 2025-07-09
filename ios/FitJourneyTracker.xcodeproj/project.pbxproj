@@ -26,6 +26,7 @@
 		3A2B3EB72E1ECB2A002DD907 /* HealthKitModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = HealthKitModule.m; sourceTree = "<group>"; };
 		3A2B3EB82E1ECB2A002DD907 /* HealthKitModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitModule.swift; sourceTree = "<group>"; };
 		3A2B3EBB2E1ECF72002DD907 /* HealthKitModule.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HealthKitModule.h; sourceTree = "<group>"; };
+		3A2B3EBC2E1EEA95002DD907 /* FitJourneyTrackerRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = FitJourneyTrackerRelease.entitlements; path = FitJourneyTracker/FitJourneyTrackerRelease.entitlements; sourceTree = "<group>"; };
 		4EBAC88295868C7F6D4AB0E8 /* Pods-FitJourneyTracker.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-FitJourneyTracker.debug.xcconfig"; path = "Target Support Files/Pods-FitJourneyTracker/Pods-FitJourneyTracker.debug.xcconfig"; sourceTree = "<group>"; };
 		66500E9AFE508FD63B74A0EC /* Pods-FitJourneyTracker.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-FitJourneyTracker.release.xcconfig"; path = "Target Support Files/Pods-FitJourneyTracker/Pods-FitJourneyTracker.release.xcconfig"; sourceTree = "<group>"; };
 		94B7AE276E0E13662B509B74 /* libPods-FitJourneyTracker.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-FitJourneyTracker.a"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -52,6 +53,7 @@
 		13B07FAE1A68108700A75B9A /* FitJourneyTracker */ = {
 			isa = PBXGroup;
 			children = (
+				3A2B3EBC2E1EEA95002DD907 /* FitJourneyTrackerRelease.entitlements */,
 				F11748412D0307B40044C1D9 /* AppDelegate.swift */,
 				F11748442D0722820044C1D9 /* FitJourneyTracker-Bridging-Header.h */,
 				BB2F792B24A3F905000567C9 /* Supporting */,
@@ -367,13 +369,15 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = FitJourneyTracker/FitJourneyTracker.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = MN4X646W73;
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
 					"FB_SONARKIT_ENABLED=1",
 				);
 				INFOPLIST_FILE = FitJourneyTracker/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -401,10 +405,12 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = FitJourneyTracker/FitJourneyTracker.entitlements;
+				CODE_SIGN_ENTITLEMENTS = FitJourneyTracker/FitJourneyTrackerRelease.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = MN4X646W73;
 				INFOPLIST_FILE = FitJourneyTracker/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -480,10 +486,7 @@
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
@@ -538,10 +541,7 @@
 				);
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = NO;
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;

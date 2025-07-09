@@ -3,7 +3,7 @@ import HealthKit
 import React
 
 @objc(HealthKitModule)
-class HealthKitModule: RCTEventEmitter, RCTBridgeModule {
+class HealthKitModule: RCTEventEmitter {
     private let healthStore = HKHealthStore()
 
     static func moduleName() -> String! {
