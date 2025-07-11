@@ -107,6 +107,7 @@ class HealthKitModule: RCTEventEmitter {
     @objc
     func getStepCount(_ startDateStr: String, endDateStr: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         let dateFormatter = ISO8601DateFormatter()
+        dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         guard let startDate = dateFormatter.date(from: startDateStr), let endDate = dateFormatter.date(from: endDateStr) else {
             reject("E_DATE", "Invalid date format", nil)
             return

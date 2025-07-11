@@ -107,8 +107,9 @@ class HealthKitModule: NSObject {
     @objc
     func getStepCount(_ startDateStr: String, endDateStr: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         let dateFormatter = ISO8601DateFormatter()
+      dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         guard let startDate = dateFormatter.date(from: startDateStr), let endDate = dateFormatter.date(from: endDateStr) else {
-            reject("E_DATE", "Invalid date format", nil)
+            reject("E_DATE", "Invalid date format\(startDateStr) and end date \(endDateStr)", nil)
             return
         }
         let stepType = HKQuantityType.quantityType(forIdentifier: .stepCount)!
@@ -127,6 +128,7 @@ class HealthKitModule: NSObject {
     @objc
     func getDistanceWalking(_ startDateStr: String, endDateStr: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         let dateFormatter = ISO8601DateFormatter()
+      dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         guard let startDate = dateFormatter.date(from: startDateStr), let endDate = dateFormatter.date(from: endDateStr) else {
             reject("E_DATE", "Invalid date format", nil)
             return
@@ -148,6 +150,7 @@ class HealthKitModule: NSObject {
     @objc
     func getActiveEnergyBurned(_ startDateStr: String, endDateStr: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         let dateFormatter = ISO8601DateFormatter()
+      dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         guard let startDate = dateFormatter.date(from: startDateStr), let endDate = dateFormatter.date(from: endDateStr) else {
             reject("E_DATE", "Invalid date format", nil)
             return
@@ -168,6 +171,7 @@ class HealthKitModule: NSObject {
     @objc
     func getHeartRateSamples(_ startDateStr: String, endDateStr: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         let dateFormatter = ISO8601DateFormatter()
+      dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         guard let startDate = dateFormatter.date(from: startDateStr), let endDate = dateFormatter.date(from: endDateStr) else {
             reject("E_DATE", "Invalid date format", nil)
             return
@@ -198,6 +202,7 @@ class HealthKitModule: NSObject {
     @objc
     func getSleepAnalysis(_ startDateStr: String, endDateStr: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         let dateFormatter = ISO8601DateFormatter()
+      dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         guard let startDate = dateFormatter.date(from: startDateStr), let endDate = dateFormatter.date(from: endDateStr) else {
             reject("E_DATE", "Invalid date format", nil)
             return
@@ -245,6 +250,7 @@ class HealthKitModule: NSObject {
     @objc
     func getWorkouts(_ startDateStr: String, endDateStr: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         let dateFormatter = ISO8601DateFormatter()
+      dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         guard let startDate = dateFormatter.date(from: startDateStr), let endDate = dateFormatter.date(from: endDateStr) else {
             reject("E_DATE", "Invalid date format", nil)
             return
@@ -277,6 +283,7 @@ class HealthKitModule: NSObject {
     @objc
     func getBodyMass(_ startDateStr: String, endDateStr: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         let dateFormatter = ISO8601DateFormatter()
+      dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         guard let startDate = dateFormatter.date(from: startDateStr), let endDate = dateFormatter.date(from: endDateStr) else {
             reject("E_DATE", "Invalid date format", nil)
             return
@@ -307,6 +314,7 @@ class HealthKitModule: NSObject {
     @objc
     func writeBodyMass(_ weight: Double, dateStr: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         let dateFormatter = ISO8601DateFormatter()
+      dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         guard let date = dateFormatter.date(from: dateStr) else {
             reject("E_DATE", "Invalid date format", nil)
             return
@@ -347,6 +355,7 @@ class HealthKitModule: NSObject {
     @objc
     func writeWorkout(_ workoutType: Int, startDateStr: String, endDateStr: String, totalEnergyBurned: Double, totalDistance: Double, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         let dateFormatter = ISO8601DateFormatter()
+      dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         guard let startDate = dateFormatter.date(from: startDateStr), let endDate = dateFormatter.date(from: endDateStr) else {
             reject("E_DATE", "Invalid date format", nil)
             return
