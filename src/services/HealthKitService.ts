@@ -71,12 +71,12 @@ class HealthKitService {
     this.ensureInitialized();
 
     const allDataTypes: HealthDataType[] = [
-      'steps',
-      'distance',
-      'calories',
+      HEALTH_DATA_TYPES.STEP_COUNT,
+      HEALTH_DATA_TYPES.DISTANCE_WALKING_RUNNING,
+      HEALTH_DATA_TYPES.ACTIVE_ENERGY_BURNED,
       'activity',
-      'heartRate',
-      'sleep'
+      HEALTH_DATA_TYPES.HEART_RATE,
+      HEALTH_DATA_TYPES.SLEEP_ANALYSIS
     ];
 
     try {

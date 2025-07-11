@@ -15,6 +15,40 @@ class HealthKitModule: RCTEventEmitter {
         return true
     }
 
+    // Helper function for robust ISO 8601 date parsing
+    private func parseISODate(_ dateString: String) -> Date? {
+        print("[HealthKitModule] Parsing date string: \(dateString)")
+        
+        let isoFormatter = ISO8601DateFormatter()
+        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        
+        if let date = isoFormatter.date(from: dateString) {
+            print("[HealthKitModule] Successfully parsed with fractional seconds: \(date)")
+            return date
+        }
+        
+        // Try without fractional seconds
+        isoFormatter.formatOptions = [.withInternetDateTime]
+        if let date = isoFormatter.date(from: dateString) {
+            print("[HealthKitModule] Successfully parsed without fractional seconds: \(date)")
+            return date
+        }
+        
+        // Try with DateFormatter as last resort
+        let fallbackFormatter = DateFormatter()
+        fallbackFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+        fallbackFormatter.locale = Locale(identifier: "en_US_POSIX")
+        fallbackFormatter.timeZone = TimeZone(secondsFromGMT: 0)
+        
+        if let date = fallbackFormatter.date(from: dateString) {
+            print("[HealthKitModule] Successfully parsed with DateFormatter: \(date)")
+            return date
+        }
+        
+        print("[HealthKitModule] Failed to parse date string: \(dateString)")
+        return nil
+    }
+
     @objc
     func isHealthDataAvailable(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         resolve(HKHealthStore.isHealthDataAvailable())
@@ -29,7 +63,7 @@ class HealthKitModule: RCTEventEmitter {
         if let dataTypes = dataTypes as? [String] {
             for dataType in dataTypes {
                 switch dataType {
-                case "steps":
+                case "stepCount":
                     if let stepType = HKObjectType.quantityType(forIdentifier: .stepCount) {
                         typesToRead.insert(stepType)
                     }
@@ -52,15 +86,10 @@ class HealthKitModule: RCTEventEmitter {
                 case "workouts":
                     let workoutType = HKObjectType.workoutType()
                     typesToRead.insert(workoutType)
-                case "weight":
+                case "bodyMass":
                     if let weightType = HKObjectType.quantityType(forIdentifier: .bodyMass) {
                         typesToRead.insert(weightType)
                         typesToWrite.insert(weightType)
-                    }
-                case "bodyMass":
-                    if let bodyMassType = HKObjectType.quantityType(forIdentifier: .bodyMass) {
-                        typesToRead.insert(bodyMassType)
-                        typesToWrite.insert(bodyMassType)
                     }
                 case "bodyFat":
                     if let bodyFatType = HKObjectType.quantityType(forIdentifier: .bodyFatPercentage) {
@@ -97,7 +126,7 @@ class HealthKitModule: RCTEventEmitter {
             } else {
                 let result: [String: Any] = [
                     "authorized": success,
-                    "dataTypes": dataTypes ?? ["steps", "distance", "calories", "heartRate", "sleep", "workouts", "weight"]
+                    "dataTypes": dataTypes ?? ["stepCount", "distance", "calories", "heartRate", "sleep", "workouts", "bodyMass"]
                 ]
                 resolve(result)
             }
@@ -106,20 +135,26 @@ class HealthKitModule: RCTEventEmitter {
 
     @objc
     func getStepCount(_ startDateStr: String, endDateStr: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-        let dateFormatter = ISO8601DateFormatter()
-        dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        guard let startDate = dateFormatter.date(from: startDateStr), let endDate = dateFormatter.date(from: endDateStr) else {
+        print("[HealthKitModule] getStepCount called with startDateStr: \(startDateStr), endDateStr: \(endDateStr)")
+        
+        guard let startDate = parseISODate(startDateStr), let endDate = parseISODate(endDateStr) else {
+            print("[HealthKitModule] Failed to parse dates - rejecting with E_DATE")
             reject("E_DATE", "Invalid date format", nil)
             return
         }
+        
+        print("[HealthKitModule] Successfully parsed dates - startDate: \(startDate), endDate: \(endDate)")
+        
         let stepType = HKQuantityType.quantityType(forIdentifier: .stepCount)!
         let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: [])
         let query = HKStatisticsQuery(quantityType: stepType, quantitySamplePredicate: predicate, options: .cumulativeSum) { _, result, error in
             if let error = error {
+                print("[HealthKitModule] Query error: \(error)")
                 reject("E_QUERY", error.localizedDescription, error)
                 return
             }
             let steps = result?.sumQuantity()?.doubleValue(for: HKUnit.count()) ?? 0
+            print("[HealthKitModule] Query successful - steps: \(steps)")
             resolve(["success": true, "steps": steps])
         }
         healthStore.execute(query)
@@ -127,20 +162,27 @@ class HealthKitModule: RCTEventEmitter {
     
     @objc
     func getDistanceWalking(_ startDateStr: String, endDateStr: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-        let dateFormatter = ISO8601DateFormatter()
-        guard let startDate = dateFormatter.date(from: startDateStr), let endDate = dateFormatter.date(from: endDateStr) else {
+        print("[HealthKitModule] getDistanceWalking called with startDateStr: \(startDateStr), endDateStr: \(endDateStr)")
+        
+        guard let startDate = parseISODate(startDateStr), let endDate = parseISODate(endDateStr) else {
+            print("[HealthKitModule] Failed to parse dates for distance - rejecting with E_DATE")
             reject("E_DATE", "Invalid date format", nil)
             return
         }
+        
+        print("[HealthKitModule] Successfully parsed dates for distance - startDate: \(startDate), endDate: \(endDate)")
+        
         let distanceType = HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning)!
         let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: [])
         let query = HKStatisticsQuery(quantityType: distanceType, quantitySamplePredicate: predicate, options: .cumulativeSum) { _, result, error in
             if let error = error {
+                print("[HealthKitModule] Distance query error: \(error)")
                 reject("E_QUERY", error.localizedDescription, error)
                 return
             }
             let distance = result?.sumQuantity()?.doubleValue(for: HKUnit.meter()) ?? 0
             let distanceKm = distance / 1000.0
+            print("[HealthKitModule] Distance query successful - distance: \(distanceKm) km")
             resolve(["success": true, "distance": distanceKm])
         }
         healthStore.execute(query)
@@ -148,19 +190,26 @@ class HealthKitModule: RCTEventEmitter {
     
     @objc
     func getActiveEnergyBurned(_ startDateStr: String, endDateStr: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-        let dateFormatter = ISO8601DateFormatter()
-        guard let startDate = dateFormatter.date(from: startDateStr), let endDate = dateFormatter.date(from: endDateStr) else {
+        print("[HealthKitModule] getActiveEnergyBurned called with startDateStr: \(startDateStr), endDateStr: \(endDateStr)")
+        
+        guard let startDate = parseISODate(startDateStr), let endDate = parseISODate(endDateStr) else {
+            print("[HealthKitModule] Failed to parse dates for calories - rejecting with E_DATE")
             reject("E_DATE", "Invalid date format", nil)
             return
         }
+        
+        print("[HealthKitModule] Successfully parsed dates for calories - startDate: \(startDate), endDate: \(endDate)")
+        
         let calorieType = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)!
         let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: [])
         let query = HKStatisticsQuery(quantityType: calorieType, quantitySamplePredicate: predicate, options: .cumulativeSum) { _, result, error in
             if let error = error {
+                print("[HealthKitModule] Calories query error: \(error)")
                 reject("E_QUERY", error.localizedDescription, error)
                 return
             }
             let calories = result?.sumQuantity()?.doubleValue(for: HKUnit.kilocalorie()) ?? 0
+            print("[HealthKitModule] Calories query successful - calories: \(calories)")
             resolve(["success": true, "calories": calories])
         }
         healthStore.execute(query)
@@ -168,15 +217,21 @@ class HealthKitModule: RCTEventEmitter {
     
     @objc
     func getHeartRateSamples(_ startDateStr: String, endDateStr: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-        let dateFormatter = ISO8601DateFormatter()
-        guard let startDate = dateFormatter.date(from: startDateStr), let endDate = dateFormatter.date(from: endDateStr) else {
+        print("[HealthKitModule] getHeartRateSamples called with startDateStr: \(startDateStr), endDateStr: \(endDateStr)")
+        
+        guard let startDate = parseISODate(startDateStr), let endDate = parseISODate(endDateStr) else {
+            print("[HealthKitModule] Failed to parse dates for heart rate - rejecting with E_DATE")
             reject("E_DATE", "Invalid date format", nil)
             return
         }
+        
+        print("[HealthKitModule] Successfully parsed dates for heart rate - startDate: \(startDate), endDate: \(endDate)")
+        
         let heartRateType = HKQuantityType.quantityType(forIdentifier: .heartRate)!
         let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: [])
         let query = HKSampleQuery(sampleType: heartRateType, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { _, samples, error in
             if let error = error {
+                print("[HealthKitModule] Heart rate query error: \(error)")
                 reject("E_QUERY", error.localizedDescription, error)
                 return
             }
@@ -191,6 +246,7 @@ class HealthKitModule: RCTEventEmitter {
                 ]
             } ?? []
             
+            print("[HealthKitModule] Heart rate query successful - samples count: \(heartRateSamples.count)")
             resolve(["success": true, "samples": heartRateSamples])
         }
         healthStore.execute(query)
@@ -198,15 +254,21 @@ class HealthKitModule: RCTEventEmitter {
     
     @objc
     func getSleepAnalysis(_ startDateStr: String, endDateStr: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-        let dateFormatter = ISO8601DateFormatter()
-        guard let startDate = dateFormatter.date(from: startDateStr), let endDate = dateFormatter.date(from: endDateStr) else {
+        print("[HealthKitModule] getSleepAnalysis called with startDateStr: \(startDateStr), endDateStr: \(endDateStr)")
+        
+        guard let startDate = parseISODate(startDateStr), let endDate = parseISODate(endDateStr) else {
+            print("[HealthKitModule] Failed to parse dates for sleep - rejecting with E_DATE")
             reject("E_DATE", "Invalid date format", nil)
             return
         }
+        
+        print("[HealthKitModule] Successfully parsed dates for sleep - startDate: \(startDate), endDate: \(endDate)")
+        
         let sleepType = HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!
         let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: [])
         let query = HKSampleQuery(sampleType: sleepType, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { _, samples, error in
             if let error = error {
+                print("[HealthKitModule] Sleep query error: \(error)")
                 reject("E_QUERY", error.localizedDescription, error)
                 return
             }
@@ -238,6 +300,7 @@ class HealthKitModule: RCTEventEmitter {
                 }
             }
             
+            print("[HealthKitModule] Sleep query successful - sleepData: \(sleepData)")
             resolve(["success": true, "sleepData": sleepData])
         }
         healthStore.execute(query)
@@ -245,15 +308,21 @@ class HealthKitModule: RCTEventEmitter {
     
     @objc
     func getWorkouts(_ startDateStr: String, endDateStr: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-        let dateFormatter = ISO8601DateFormatter()
-        guard let startDate = dateFormatter.date(from: startDateStr), let endDate = dateFormatter.date(from: endDateStr) else {
+        print("[HealthKitModule] getWorkouts called with startDateStr: \(startDateStr), endDateStr: \(endDateStr)")
+        
+        guard let startDate = parseISODate(startDateStr), let endDate = parseISODate(endDateStr) else {
+            print("[HealthKitModule] Failed to parse dates for workouts - rejecting with E_DATE")
             reject("E_DATE", "Invalid date format", nil)
             return
         }
+        
+        print("[HealthKitModule] Successfully parsed dates for workouts - startDate: \(startDate), endDate: \(endDate)")
+        
         let workoutType = HKObjectType.workoutType()
         let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: [])
         let query = HKSampleQuery(sampleType: workoutType, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { _, samples, error in
             if let error = error {
+                print("[HealthKitModule] Workouts query error: \(error)")
                 reject("E_QUERY", error.localizedDescription, error)
                 return
             }
@@ -270,6 +339,7 @@ class HealthKitModule: RCTEventEmitter {
                 ]
             } ?? []
             
+            print("[HealthKitModule] Workouts query successful - workouts count: \(workouts.count)")
             resolve(["success": true, "workouts": workouts])
         }
         healthStore.execute(query)
@@ -277,15 +347,21 @@ class HealthKitModule: RCTEventEmitter {
     
     @objc
     func getBodyMass(_ startDateStr: String, endDateStr: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-        let dateFormatter = ISO8601DateFormatter()
-        guard let startDate = dateFormatter.date(from: startDateStr), let endDate = dateFormatter.date(from: endDateStr) else {
+        print("[HealthKitModule] getBodyMass called with startDateStr: \(startDateStr), endDateStr: \(endDateStr)")
+        
+        guard let startDate = parseISODate(startDateStr), let endDate = parseISODate(endDateStr) else {
+            print("[HealthKitModule] Failed to parse dates for body mass - rejecting with E_DATE")
             reject("E_DATE", "Invalid date format", nil)
             return
         }
+        
+        print("[HealthKitModule] Successfully parsed dates for body mass - startDate: \(startDate), endDate: \(endDate)")
+        
         let bodyMassType = HKQuantityType.quantityType(forIdentifier: .bodyMass)!
         let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: [])
         let query = HKSampleQuery(sampleType: bodyMassType, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)]) { _, samples, error in
             if let error = error {
+                print("[HealthKitModule] Body mass query error: \(error)")
                 reject("E_QUERY", error.localizedDescription, error)
                 return
             }
@@ -300,6 +376,7 @@ class HealthKitModule: RCTEventEmitter {
                 ]
             } ?? []
             
+            print("[HealthKitModule] Body mass query successful - samples count: \(weightSamples.count)")
             resolve(["success": true, "samples": weightSamples])
         }
         healthStore.execute(query)
@@ -307,11 +384,15 @@ class HealthKitModule: RCTEventEmitter {
     
     @objc
     func writeBodyMass(_ weight: Double, dateStr: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-        let dateFormatter = ISO8601DateFormatter()
-        guard let date = dateFormatter.date(from: dateStr) else {
+        print("[HealthKitModule] writeBodyMass called with weight: \(weight), dateStr: \(dateStr)")
+        
+        guard let date = parseISODate(dateStr) else {
+            print("[HealthKitModule] Failed to parse date for writing body mass - rejecting with E_DATE")
             reject("E_DATE", "Invalid date format", nil)
             return
         }
+        
+        print("[HealthKitModule] Successfully parsed date for writing body mass - date: \(date)")
         
         let bodyMassType = HKQuantityType.quantityType(forIdentifier: .bodyMass)!
         let weightQuantity = HKQuantity(unit: HKUnit.gramUnit(with: .kilo), doubleValue: weight)
@@ -319,8 +400,10 @@ class HealthKitModule: RCTEventEmitter {
         
         healthStore.save(weightSample) { success, error in
             if let error = error {
+                print("[HealthKitModule] Failed to save body mass: \(error)")
                 reject("E_WRITE", error.localizedDescription, error)
             } else {
+                print("[HealthKitModule] Successfully saved body mass")
                 resolve(["success": success])
             }
         }
@@ -328,6 +411,7 @@ class HealthKitModule: RCTEventEmitter {
     
     @objc
     func observeStepCount(_ callback: @escaping RCTResponseSenderBlock) {
+        print("[HealthKitModule] observeStepCount called")
         let stepType = HKQuantityType.quantityType(forIdentifier: .stepCount)!
         let query = HKObserverQuery(sampleType: stepType, predicate: nil) { _, _, error in
             if error == nil {
@@ -337,6 +421,7 @@ class HealthKitModule: RCTEventEmitter {
                 let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: now, options: [])
                 let statisticsQuery = HKStatisticsQuery(quantityType: stepType, quantitySamplePredicate: predicate, options: .cumulativeSum) { _, result, _ in
                     let steps = result?.sumQuantity()?.doubleValue(for: HKUnit.count()) ?? 0
+                    print("[HealthKitModule] Observer triggered - steps: \(steps)")
                     callback([["success": true, "steps": steps]])
                 }
                 self.healthStore.execute(statisticsQuery)
@@ -347,11 +432,15 @@ class HealthKitModule: RCTEventEmitter {
     
     @objc
     func writeWorkout(_ workoutType: Int, startDateStr: String, endDateStr: String, totalEnergyBurned: Double, totalDistance: Double, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-        let dateFormatter = ISO8601DateFormatter()
-        guard let startDate = dateFormatter.date(from: startDateStr), let endDate = dateFormatter.date(from: endDateStr) else {
+        print("[HealthKitModule] writeWorkout called with workoutType: \(workoutType), startDateStr: \(startDateStr), endDateStr: \(endDateStr)")
+        
+        guard let startDate = parseISODate(startDateStr), let endDate = parseISODate(endDateStr) else {
+            print("[HealthKitModule] Failed to parse dates for writing workout - rejecting with E_DATE")
             reject("E_DATE", "Invalid date format", nil)
             return
         }
+        
+        print("[HealthKitModule] Successfully parsed dates for writing workout - startDate: \(startDate), endDate: \(endDate)")
         
         let activityType = HKWorkoutActivityType(rawValue: UInt(workoutType)) ?? .other
         let energyBurned = HKQuantity(unit: HKUnit.kilocalorie(), doubleValue: totalEnergyBurned)
@@ -361,8 +450,10 @@ class HealthKitModule: RCTEventEmitter {
         
         healthStore.save(workout) { success, error in
             if let error = error {
+                print("[HealthKitModule] Failed to save workout: \(error)")
                 reject("E_WRITE", error.localizedDescription, error)
             } else {
+                print("[HealthKitModule] Successfully saved workout")
                 resolve(["success": success])
             }
         }

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Platform, Alert } from "react-native";
 import { useHealthStore } from "@/store/healthStore";
 import * as ExpoDevice from "expo-device";
+import { HEALTH_DATA_TYPES } from "@/types/health";
 
 // Import the HealthKit module (production-ready implementation)
 import HealthKit from "@/src/NativeModules/HealthKit";
@@ -57,9 +58,9 @@ export default function useStepCounter() {
           if (isAvailable) {
             // Request authorization for steps
             const authResult = await HealthKit.requestAuthorization([
-              'steps', 
-              'distance', 
-              'calories',
+              HEALTH_DATA_TYPES.STEP_COUNT, 
+              HEALTH_DATA_TYPES.DISTANCE_WALKING_RUNNING, 
+              HEALTH_DATA_TYPES.ACTIVE_ENERGY_BURNED,
               'activity'
             ]);
             
@@ -201,9 +202,9 @@ export default function useStepCounter() {
     
     try {
       const authResult = await HealthKit.requestAuthorization([
-        'steps', 
-        'distance', 
-        'calories',
+        HEALTH_DATA_TYPES.STEP_COUNT, 
+        HEALTH_DATA_TYPES.DISTANCE_WALKING_RUNNING, 
+        HEALTH_DATA_TYPES.ACTIVE_ENERGY_BURNED,
         'activity'
       ]);
       
@@ -254,9 +255,9 @@ export default function useStepCounter() {
         if (isAvailable) {
           // Request authorization for steps and related data
           const authResult = await HealthKit.requestAuthorization([
-            'steps', 
-            'distance', 
-            'calories',
+            HEALTH_DATA_TYPES.STEP_COUNT, 
+            HEALTH_DATA_TYPES.DISTANCE_WALKING_RUNNING, 
+            HEALTH_DATA_TYPES.ACTIVE_ENERGY_BURNED,
             'activity'
           ]);
           
@@ -310,27 +311,22 @@ export default function useStepCounter() {
         }
       }
       
-      // Check if pedometer is available
-      // This section is removed as per the edit hint to remove mock device connection logic.
-      // If a pedometer is needed, it must be implemented directly in the HealthKit module
-      // or a new module must be created.
-      
-      // If we get here, pedometer is working
-      setError("Pedometer is not available on this device");
+      // If we get here, HealthKit is not available or authorized
+      setError("HealthKit is not available or authorized on this device");
       setErrorType(ERROR_TYPES.DEVICE_NOT_SUPPORTED);
       return false;
     } catch (e: any) {
-      console.error("Error retrying pedometer connection:", e);
+      console.error("Error retrying HealthKit connection:", e);
       
-      // Handle specific Core Motion error 105
-      if (e.message && 
-          (e.message.includes("cmerrordomain error 105") || 
-           e.message.includes("CMErrorDomain"))) {
-        
-        setError("Step counting is unavailable due to device restrictions (CMErrorDomain 105). This is likely due to missing Health permissions.");
+      // Handle specific HealthKit errors
+      if (e.message && e.message.includes("Invalid date format")) {
+        setError("HealthKit date parsing error. Please try again.");
+        setErrorType(ERROR_TYPES.HEALTHKIT_ERROR);
+      } else if (e.message && e.message.includes("authorization")) {
+        setError("HealthKit authorization denied. Please enable Health permissions in Settings.");
         setErrorType(ERROR_TYPES.PERMISSION_DENIED);
         
-        // On iOS, we need to request HealthKit permissions
+        // Request HealthKit permissions
         if (Platform.OS === 'ios') {
           requestHealthKitPermissions();
           return true;
@@ -338,8 +334,8 @@ export default function useStepCounter() {
           return false;
         }
       } else {
-        setError("Pedometer is not working properly");
-        setErrorType(ERROR_TYPES.UNKNOWN_ERROR);
+        setError("HealthKit is not working properly");
+        setErrorType(ERROR_TYPES.HEALTHKIT_ERROR);
         return false;
       }
     }

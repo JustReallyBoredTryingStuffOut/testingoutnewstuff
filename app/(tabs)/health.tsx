@@ -29,6 +29,7 @@ import WaterTracker from "@/components/WaterTracker";
 import ActivityMap from "@/components/ActivityMap";
 import Button from "@/components/Button";
 import HealthKitService from '../../src/services/HealthKitService';
+import { HEALTH_DATA_TYPES } from "@/types/health";
 
 // Import HealthKit module
 import HealthKit from "@/src/NativeModules/HealthKit";
@@ -70,11 +71,11 @@ export default function HealthScreen() {
           if (isAvailable) {
             // Request authorization for health data
             const authResult = await HealthKit.requestAuthorization([
-              'steps', 
-              'distance', 
-              'calories', 
-              'heartRate', 
-              'sleep', 
+              HEALTH_DATA_TYPES.STEP_COUNT, 
+              HEALTH_DATA_TYPES.DISTANCE_WALKING_RUNNING, 
+              HEALTH_DATA_TYPES.ACTIVE_ENERGY_BURNED, 
+              HEALTH_DATA_TYPES.HEART_RATE, 
+              HEALTH_DATA_TYPES.SLEEP_ANALYSIS, 
               'workouts'
             ]);
             
@@ -148,11 +149,11 @@ export default function HealthScreen() {
               if (Platform.OS === 'ios') {
                 try {
                   const authResult = await HealthKit.requestAuthorization([
-                    'steps', 
-                    'distance', 
-                    'calories', 
-                    'heartRate', 
-                    'sleep', 
+                    HEALTH_DATA_TYPES.STEP_COUNT, 
+                    HEALTH_DATA_TYPES.DISTANCE_WALKING_RUNNING, 
+                    HEALTH_DATA_TYPES.ACTIVE_ENERGY_BURNED, 
+                    HEALTH_DATA_TYPES.HEART_RATE, 
+                    HEALTH_DATA_TYPES.SLEEP_ANALYSIS, 
                     'workouts'
                   ]);
                   
@@ -288,9 +289,9 @@ export default function HealthScreen() {
       
       console.log('[DEBUG] Testing HealthKit.requestAuthorization...');
       const authResult = await HealthKit.requestAuthorization([
-        'steps', 
-        'distance', 
-        'calories',
+        HEALTH_DATA_TYPES.STEP_COUNT, 
+        HEALTH_DATA_TYPES.DISTANCE_WALKING_RUNNING, 
+        HEALTH_DATA_TYPES.ACTIVE_ENERGY_BURNED,
         'activity'
       ]);
       
