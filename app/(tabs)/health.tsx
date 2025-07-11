@@ -64,11 +64,23 @@ export default function HealthScreen() {
     if (Platform.OS === 'ios') {
       const initializeHealthKit = async () => {
         try {
+          console.log('[HealthTab] Starting HealthKit initialization...');
+          
+          // Check if HealthKit module exists
+          if (!HealthKit) {
+            console.error('[HealthTab] HealthKit module not found');
+            setHealthKitAvailable(false);
+            return;
+          }
+          
           // Check if HealthKit is available
+          console.log('[HealthTab] Checking if HealthKit is available...');
           const isAvailable = await HealthKit.isHealthDataAvailable();
+          console.log('[HealthTab] HealthKit available:', isAvailable);
           setHealthKitAvailable(isAvailable);
           
           if (isAvailable) {
+            console.log('[HealthTab] Requesting HealthKit authorization...');
             // Request authorization for health data
             const authResult = await HealthKit.requestAuthorization([
               HEALTH_DATA_TYPES.STEP_COUNT, 
@@ -79,14 +91,22 @@ export default function HealthScreen() {
               'workouts'
             ]);
             
+            console.log('[HealthTab] Authorization result:', authResult);
             setHealthKitAuthorized(authResult.authorized);
           }
         } catch (error) {
-          console.error("Error initializing HealthKit:", error);
+          console.error("[HealthTab] Error initializing HealthKit:", error);
+          setHealthKitAvailable(false);
+          setHealthKitAuthorized(false);
         }
       };
       
-      initializeHealthKit();
+      // Add a small delay to ensure the component is fully mounted
+      const timer = setTimeout(() => {
+        initializeHealthKit();
+      }, 100);
+      
+      return () => clearTimeout(timer);
     }
   }, []);
   
@@ -148,6 +168,7 @@ export default function HealthScreen() {
             onPress: async () => {
               if (Platform.OS === 'ios') {
                 try {
+                  console.log('[HealthTab] Requesting authorization in sync...');
                   const authResult = await HealthKit.requestAuthorization([
                     HEALTH_DATA_TYPES.STEP_COUNT, 
                     HEALTH_DATA_TYPES.DISTANCE_WALKING_RUNNING, 
@@ -156,6 +177,7 @@ export default function HealthScreen() {
                     HEALTH_DATA_TYPES.SLEEP_ANALYSIS, 
                     'workouts'
                   ]);
+                  console.log('[HealthTab] Sync authorization result:', authResult);
                   
                   setHealthKitAuthorized(authResult.authorized);
                   
@@ -202,25 +224,35 @@ export default function HealthScreen() {
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
         
         // Get step data
-        const stepsResult = await HealthKit.getStepCount(
-          sevenDaysAgo.toISOString(),
-          new Date().toISOString()
-        );
-        
-        if (stepsResult.success) {
-          // Log success
-          console.log(`Synced ${stepsResult.steps} steps from Apple Health`);
+        try {
+          console.log('[HealthTab] Fetching step data...');
+          const stepsResult = await HealthKit.getStepCount(
+            sevenDaysAgo.toISOString(),
+            new Date().toISOString()
+          );
+          
+          if (stepsResult.success) {
+            // Log success
+            console.log(`[HealthTab] Synced ${stepsResult.steps} steps from Apple Health`);
+          }
+        } catch (stepError) {
+          console.error('[HealthTab] Error fetching step data:', stepError);
         }
         
         // Get workout data
-        const workouts = await HealthKit.getWorkouts(
-          sevenDaysAgo.toISOString(),
-          new Date().toISOString()
-        );
-        
-        if (workouts && workouts.length > 0) {
-          // Log success
-          console.log(`Synced ${workouts.length} workouts from Apple Health`);
+        try {
+          console.log('[HealthTab] Fetching workout data...');
+          const workouts = await HealthKit.getWorkouts(
+            sevenDaysAgo.toISOString(),
+            new Date().toISOString()
+          );
+          
+          if (workouts && workouts.length > 0) {
+            // Log success
+            console.log(`[HealthTab] Synced ${workouts.length} workouts from Apple Health`);
+          }
+        } catch (workoutError) {
+          console.error('[HealthTab] Error fetching workout data:', workoutError);
         }
       }
       
